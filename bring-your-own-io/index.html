@@ -749,18 +749,22 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="aline r"></div>
   <h2>The standard library situation</h2>
   <p>C++26 is finalized. The standard library implementations are not.</p>
-  <div class="row mt" style="gap:1.2em;">
+  <div class="row mt" style="gap:1em;">
     <div class="col">
-      <p style="font-size:.8em;font-weight:700;color:var(--text);margin-bottom:.35em;">GCC / libstdc++</p>
-      <p>The <span class="ic">&lt;execution&gt;</span> header exists but only wires up C++17 parallel policies (<span class="ic">par</span>, <span class="ic">seq</span>) via Intel TBB. The source tree has <strong>no P2300 code</strong>. No tracking issue. No timeline.</p>
+      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.35em;">GCC / libstdc++</p>
+      <p style="font-size:.78em;">The <span class="ic">&lt;execution&gt;</span> header exists but only wires up C++17 parallel policies via Intel TBB. The source tree has <strong>no P2300 code</strong>. No tracking issue. No timeline.</p>
     </div>
     <div class="col">
-      <p style="font-size:.8em;font-weight:700;color:var(--text);margin-bottom:.35em;">Clang / libc++</p>
-      <p>The official C++26 status page lists P2300R10 with a <strong>blank status and no version number</strong>. Work hasn't started or isn't tracked. No public timeline.</p>
+      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.35em;">Clang / libc++</p>
+      <p style="font-size:.78em;">The official C++26 status page lists P2300R10 with a <strong>blank status and no version number</strong>. Work hasn't started or isn't tracked. No public timeline.</p>
+    </div>
+    <div class="col">
+      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.35em;">MSVC / Microsoft STL</p>
+      <p style="font-size:.78em;">A tracking issue exists (<span class="ic">microsoft/STL #4768</span>) with planned feature test macros documented. However the team has explicitly stated <strong>no C++26 PRs will be accepted</strong> until remaining C++23 work is complete. Nothing shipped.</p>
     </div>
   </div>
   <div class="box rd mt">
-    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. The sender/receiver framework is not in any shipping standard library. Realistic arrival: GCC 17-18 at earliest, possibly C++29-era compilers (~2028).</p>
+    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. The sender/receiver framework is not in any shipping standard library across GCC, Clang, or MSVC. Realistic arrival: GCC 17-18 at earliest, possibly C++29-era compilers (~2028).</p>
   </div>
   <div class="box gr mt">
     <p>This is not unusual. <span class="ic">std::format</span> took ~3 years to land in both libraries after C++20. P2300 is far larger and more complex. The gap between standardization and implementation is real and matters for adoption planning.</p>
