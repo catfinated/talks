@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stop Reinventing the Scheduler — std::execution / P2300</title>
+<title>The Async Model is Here. Bring Your Own I/O (for now) — std::execution / P2300</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap">
 <style>
@@ -227,7 +227,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
 <!-- S1 TITLE -->
 <div class="slide title-slide active" id="s1">
   <div class="eyebrow">C++26 · P2300 · std::execution · A practitioner's perspective</div>
-  <div class="title-main">Stop Reinventing<br>the Scheduler</div>
+  <div class="title-main">The Async Model is Here.<br>Bring Your Own I/O (for now)</div>
   <p class="title-sub">Four years ago I built an async I/O scheduler — io_uring in production, thread pool fallback, stop token cancellation. It works, but it isn't this. Here's what P2300 actually is, where the ecosystem stands today, and what's still genuinely missing.</p>
   <div class="title-meta">
     ~60 min &nbsp;·&nbsp; Code examples use stdexec &nbsp;·&nbsp; Familiarity with <span class="ic">std::future</span> and <span class="ic">std::thread</span> helpful
