@@ -687,7 +687,9 @@ std::thread([&amp;data] {
       <div class="box rd" style="margin-top:.4em;">
         <p>Detached threads are a well-known footgun. No way to know when — or whether — they complete.</p>
       </div>
-      <p class="mt" style="font-size:.79em;">The same problem exists in hand-rolled async systems. My io_uring scheduler has careful lifetime management — but it's manual, fragile, and doesn't compose.</p>
+      <div class="box gr mt">
+        <p><span class="ic">std::jthread</span> fixes the lifetime problem — and that's genuinely useful — but it's still fundamentally a thread. You can't run it on a scheduler, compose it with <span class="ic">when_all</span>, or propagate errors out of it. A <span class="ic">jthread</span> is a hammer; a sender scope is a grammar.</p>
+      </div>
     </div>
     <div class="col">
       <p class="g-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The sender way — safe</p>
