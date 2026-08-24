@@ -262,7 +262,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     <div class="col">
       <ul class="plist">
         <li><span class="pi good">▸</span><span><strong>Nick Milkovits</strong> — Principal Software Engineer</span></li>
-        <li><span class="pi good">▸</span><span><strong>Currently:</strong> autonomous systems infrastructure for the past 6 years, including building an async I/O scheduler on io_uring four years ago for our self-driving vehicle software stack</span></li>
+        <li><span class="pi good">▸</span><span><strong>Currently:</strong> autonomous systems infrastructure for the past 6 years, including building an async I/O scheduler on io_uring four years ago for a self-driving vehicle software stack</span></li>
         <li><span class="pi good">▸</span><span><strong>Previously:</strong> a decade in high-frequency trading — low-latency, high-throughput systems where async I/O performance is existential</span></li>
         <li><span class="pi good">▸</span><span><strong>Tonight:</strong> what I found when I held that infrastructure up against P2300</span></li>
       </ul>
@@ -280,7 +280,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
         <p style="font-family:var(--fm);font-size:.8em;">github.com/<strong style="color:var(--accent);">catfinated</strong></p>
       </div>
       <div class="box gr" style="margin:0;">
-        <p style="font-size:.88em;color:var(--dim);font-style:italic;">Research and slides prepared with AI assistance. All technical claims independently verified — but challenge anything that seems off.</p>
+        <p style="font-size:.88em;color:var(--dim);font-style:italic;">Research and slides prepared with AI assistance. All technical claims independently verified, but challenge anything that seems off.</p>
       </div>
       <div class="box gr" style="margin:0;margin-top:.7em;">
         <p style="font-size:.88em;color:var(--dim);font-style:italic;">Views are my own. While my work in autonomous systems drives my interest in async I/O, this talk represents personal research and not the work or views of my employer.</p>
@@ -294,7 +294,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   <div class="snum">01</div>
   <div class="slabel">The Problem</div>
   <div class="stitle">Why async C++<br>has been broken</div>
-  <p class="sdesc">The standard library gave us primitives. It never gave us a model. So we all built our own — and none of them compose.</p>
+  <p class="sdesc">The standard library gave us primitives. It never gave us a model. So we all built our own and none of them compose.</p>
 </div>
 
 <!-- S4 THE STORY -->
@@ -657,7 +657,7 @@ stdexec::<span class="fn">sync_wait</span>(std::move(pipeline));</code></pre>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. And: once sender-based async_recv / async_write exist, this pipeline compiles as written — today you'd wrap your own io_uring layer to produce those senders. GPU caveat: you'd still manage host-device memory transfer; nvexec has facilities. <b>If probed on step 3:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>"Isn't continues_on(io_sched) redundant if async_write is already bound to the ring?"</b> — it repositions where the lambda itself runs; kept here to show scheduler hand-off, which is the point of the slide.</div>
+  <div class="notes"><b>"Why no starts_on here?"</b> — async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; the previous slide's async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. And: once sender-based async_recv / async_write exist, this pipeline compiles as written — today you'd wrap your own io_uring layer to produce those senders. GPU caveat: you'd still manage host-device memory transfer; nvexec has facilities. <b>If probed on step 3:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>"Isn't continues_on(io_sched) redundant if async_write is already bound to the ring?"</b> — it repositions where the lambda itself runs; kept here to show scheduler hand-off, which is the point of the slide.</div>
 </div>
 
 <!-- S14 STRUCTURED CONCURRENCY -->
