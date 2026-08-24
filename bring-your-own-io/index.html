@@ -42,18 +42,19 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; }
   display: none;
   position: absolute;
   inset: 0;
-  padding: 50px 58px 40px;
+  padding: 42px 54px 34px;
   flex-direction: column;
 }
 .slide.active { display: flex; }
 /* Override: active modifier always wins — even for sect/title-slide variants */
 .slide:not(.active) { display: none !important; }
+.slide.measure { display:flex !important; visibility:hidden !important; }
 
 h1 { font-family:var(--fh); font-size:2.6em; font-weight:700; letter-spacing:-.025em; line-height:1.05; color:var(--text); }
 h2 { font-family:var(--fh); font-size:1.65em; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--text); margin-bottom:.2em; }
-h3 { font-family:var(--fh); font-size:1.05em; font-weight:700; color:var(--accent); }
-p  { font-size:.82em; line-height:1.65; color:var(--dim); }
-li { font-size:.82em; line-height:1.6; color:var(--dim); margin:.2em 0; }
+h3 { font-family:var(--fh); font-size:1.1em; font-weight:700; color:var(--accent); }
+p  { font-size:1em; line-height:1.5; color:var(--dim); }
+li { font-size:1em; line-height:1.5; color:var(--dim); margin:.18em 0; }
 ul { padding-left:1.1em; }
 strong { color:var(--text); font-weight:600; }
 em { color:var(--accent); font-style:normal; font-weight:600; }
@@ -62,15 +63,15 @@ pre {
   background:#07090d;
   border:1px solid var(--border);
   border-radius:8px;
-  padding:.9em 1.1em;
-  margin:.45em 0;
+  padding:.75em .95em;
+  margin:.4em 0;
   flex-shrink:0;
   overflow:hidden;
 }
 pre code {
   font-family:var(--fm);
-  font-size:.695em;
-  line-height:1.65;
+  font-size:.875em;
+  line-height:1.5;
   color:#abb2bf;
   display:block;
   white-space:pre;
@@ -82,7 +83,7 @@ pre code {
 .ic {
   display:inline;
   font-family:var(--fm);
-  font-size:.82em;
+  font-size:.9em;
   color:var(--accent);
   background:rgba(0,223,162,.08);
   padding:.08em .38em;
@@ -102,12 +103,12 @@ pre code {
 
 .box {
   border-radius:7px;
-  padding:.75em 1em;
-  margin:.4em 0;
+  padding:.6em .9em;
+  margin:.35em 0;
   border-left:3px solid;
   flex-shrink:0;
 }
-.box p { font-size:.8em; margin:0; line-height:1.55; }
+.box p { font-size:.95em; margin:0; line-height:1.45; }
 .g   { background:rgba(0,223,162,.05);   border-color:var(--accent); }
 .g p { color:#a8f0d8; }
 .bl  { background:rgba(77,166,255,.05);  border-color:var(--blue); }
@@ -134,9 +135,9 @@ pre code {
   pointer-events:none;
 }
 .snum   { font-family:var(--fm); font-size:5.5em; font-weight:700; color:rgba(0,223,162,.05); line-height:1; letter-spacing:-.05em; margin-bottom:-.1em; }
-.slabel { font-family:var(--fm); font-size:.65em; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.35em; }
+.slabel { font-family:var(--fm); font-size:.7em; color:var(--accent); letter-spacing:.1em; text-transform:uppercase; margin-bottom:.35em; }
 .stitle { font-family:var(--fh); font-size:2.4em; font-weight:700; line-height:1.05; color:var(--text); letter-spacing:-.025em; }
-.sdesc  { font-size:.84em; color:var(--dim); margin-top:.7em; max-width:520px; line-height:1.6; }
+.sdesc  { font-size:1em; color:var(--dim); margin-top:.7em; max-width:520px; line-height:1.6; }
 
 .title-slide {
   flex-direction:column;
@@ -154,35 +155,36 @@ pre code {
 }
 .title-slide::after {
   content:'';
-  position:absolute; bottom:-60px; left:35%;
+  position:absolute; bottom:0; left:35%;
   width:300px; height:300px; border-radius:50%;
+  transform:translateY(60px);
   background:radial-gradient(circle,rgba(77,166,255,.06) 0%,transparent 70%);
   pointer-events:none;
 }
-.eyebrow    { font-family:var(--fm); font-size:.68em; color:var(--accent); letter-spacing:.12em; text-transform:uppercase; margin-bottom:.9em; }
+.eyebrow    { font-family:var(--fm); font-size:.72em; color:var(--accent); letter-spacing:.12em; text-transform:uppercase; margin-bottom:.9em; }
 .title-main { font-family:var(--fh); font-size:3em; font-weight:700; line-height:1.0; letter-spacing:-.03em; background:linear-gradient(130deg, var(--text) 35%, var(--accent) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:.4em; }
-.title-sub  { font-size:.9em; color:var(--dim); max-width:600px; line-height:1.55; margin-bottom:2em; }
-.title-meta { font-family:var(--fm); font-size:.65em; color:var(--muted); border-top:1px solid var(--border); padding-top:1em; line-height:2; }
+.title-sub  { font-size:1em; color:var(--dim); max-width:600px; line-height:1.55; margin-bottom:2em; }
+.title-meta { font-family:var(--fm); font-size:.72em; color:var(--muted); border-top:1px solid var(--border); padding-top:1em; line-height:2; }
 
 .plist { list-style:none; padding:0; }
-.plist li { display:flex; gap:.75em; align-items:flex-start; padding:.48em 0; border-bottom:1px solid var(--border); font-size:.81em; color:var(--dim); }
+.plist li { display:flex; gap:.75em; align-items:flex-start; padding:.4em 0; border-bottom:1px solid var(--border); font-size:.95em; color:var(--dim); }
 .plist li:last-child { border-bottom:none; }
 .pi { flex-shrink:0; padding-top:.1em; }
 .pi.bad  { color:var(--warn); }
 .pi.good { color:var(--accent); }
 
 .tl { list-style:none; padding:0; }
-.tl li { display:flex; gap:1.1em; align-items:flex-start; padding:.45em 0; border-bottom:1px solid var(--border); font-size:.79em; color:var(--dim); }
+.tl li { display:flex; gap:1.1em; align-items:flex-start; padding:.4em 0; border-bottom:1px solid var(--border); font-size:.92em; color:var(--dim); }
 .tl li:last-child { border-bottom:none; }
 .ty { font-family:var(--fm); font-size:.85em; color:var(--accent); min-width:58px; flex-shrink:0; padding-top:.05em; }
 
 .alist { list-style:none; padding:0; }
-.alist li { display:flex; gap:.8em; align-items:baseline; padding:.52em 0; border-bottom:1px solid var(--border); font-size:.8em; }
+.alist li { display:flex; gap:.8em; align-items:baseline; padding:.45em 0; border-bottom:1px solid var(--border); font-size:.95em; }
 .alist li:last-child { border-bottom:none; }
 .an { font-family:var(--fm); color:var(--accent); min-width:155px; flex-shrink:0; font-size:.95em; }
 .ad { color:var(--dim); line-height:1.4; }
 
-.ct { width:100%; border-collapse:collapse; font-size:.74em; margin-top:.7em; }
+.ct { width:100%; border-collapse:collapse; font-size:.82em; margin-top:.7em; }
 .ct th { font-family:var(--fh); font-weight:700; color:var(--text); text-align:left; padding:.45em .7em; border-bottom:2px solid var(--border); }
 .ct td { padding:.4em .7em; border-bottom:1px solid var(--border); color:var(--dim); vertical-align:middle; }
 .ct tr:last-child td { border-bottom:none; }
@@ -191,14 +193,32 @@ pre code {
 .cx  { color:var(--warn); }
 .cpt { color:#f0b429; }
 
-.bq { font-family:var(--fh); font-size:1.15em; font-weight:700; line-height:1.3; color:var(--text); border-left:4px solid var(--accent); padding-left:.9em; margin:.7em 0; }
-.qa { font-family:var(--fm); font-size:.6em; color:var(--muted); margin-top:.4em; padding-left:1em; }
+.bq { font-family:var(--fh); font-size:1.25em; font-weight:700; line-height:1.3; color:var(--text); border-left:4px solid var(--accent); padding-left:.9em; margin:.7em 0; }
+.qa { font-family:var(--fm); font-size:.7em; color:var(--muted); margin-top:.4em; padding-left:1em; }
 
-.tag { display:inline-block; font-family:var(--fm); font-size:.58em; padding:.18em .65em; border-radius:4px; letter-spacing:.05em; text-transform:uppercase; vertical-align:middle; margin-left:.5em; }
+.tag { display:inline-block; font-family:var(--fm); font-size:.65em; padding:.18em .65em; border-radius:4px; letter-spacing:.05em; text-transform:uppercase; vertical-align:middle; margin-left:.5em; }
 .tg { background:rgba(0,223,162,.1); color:var(--accent); border:1px solid rgba(0,223,162,.25); }
 .tb { background:rgba(77,166,255,.1); color:var(--blue);   border:1px solid rgba(77,166,255,.25); }
 .tr { background:rgba(255,107,74,.1); color:var(--warn);   border:1px solid rgba(255,107,74,.25); }
 .tm { background:rgba(90,98,117,.15); color:var(--muted);  border:1px solid var(--border); }
+
+.notes {
+  display:none;
+  position:absolute;
+  right:16px; bottom:16px;
+  max-width:400px;
+  background:rgba(7,9,13,.93);
+  border:1px solid rgba(0,223,162,.45);
+  border-radius:8px;
+  padding:.7em .9em .8em;
+  font-size:.62em;
+  line-height:1.55;
+  color:var(--dim);
+  z-index:60;
+}
+.notes::before { content:'SPEAKER NOTES · N toggles'; display:block; font-family:var(--fm); font-size:.8em; letter-spacing:.09em; color:var(--accent); margin-bottom:.4em; }
+.notes b { color:var(--text); }
+body.shownotes .slide.active .notes { display:block; }
 
 #nav {
   position:fixed; bottom:0; left:0; right:0; height:38px;
@@ -217,7 +237,7 @@ pre code {
 .b-text { color:var(--blue); }
 .r-text { color:var(--warn); }
 .m-text { color:var(--muted); }
-.sm { font-size:.78em; }
+.sm { font-size:.9em; }
 hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shrink:0; }
 </style>
 </head>
@@ -244,7 +264,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
         <li><span class="pi good">▸</span><span><strong>Nick Milkovits</strong> — Principal Software Engineer</span></li>
         <li><span class="pi good">▸</span><span><strong>Currently:</strong> autonomous systems infrastructure for the past 6 years, including building an async I/O scheduler on io_uring four years ago for our self-driving vehicle software stack</span></li>
         <li><span class="pi good">▸</span><span><strong>Previously:</strong> a decade in high-frequency trading — low-latency, high-throughput systems where async I/O performance is existential</span></li>
-        <li><span class="pi good">▸</span><span><strong>Relevant to tonight:</strong> Leahy's CppCon 2025 talk on adopting std::execution in Asio codebases made me curious about where P2300 stands relative to my own I/O infrastructure work — this talk is what I found</span></li>
+        <li><span class="pi good">▸</span><span><strong>Tonight:</strong> what I found when I held that infrastructure up against P2300</span></li>
       </ul>
       <div class="box bl mt2">
         <p>I'm coming at this from a <strong>user and implementer perspective</strong> — not as a proposal author or compiler vendor. What works, what doesn't, and what's still missing.</p>
@@ -252,47 +272,20 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     </div>
     <div class="col-38" style="display:flex;flex-direction:column;justify-content:center;gap:.8em;">
       <div class="box gr" style="margin:0;">
-        <p style="font-family:var(--fm);font-size:.75em;margin-bottom:.3em;color:var(--text);">LinkedIn</p>
-        <p style="font-family:var(--fm);font-size:.7em;word-break:break-all;">linkedin.com/in/<strong style="color:var(--accent);">nicholasmilkovits</strong></p>
+        <p style="font-family:var(--fm);font-size:.88em;margin-bottom:.3em;color:var(--text);">LinkedIn</p>
+        <p style="font-family:var(--fm);font-size:.8em;word-break:break-all;">linkedin.com/in/<strong style="color:var(--accent);">nicholasmilkovits</strong></p>
       </div>
       <div class="box gr" style="margin:0;">
-        <p style="font-family:var(--fm);font-size:.75em;margin-bottom:.3em;color:var(--text);">GitHub</p>
-        <p style="font-family:var(--fm);font-size:.7em;">github.com/<strong style="color:var(--accent);">catfinated</strong></p>
+        <p style="font-family:var(--fm);font-size:.88em;margin-bottom:.3em;color:var(--text);">GitHub</p>
+        <p style="font-family:var(--fm);font-size:.8em;">github.com/<strong style="color:var(--accent);">catfinated</strong></p>
       </div>
       <div class="box gr" style="margin:0;">
-        <p style="font-size:.75em;color:var(--dim);font-style:italic;">Research and slides prepared with AI assistance. All technical claims independently verified — but challenge anything that seems off.</p>
+        <p style="font-size:.88em;color:var(--dim);font-style:italic;">Research and slides prepared with AI assistance. All technical claims independently verified — but challenge anything that seems off.</p>
       </div>
       <div class="box gr" style="margin:0;margin-top:.7em;">
-        <p style="font-size:.75em;color:var(--dim);font-style:italic;">Views are my own. While my work in autonomous systems drives my interest in async I/O, this talk represents personal research and not the work or views of my employer.</p>
+        <p style="font-size:.88em;color:var(--dim);font-style:italic;">Views are my own. While my work in autonomous systems drives my interest in async I/O, this talk represents personal research and not the work or views of my employer.</p>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- S3 AGENDA -->
-<div class="slide" id="s3">
-  <div class="aline"></div>
-  <h2>What we're covering</h2>
-  <div class="row mt">
-    <div class="col">
-      <ul>
-        <li><strong>The problem</strong> — why async C++ has been painful, and why I built my own</li>
-        <li><strong>The model</strong> — scheduler, sender, receiver and what they actually mean</li>
-        <li><strong>Writing sender code</strong> — the user-facing API you'll actually touch</li>
-        <li><strong>Structured concurrency</strong> — the safety story</li>
-      </ul>
-    </div>
-    <div class="col">
-      <ul>
-        <li><strong>History</strong> — how we got here and why it took so long</li>
-        <li><strong>The ecosystem today</strong> — stdexec, Beman, the stdlibs</li>
-        <li><strong>The I/O gap</strong> — the honest picture nobody else is giving you</li>
-        <li><strong>Adoption</strong> — what to do now vs. what to wait for</li>
-      </ul>
-    </div>
-  </div>
-  <div class="box gr mt2">
-    <p>This is a <strong>user's and implementer's perspective</strong> — not the proposal authors'. We'll cover what works, what doesn't, and what's still missing — especially for I/O-heavy workloads.</p>
   </div>
 </div>
 
@@ -311,19 +304,19 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   <div class="row mt">
     <div class="col-55">
       <p>Four years ago I built an async I/O scheduler with a common interface backed by two implementations: io_uring in production, and a thread pool fallback for environments where io_uring isn't available. It has cancellation via stop tokens.</p>
-      <p class="mt">That backend-abstraction design is actually the same core insight P2300 is built on — separating computation from execution context. But it still has real gaps:</p>
+      <p class="mt">This was <strong>standard practice</strong> — every shop with serious async needs built some version of it. And every one of those systems, mine included, hits the same structural ceiling:</p>
       <ul class="plist mt">
-        <li><span class="pi bad">✗</span><span><strong>Not composable.</strong> Work pipelines are ad-hoc. No standard way to chain, fan-out, or fan-in without writing custom plumbing each time. Integrating a different I/O domain requires a bridge.</span></li>
-        <li><span class="pi bad">✗</span><span><strong>Not standardised.</strong> The interface is mine, not a shared vocabulary. Other teams can't compose their async work with it using generic algorithms.</span></li>
-        <li><span class="pi bad">✗</span><span><strong>No uniform error/cancellation propagation.</strong> Each pipeline junction handles errors and stop signals in its own way.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>No two of them compose.</strong> Work pipelines are ad-hoc plumbing; integrating another team's async domain means writing a custom bridge — every time.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>None of them share a vocabulary.</strong> My interface is mine, Asio's is Asio's — no generic algorithm can span them.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>Each one invents error and cancellation propagation.</strong> Exceptions here, error_codes there, silent drops somewhere else.</span></li>
       </ul>
       <div class="box g mt">
-        <p>Having swappable backends already shows the right instinct. P2300 takes that idea and makes it universal — any scheduler, any algorithm, any library, all composable through the same vocabulary.</p>
+        <p>These aren't design mistakes — they're the ceiling <strong>any</strong> single-team library hits, because composing across teams needs a vocabulary everyone shares, and only a standard can provide one. P2300 takes the instinct we all had — separate computation from execution context — and makes it universal.</p>
       </div>
     </div>
     <div class="col">
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.4em;">What the ecosystem looks like without a standard model:</p>
-      <ul style="font-size:.79em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.4em;">The prior art — what every large C++ shop built:</p>
+      <ul style="font-size:.92em;">
         <li>Team A uses Boost.Asio with callbacks</li>
         <li>Team B uses hand-rolled thread pool + futures</li>
         <li>Team C wrote a coroutine framework</li>
@@ -337,36 +330,37 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
       </div>
     </div>
   </div>
+  <div class="notes"><b>Delivery:</b> the ✗s are coordination failures, not engineering failures — no amount of skill fixes them from inside one team, because they require everyone else to agree on a vocabulary. Land that sentence before advancing; it's the whole reason the fix is a standard and not a better in-house library. Your system stays on stage as the exemplar of standard practice, not the patient.</div>
 </div>
 
-<!-- S5 STD::FUTURE PROBLEMS -->
+<!-- FUTURE VS NEEDS (merged) -->
 <div class="slide" id="s6">
   <div class="aline r"></div>
-  <h2>What's wrong with <span class="ic">std::future</span>?</h2>
-  <ul class="plist mt">
-    <li><span class="pi bad">✗</span><span><strong>No continuations.</strong> <span class="ic">.then()</span> was proposed in 2013 and made it into the Concurrency TS — but never into the standard. It's been stuck in experimental limbo for over a decade. To chain work you must block with <span class="ic">.get()</span> or spin up another thread.</span></li>
-    <li><span class="pi bad">✗</span><span><strong>Always heap-allocated.</strong> Shared state between promise and future always requires dynamic allocation — even for trivial work.</span></li>
-    <li><span class="pi bad">✗</span><span><strong>No cancellation, no async readiness notification.</strong> <span class="ic">wait_for(0s)</span> gives a non-blocking poll but only returns a status — there's no way to say "call me back when it's ready." You either poll in a loop or block.</span></li>
-    <li><span class="pi bad">✗</span><span><strong>No scheduler control.</strong> <span class="ic">std::async</span> may or may not use a thread pool — implementation-defined. You have no say in where work runs.</span></li>
-    <li><span class="pi bad">✗</span><span><strong>No useful laziness.</strong> <span class="ic">launch::deferred</span> delays execution but always runs on the calling thread when you retrieve the value — not on a scheduler you control. No way to compose deferred futures or hand them to a different execution context.</span></li>
-    <li><span class="pi bad">✗</span><span><strong>Blocking fan-in.</strong> Waiting for N futures means blocking on each in sequence — no parallel join without yet more threads.</span></li>
-    <li><span class="pi bad">✗</span><span><strong>Error handling inconsistency.</strong> Exceptions hidden in shared state, incompatible with error_code-based I/O APIs, no clean propagation across async boundaries.</span></li>
-  </ul>
-</div>
-
-<!-- S6 WHAT WE WANT -->
-<div class="slide" id="s7">
-  <div class="aline"></div>
-  <h2>What a real async model needs</h2>
-  <ul class="plist mt">
-    <li><span class="pi good">✓</span><span><strong>Lazy by default.</strong> Describe work as a value. Choose when to run it, and where.</span></li>
-    <li><span class="pi good">✓</span><span><strong>Composable.</strong> Chain, fan-out, fan-in — with the same syntax regardless of what's underneath.</span></li>
-    <li><span class="pi good">✓</span><span><strong>Scheduler-agnostic.</strong> The computation shouldn't care whether it runs on a thread pool, GPU, io_uring ring, or interrupt handler.</span></li>
-    <li><span class="pi good">✓</span><span><strong>Uniform error and cancellation handling.</strong> Three well-defined completion channels: value, error, stopped. No special-casing per library.</span></li>
-    <li><span class="pi good">✓</span><span><strong>Zero overhead in the common case.</strong> No heap allocations, no type erasure, no reference counting in the default path — though some patterns (<span class="ic">async_scope::spawn</span>, <span class="ic">any_sender_of</span>) opt in to allocation.</span></li>
-    <li><span class="pi good">✓</span><span><strong>Structured lifetimes.</strong> The model makes it natural for child work to complete before the parent scope exits — no detached threads, no dangling references in well-structured code.</span></li>
-    <li><span class="pi good">✓</span><span><strong>Interoperable.</strong> Work from Asio, a custom io_uring scheduler, a GPU — composable through the same generic algorithms.</span></li>
-  </ul>
+  <h2>Why <span class="ic">std::future</span> isn't the model — and what is</h2>
+  <div class="row mt" style="gap:1.6em;">
+    <div class="col">
+      <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">What's broken</p>
+      <ul class="plist">
+        <li><span class="pi bad">✗</span><span><strong>No continuations.</strong> <span class="ic">.then()</span> has been stuck in the Concurrency TS since 2013 — chaining means blocking on <span class="ic">.get()</span> or spawning another thread.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>No cancellation, no readiness callback.</strong> You poll in a loop or you block.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>No scheduler control.</strong> <span class="ic">std::async</span> runs work wherever it likes — implementation-defined.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>Blocking fan-in, messy errors.</strong> Join N futures serially; exceptions hide in shared state, incompatible with <span class="ic">error_code</span> I/O.</span></li>
+      </ul>
+    </div>
+    <div class="col">
+      <p class="g-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">What a real model needs</p>
+      <ul class="plist">
+        <li><span class="pi good">✓</span><span><strong>Composable continuations.</strong> Chain, fan-out, fan-in — one syntax regardless of what's underneath.</span></li>
+        <li><span class="pi good">✓</span><span><strong>First-class cancellation.</strong> Stopped is its own completion channel, not an exception in disguise.</span></li>
+        <li><span class="pi good">✓</span><span><strong>Scheduler-agnostic.</strong> Thread pool, GPU, io_uring ring, interrupt handler — the computation shouldn't care.</span></li>
+        <li><span class="pi good">✓</span><span><strong>Uniform completion.</strong> Value / error / stopped, propagated automatically through the chain.</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="box g mt">
+    <p>Each ✗ maps to the ✓ beside it. Two more requirements we'll meet in the model section: <strong>zero overhead on the default path</strong> (allocation opts in, never sneaks in) and <strong>structured lifetimes</strong> — child work completes before its parent scope exits.</p>
+  </div>
+  <div class="notes"><b>Detail dropped from the slide:</b> futures always heap-allocate shared state, even for trivial work. launch::deferred is laziness without value — runs on the retrieving thread, can't target a scheduler, can't compose. jthread fixes thread lifetime but is still a thread: no when_all, no error propagation out. The coroutine ecosystem's failure modes are different — next slide.</div>
 </div>
 
 <!-- S7 WHAT ABOUT COROUTINES -->
@@ -382,13 +376,10 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
         <li><span class="pi bad">✗</span><span><strong>Fan-out is awkward.</strong> <span class="ic">co_await</span> is sequential by nature. Concurrent fan-out requires library primitives that don't exist in the standard.</span></li>
         <li><span class="pi bad">✗</span><span><strong>No scheduler portability.</strong> A coroutine written against Asio's executor doesn't compose with one written against a custom io_uring scheduler.</span></li>
       </ul>
-      <div class="box gr mt">
-        <p>Coroutines and <span class="ic">std::future</span> have different failure modes. Futures fail at composability; the coroutine <em>ecosystem</em> fails at parallelism, cancellation, and portability. P2300 provides the missing infrastructure — and uses coroutines as a first-class citizen in the process.</p>
-      </div>
     </div>
     <div class="col">
-      <p style="font-size:.79em;font-weight:700;color:var(--accent);margin-bottom:.35em;">The good news: they interoperate</p>
-      <p style="font-size:.79em;">P2300 deliberately treats coroutines as a first-class citizen. You don't have to choose.</p>
+      <p style="font-size:.92em;font-weight:700;color:var(--accent);margin-bottom:.35em;">The good news: they interoperate</p>
+      <p style="font-size:.92em;">P2300 deliberately treats coroutines as a first-class citizen. You don't have to choose.</p>
 <pre style="margin-top:.5em;"><code><span class="cm">// co_await any sender inside a coroutine</span>
 exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     <span class="cm">// sender becomes awaitable</span>
@@ -409,6 +400,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       </div>
     </div>
   </div>
+  <div class="notes"><b>Framing line before advancing:</b> coroutines and std::future have DIFFERENT failure modes — futures fail at composability; the coroutine ecosystem fails at parallelism, cancellation, and portability. P2300 provides the missing infrastructure and treats coroutines as a first-class citizen in the process.</div>
 </div>
 
 <!-- S8 SECTION: MODEL -->
@@ -427,20 +419,20 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     <div class="col" style="background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:1.1em;">
       <div style="font-size:1.3em;margin-bottom:.4em;">📍</div>
       <h3>Scheduler</h3>
-      <p class="mt" style="font-size:.79em;">A lightweight handle to an <strong>execution context</strong> — thread pool, GPU stream, io_uring ring, interrupt handler. Answers: <em>"where does work run?"</em></p>
-      <p class="mt" style="font-size:.79em;">This is what you provide when you plug in your own I/O layer. Your io_uring ring <em>becomes</em> a scheduler.</p>
+      <p class="mt" style="font-size:.92em;">A lightweight handle to an <strong>execution context</strong> — thread pool, GPU stream, io_uring ring, interrupt handler. Answers: <em>"where does work run?"</em></p>
+      <p class="mt" style="font-size:.92em;">This is what you provide when you plug in your own I/O layer. Your io_uring ring <em>becomes</em> a scheduler.</p>
     </div>
     <div class="col" style="background:var(--surf);border:1px solid rgba(0,223,162,.2);border-radius:10px;padding:1.1em;">
       <div style="font-size:1.3em;margin-bottom:.4em;">📦</div>
       <h3>Sender</h3>
-      <p class="mt" style="font-size:.79em;">A <strong>description of async work</strong> — lazy, composable, zero-overhead until started. Like a recipe, not a running computation.</p>
-      <p class="mt" style="font-size:.79em;color:var(--accent);font-weight:500;">This is what you spend 95% of your time with as a user.</p>
+      <p class="mt" style="font-size:.92em;">A <strong>description of async work</strong> — lazy, composable, zero-overhead until started. Like a recipe, not a running computation.</p>
+      <p class="mt" style="font-size:.92em;color:var(--accent);font-weight:500;">This is what you spend 95% of your time with as a user.</p>
     </div>
     <div class="col" style="background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:1.1em;">
       <div style="font-size:1.3em;margin-bottom:.4em;">📬</div>
       <h3>Receiver</h3>
-      <p class="mt" style="font-size:.79em;">A <strong>generalized callback</strong> with three channels: value, error, and stopped. Glue between senders inside the framework.</p>
-      <p class="mt" style="font-size:.79em;">As a user you almost never write these. Algorithms handle them internally.</p>
+      <p class="mt" style="font-size:.92em;">A <strong>generalized callback</strong> with three channels: value, error, and stopped. Glue between senders inside the framework.</p>
+      <p class="mt" style="font-size:.92em;">As a user you almost never write these. Algorithms handle them internally.</p>
     </div>
   </div>
   <div class="box g mt2">
@@ -477,11 +469,9 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       <div class="box bl mt">
         <p>The full pipeline can be stored, passed to functions, or modified before running. This is what composability actually means.</p>
       </div>
-      <div class="box g mt">
-        <p>If your scheduler is an io_uring ring, <span class="ic">pipeline(ring_sched)</span> routes all that work through your ring — the computation logic is unchanged.</p>
-      </div>
     </div>
   </div>
+  <div class="notes"><b>Say, don't show:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring — the computation logic is unchanged. This is the hook back to the audience's own infrastructure.</div>
 </div>
 
 <!-- S10 THREE CHANNELS -->
@@ -511,8 +501,9 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       })
     | stdexec::<span class="fn">upon_stopped</span>([] { <span class="fn">cleanup</span>(); });</code></pre>
   <div class="box g mt">
-    <p>This replaces the inconsistent mix of exceptions, error codes, and silent failures that plague typical async C++ code. The multi-value capability is also why <span class="ic">sync_wait</span> always returns <span class="ic">optional&lt;tuple&lt;...&gt;&gt;</span> — even for a single value. The <span class="ic">optional</span> is empty on cancellation; the <span class="ic">tuple</span> carries all values. <span class="ic">when_all</span> uses this to deliver one result per branch in a single completion.</p>
+    <p>One uniform completion story — no more per-library mix of exceptions, error codes, and silent failures.</p>
   </div>
+  <div class="notes"><b>Say, don't show:</b> the multi-value capability is why sync_wait always returns optional&lt;tuple&lt;...&gt;&gt; even for one value — the optional is empty on cancellation, the tuple carries all values. when_all uses this to deliver one result per branch in a single completion.</div>
 </div>
 
 <!-- S11 SECTION: ALGORITHMS -->
@@ -534,10 +525,9 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     <li><span class="an">let_value(sndr, fn)</span><span class="ad">Like <span class="ic">then</span> but <span class="ic">fn</span> returns a <em>sender</em> — for chaining operations that are themselves async.</span></li>
     <li><span class="an">when_all(sndrs...)</span><span class="ad">Fan-in. Runs all senders concurrently, completes when all finish. Returns tuple of all results.</span></li>
     <li><span class="an">upon_error(sndr, fn)</span><span class="ad">Handle errors mid-chain. Recover and continue, rethrow, or return a fallback value.</span></li>
-    <li><span class="an">upon_stopped(sndr, fn)</span><span class="ad">Handle cancellation explicitly at any point in the pipeline.</span></li>
-    <li><span class="an">bulk(sndr, n, fn)</span><span class="ad">Run <span class="ic">fn</span> for indices 0..n-1, potentially in parallel. Structured parallel loops without manual thread management.</span></li>
-    <li><span class="an">sync_wait(sndr)</span><span class="ad">Consumer. Blocks calling thread until sender completes. Returns <span class="ic">optional&lt;tuple&lt;values...&gt;&gt;</span>.</span></li>
+    <li><span class="an">sync_wait(sndr)</span><span class="ad">Consumer. Blocks calling thread until sender completes. Returns <span class="ic">optional&lt;tuple&lt;values...&gt;&gt;</span>. In the final standard it lives in <span class="ic">std::this_thread::sync_wait</span>; stdexec spells it <span class="ic">stdexec::sync_wait</span>.</span></li>
   </ul>
+  <div class="notes"><b>Mention verbally, not row-by-row:</b> upon_stopped(sndr, fn) — handle cancellation explicitly mid-pipeline (already shown in code on the three-channels slide). bulk — parallel for over indices 0..n-1; final C++26 bulk takes an execution policy (P3481) and adds bulk_chunked / bulk_unchunked; older stdexec examples show bulk(sndr, n, fn). <b>Speak to five only:</b> just, schedule, then, let_value, sync_wait — the demo uses exactly these. The rest are "on the slide for your reference."</div>
 </div>
 
 <!-- DEMO SLIDE -->
@@ -546,7 +536,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <h2>Live demo</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-60">
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin-bottom:.5em;">compiler-explorer.com · library: stdexec · example: hello_world.cpp</p>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.5em;">compiler-explorer.com · library: stdexec · example: hello_world.cpp</p>
 <pre><code><span class="cm">// stdexec/examples/hello_world.cpp</span>
 <span class="cm">// A minimal but complete sender pipeline:</span>
 <span class="cm">//   · static_thread_pool scheduler</span>
@@ -571,13 +561,14 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
         <p>Notice: the scheduler is constructed once and passed in. Swap <span class="ic">static_thread_pool</span> for any other scheduler and the pipeline logic is unchanged — that's the whole point.</p>
       </div>
       <div class="box gr mt">
-        <p>Full examples directory:<br><span style="font-family:var(--fm);font-size:.85em;">github.com/NVIDIA/stdexec/<br>tree/main/examples</span></p>
+        <p>Full examples directory:<br><span style="font-family:var(--fm);font-size:.95em;">github.com/NVIDIA/stdexec/<br>tree/main/examples</span></p>
       </div>
       <div class="box rd mt">
         <p>If Godbolt is unresponsive on the night — skip ahead, the concepts are already established.</p>
       </div>
     </div>
   </div>
+  <div class="notes"><b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-loaded example → if compiles are slow, narrate the expected output → if Godbolt is down entirely, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
 </div>
 
 <!-- S13 WHEN_ALL + LET_VALUE -->
@@ -589,18 +580,18 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       <h3 style="margin-bottom:.4em;">Fan-out with when_all</h3>
 <pre><code><span class="cm">// Three operations run concurrently</span>
 <span class="kw">auto</span> work = stdexec::<span class="fn">when_all</span>(
-    stdexec::<span class="fn">on</span>(sched,
+    stdexec::<span class="fn">starts_on</span>(sched,
         <span class="fn">async_read</span>(fd_a) | stdexec::<span class="fn">then</span>(process)),
-    stdexec::<span class="fn">on</span>(sched,
+    stdexec::<span class="fn">starts_on</span>(sched,
         <span class="fn">async_read</span>(fd_b) | stdexec::<span class="fn">then</span>(process)),
-    stdexec::<span class="fn">on</span>(sched,
+    stdexec::<span class="fn">starts_on</span>(sched,
         <span class="fn">async_read</span>(fd_c) | stdexec::<span class="fn">then</span>(process))
 )
 | stdexec::<span class="fn">then</span>([](A a, B b, C c) {
     <span class="kw">return</span> <span class="fn">combine</span>(a, b, c); <span class="cm">// after all three</span>
 });</code></pre>
       <div class="box g" style="margin-top:.4em;">
-        <p>No blocking between steps. No thread-per-operation. One clean join point. Note: each branch here returns exactly one value. If a branch returns void or multiple values, the downstream signature changes — check the completion signatures if you get unexpected compile errors.</p>
+        <p>No blocking between steps. No thread-per-operation. One clean join point.</p>
       </div>
     </div>
     <div class="col">
@@ -623,60 +614,57 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       </div>
     </div>
   </div>
+  <div class="notes"><b>Why starts_on, not on:</b> since P3175, on(sch, s) is the round-trip adaptor — it hops completion back to the environment's current scheduler, and is ill-formed when the env has none (e.g. inside scope.spawn). starts_on says exactly what these examples mean: start the work there, no return hop. stdexec implements the new semantics too. <b>Caveat if asked about the (A a, B b, C c) signature:</b> each when_all branch here returns exactly one value. A branch returning void or multiple values changes the downstream signature — check the completion signatures when you hit surprising compile errors.</div>
 </div>
 
 <!-- TRANSFER SLIDE -->
 <div class="slide" id="s17">
   <div class="aline"></div>
   <h2>Composing schedulers — the real payoff</h2>
-  <p class="mt"><span class="ic">transfer(sndr, sched)</span> hands execution off to a different scheduler mid-pipeline. This is something no hand-rolled async system does cleanly.</p>
+  <p class="mt"><span class="ic">continues_on(sndr, sched)</span> hands execution off to a different scheduler mid-pipeline. (Renamed from <span class="ic">transfer</span> in P2300R10; the old <span class="ic">on</span> is now <span class="ic">starts_on</span>, with a new round-trip <span class="ic">on</span> added. stdexec keeps the old spellings as aliases.) This is something no hand-rolled async system does cleanly.</p>
   <div class="row mt" style="gap:1.2em;">
     <div class="col-60">
 <pre><code><span class="cm">// Three schedulers, one pipeline.</span>
 <span class="cm">// Each step runs where it makes sense.</span>
 
 <span class="kw">auto</span> pipeline =
-
     <span class="cm">// 1. Receive data on the io_uring ring</span>
     async_recv(io_sched, socket, buf)
 
     <span class="cm">// 2. Hand off to GPU/CPU for compute</span>
-    | stdexec::<span class="fn">transfer</span>(gpu_sched)
+    | stdexec::<span class="fn">continues_on</span>(gpu_sched)
     | stdexec::<span class="fn">then</span>([](Buffer b) {
           <span class="kw">return</span> <span class="fn">process_data</span>(b);   <span class="cm">// continuation runs on GPU context</span>
       })
 
-    <span class="cm">// 3. Transfer back to io_uring to write result</span>
-    | stdexec::<span class="fn">transfer</span>(io_sched)
-    | stdexec::<span class="fn">then</span>([](Result r) {
-          <span class="kw">return</span> <span class="fn">async_write</span>(io_sched, file, r);
+    <span class="cm">// 3. Continue on io_uring to write result</span>
+    | stdexec::<span class="fn">continues_on</span>(io_sched)
+    | stdexec::<span class="fn">let_value</span>([](Result r) {
+          <span class="kw">return</span> <span class="fn">async_write</span>(io_sched, file, r);  <span class="cm">// returns a sender — chained in</span>
       });
 
 stdexec::<span class="fn">sync_wait</span>(std::move(pipeline));</code></pre>
     </div>
     <div class="col">
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin-bottom:.4em;">Why this matters</p>
-      <ul style="font-size:.79em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.4em;">Why this matters</p>
+      <ul style="font-size:.92em;">
         <li>Each scheduler is independently sourced — io_uring from your own layer, thread pool or GPU from stdexec or nvexec</li>
-        <li>The <strong>control flow</strong> doesn't change if you swap the compute scheduler from CPU to GPU. For GPU specifically, you'd still manage host-device memory transfer — nvexec has facilities for this</li>
+        <li>Swap the compute scheduler CPU↔GPU — the <strong>control flow</strong> doesn't change</li>
         <li>Error and cancellation propagate across scheduler boundaries automatically — no special handling at the transfer points</li>
-        <li>This is essentially impossible to do cleanly with <span class="ic">std::future</span>, hand-rolled callbacks, or most coroutine frameworks</li>
       </ul>
       <div class="box g mt">
         <p>This is the pipeline pattern that motivated P2300 in the first place — heterogeneous execution where <strong>the computation describes what runs where</strong>, not the scheduler.</p>
       </div>
-      <div class="box gr mt">
-        <p>In the I/O gap context: once sender-based <span class="ic">async_recv</span> and <span class="ic">async_write</span> exist, this pipeline compiles as written. Today you'd wrap your own io_uring layer to produce those senders.</p>
-      </div>
     </div>
   </div>
+  <div class="notes"><b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. And: once sender-based async_recv / async_write exist, this pipeline compiles as written — today you'd wrap your own io_uring layer to produce those senders. GPU caveat: you'd still manage host-device memory transfer; nvexec has facilities. <b>If probed on step 3:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>"Isn't continues_on(io_sched) redundant if async_write is already bound to the ring?"</b> — it repositions where the lambda itself runs; kept here to show scheduler hand-off, which is the point of the slide.</div>
 </div>
 
 <!-- S14 STRUCTURED CONCURRENCY -->
 <div class="slide" id="s18">
   <div class="aline"></div>
   <h2>Structured concurrency — safety by construction</h2>
-  <div class="row mt" style="gap:1.2em;">
+  <div class="row mt" style="gap:1.4em;">
     <div class="col">
       <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The old way — danger</p>
 <pre><code><span class="cm">// Thread may outlive `data`</span>
@@ -687,37 +675,49 @@ std::thread([&amp;data] {
       <div class="box rd" style="margin-top:.4em;">
         <p>Detached threads are a well-known footgun. No way to know when — or whether — they complete.</p>
       </div>
-      <div class="box gr mt">
-        <p><span class="ic">std::jthread</span> fixes the lifetime problem — and that's genuinely useful — but it's still fundamentally a thread. You can't run it on a scheduler, compose it with <span class="ic">when_all</span>, or propagate errors out of it. A <span class="ic">jthread</span> is a hammer; a sender scope is a grammar.</p>
-      </div>
     </div>
     <div class="col">
       <p class="g-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The sender way — safe</p>
 <pre><code><span class="cm">// Work is nested — cannot outlive scope</span>
 stdexec::<span class="fn">sync_wait</span>(
-    stdexec::<span class="fn">on</span>(sched,
+    stdexec::<span class="fn">starts_on</span>(sched,
         stdexec::<span class="fn">just</span>(data)
         | stdexec::<span class="fn">then</span>(process)
     )
 );
 <span class="cm">// Guaranteed: process() is done here ✓</span></code></pre>
       <div class="box g" style="margin-top:.4em;">
-        <p>Child work <strong>always</strong> completes before the parent scope exits. Made the default by the model — not left to discipline. You <em>can</em> still misuse the low-level primitives, but the high-level API steers you away from it.</p>
-      </div>
-      <div class="box bl mt" style="padding:.6em .8em;">
-        <p style="margin-bottom:.4em;"><span class="ic">async_scope</span> — structured fire-and-forget that still tracks lifetimes:</p>
-<pre style="margin:0;border:none;background:rgba(0,0,0,.25);padding:.6em .8em;border-radius:5px;"><code style="font-size:.65em;"><span class="kw">exec</span>::async_scope scope;
-scope.<span class="fn">spawn</span>(
-    stdexec::<span class="fn">on</span>(sched, <span class="fn">do_work</span>())
-);
-<span class="cm">// caller continues immediately...</span>
-stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span>());
-<span class="cm">// ...but all spawned work is done here ✓</span></code></pre>
+        <p>Child work <strong>always</strong> completes before the parent scope exits — the default of the model, not a discipline you maintain.</p>
       </div>
     </div>
   </div>
-  <div class="box g mt">
-    <p>The old model gives you two bad choices: block on everything or detach and hope for the best. The sender model gives you a third option — spawn work and continue, but the scope itself tracks all outstanding work and you choose exactly when to join.</p>
+  <div class="notes"><b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still fundamentally a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. And yes, you can still misuse the low-level primitives — the high-level API steers you away from it.</div>
+</div>
+
+<!-- ASYNC_SCOPE (split from structured concurrency) -->
+<div class="slide" id="s18b">
+  <div class="aline b"></div>
+  <h2><span class="ic">async_scope</span> — fire-and-forget, still structured</h2>
+  <div class="row mt" style="gap:1.4em;">
+    <div class="col-55">
+<pre><code><span class="kw">exec</span>::async_scope scope;
+
+scope.<span class="fn">spawn</span>(
+    stdexec::<span class="fn">starts_on</span>(sched, <span class="fn">do_work</span>())
+);
+<span class="cm">// caller continues immediately...</span>
+
+stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span>());
+<span class="cm">// ...but all spawned work is done here ✓</span></code></pre>
+    </div>
+    <div class="col">
+      <div class="box g">
+        <p>The old model gives two bad choices: block on everything, or detach and hope. This is the third option — <strong>spawn work and continue</strong>, while the scope tracks every outstanding operation and you choose exactly when to join.</p>
+      </div>
+      <div class="box gr mt">
+        <p>Standardized in C++26 as <span class="ic">counting_scope</span> / <span class="ic">spawn</span> / <span class="ic">spawn_future</span> (P3149). Note: <span class="ic">spawn</span> is one of the few places the model allocates — by design.</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -734,14 +734,16 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="aline"></div>
   <h2>The road to P2300</h2>
   <ul class="tl mt">
+    <li><span class="ty">2005</span><span><strong>Async I/O starts it all</strong> — Kohlhoff's Boost.Asio-based networking proposals bring asynchronous I/O into the standards process. The Networking TS grows from here — and its need for an executor model triggers everything below.</span></li>
     <li><span class="ty">2011</span><span><strong>C++11</strong> — <span class="ic">std::thread</span>, <span class="ic">std::future</span>, <span class="ic">std::async</span>. Useful primitives. No composable model. The complaints start immediately.</span></li>
-    <li><span class="ty">2012–18</span><span><strong>The executor wars</strong> — years of competing proposals. Multiple rounds through the committee. Networking TS stalls. No consensus on the async model.</span></li>
+    <li><span class="ty">2012–18</span><span><strong>The executor wars</strong> — years of competing proposals, multiple rounds through the committee. The Networking TS stalls waiting for an executor model that never lands. No consensus on the async model.</span></li>
     <li><span class="ty">2018</span><span><strong>Libunifex</strong> born at Facebook. Eric Niebler and colleagues build a production sender/receiver system. This becomes the field-experience foundation for P2300.</span></li>
     <li><span class="ty">2019–20</span><span>Many of us write our own async systems out of necessity. io_uring lands in kernel 5.1. C++20 coroutines land as language features with no standard library support.</span></li>
-    <li><span class="ty">2021</span><span><strong>P2300 R0</strong> — Niebler, Lelbach, Baker et al. submit the sender/receiver proposal. NVIDIA funds stdexec as the reference implementation.</span></li>
-    <li><span class="ty">Jun 2024</span><span><strong>P2300R10 adopted</strong> at WG21 St. Louis plenary — though with a notably narrow vote (~1/3 opposed), reflecting concerns about complexity and review thoroughness.</span></li>
-    <li><span class="ty">Mar 2026</span><span><strong>C++26 finalized</strong> in London. ISO publication pending. Compiler stdlib implementations: no public progress visible as of early 2026.</span></li>
+    <li><span class="ty">2021</span><span><strong>P2300 R0</strong> — Niebler, Lelbach, Baker et al. submit the sender/receiver proposal. NVIDIA funds stdexec as the reference implementation. Senders win; the Networking TS path is retired, to restart as sender-based P2762.</span></li>
+    <li><span class="ty">Jun 2024</span><span><strong>P2300R10 adopted</strong> at WG21 St. Louis plenary — consensus, but with notable minority opposition reflecting concerns about complexity and review thoroughness.</span></li>
+    <li><span class="ty">Mar 2026</span><span><strong>C++26 technical work completed</strong> March 28 in London (Croydon). DIS ballot / ISO publication pending. Compiler stdlib implementations: no public progress visible as of August 2026.</span></li>
   </ul>
+  <div class="notes"><b>The punchline of this slide, say it:</b> the standardization effort that STARTED with async I/O ended, twenty years later, with a standard async model containing everything EXCEPT the I/O. The Networking TS died so senders could live, and the senders shipped without the sockets. <b>For the P0443 veterans in the room:</b> P2300 didn't descend from the TS — its design lineage is Facebook's pushmi/libunifex. The connection is the executor layer: the TS's needs fed unified executors (P0443, Kohlhoff co-authored), P2300 replaced P0443, and the P2444-vs-P2464 debate settled it in senders' favor.</div>
 </div>
 
 <!-- S18 STDLIB STATUS -->
@@ -751,24 +753,25 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <p>C++26 is finalized. The standard library implementations are not.</p>
   <div class="row mt" style="gap:1em;">
     <div class="col">
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.35em;">GCC / libstdc++</p>
-      <p style="font-size:.78em;">The <span class="ic">&lt;execution&gt;</span> header exists but only wires up C++17 parallel policies via Intel TBB. The source tree has <strong>no P2300 code</strong>. No tracking issue. No timeline.</p>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.35em;">GCC / libstdc++</p>
+      <p style="font-size:.92em;">The <span class="ic">&lt;execution&gt;</span> header exists but only wires up C++17 parallel policies via Intel TBB. The source tree has <strong>no P2300 code</strong> — no visible implementation work or public timeline. (GCC 16 prioritized reflection and contracts.)</p>
     </div>
     <div class="col">
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.35em;">Clang / libc++</p>
-      <p style="font-size:.78em;">The official C++26 status page lists P2300R10 with a <strong>blank status and no version number</strong>. Work hasn't started or isn't tracked. No public timeline.</p>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.35em;">Clang / libc++</p>
+      <p style="font-size:.92em;">The official C++26 status page lists P2300R10 with a <strong>blank status and no version number</strong>. Work hasn't started or isn't tracked. No public timeline.</p>
     </div>
     <div class="col">
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.35em;">MSVC / Microsoft STL</p>
-      <p style="font-size:.78em;">A tracking issue exists (<span class="ic">microsoft/STL #4768</span>) with planned feature test macros documented. However the team has explicitly stated <strong>no C++26 PRs will be accepted</strong> until remaining C++23 work is complete. Nothing shipped.</p>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.35em;">MSVC / Microsoft STL</p>
+      <p style="font-size:.92em;">A tracking issue exists (<span class="ic">microsoft/STL #4768</span>) with planned feature test macros documented. However the team has explicitly stated <strong>no C++26 PRs will be accepted</strong> until remaining C++23 work is complete. Nothing shipped.</p>
     </div>
   </div>
   <div class="box rd mt">
     <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. The sender/receiver framework is not in any shipping standard library across GCC, Clang, or MSVC. Likely arrival: 2–4 years based on precedent, but no public timelines from any vendor.</p>
   </div>
-  <div class="box gr mt">
-    <p>This is not unusual. <span class="ic">std::format</span> took ~3 years to land in both libraries after C++20. P2300 is far larger and more complex. The gap between standardization and implementation is real and matters for adoption planning.</p>
+  <div class="box bl mt">
+    <p><strong>And C++26 execution is bigger than P2300:</strong> the standard also adopted <span class="ic">counting_scope</span> / <span class="ic">spawn</span> (P3149), a standard <span class="ic">parallel_scheduler</span> system context (P2079), a coroutine task type <span class="ic">std::execution::task</span> (P3552), and a policy-taking <span class="ic">bulk</span> (P3481). None of that has shipped in any stdlib either — but "the standard has no scheduler or task type" is no longer true on paper.</p>
   </div>
+  <div class="notes"><b>Precedent, if asked "why so slow?":</b> std::format took ~3 years to land in both libstdc++ and libc++ after C++20 — and P2300 is far larger. The standardization-to-implementation gap is normal, not a red flag; it just matters for adoption planning.</div>
 </div>
 
 <!-- S19 STDEXEC -->
@@ -777,13 +780,13 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <h2>NVIDIA stdexec <span class="tag tb">github.com/NVIDIA/stdexec</span></h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-60">
-      <p>The reference implementation, now well beyond P2300 core. Header-only, C++20, GCC 11+, Clang 13+.</p>
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">In <span class="ic">stdexec/</span> — P2300 core:</p>
-      <ul style="font-size:.78em;"><li>All core concepts, CPOs, and algorithms</li><li><span class="ic">run_loop</span> scheduler (single-thread event loop)</li><li>Coroutine <span class="ic">as_awaitable</span> integration</li></ul>
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">In <span class="ic">exec/</span> — extensions beyond P2300:</p>
-      <ul style="font-size:.78em;">
+      <p>The reference implementation, now well beyond P2300 core. Header-only; requires C++20 or later.</p>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">In <span class="ic">stdexec/</span> — P2300 core:</p>
+      <ul style="font-size:.92em;"><li>All core concepts, CPOs, and algorithms</li><li><span class="ic">run_loop</span> scheduler (single-thread event loop)</li><li>Coroutine <span class="ic">as_awaitable</span> integration</li></ul>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">In <span class="ic">exec/</span> — extensions beyond P2300:</p>
+      <ul style="font-size:.92em;">
         <li><span class="ic">static_thread_pool</span> — actual multi-thread scheduler</li>
-        <li><span class="ic">async_scope</span> — structured fire-and-forget with lifetime tracking</li>
+        <li><span class="ic">async_scope</span> — structured fire-and-forget with lifetime tracking (standardized as <span class="ic">counting_scope</span> in C++26)</li>
         <li><span class="ic">when_any</span>, <span class="ic">finally</span>, sequence senders</li>
         <li>Type erasure: <span class="ic">any_sender_of</span>, <span class="ic">any_scheduler</span></li>
         <li><strong>io_uring scheduler</strong> — proves wiring works, timers &amp; cancellation only</li>
@@ -800,11 +803,9 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
       <div class="box gr mt">
         <p>compiler-explorer.com has stdexec pre-installed as a library. Full runnable examples at github.com/NVIDIA/stdexec/tree/main/examples.</p>
       </div>
-      <div class="box gr mt">
-        <p>Leahy's C++ on Sea 2025 talk on <em>higher-order senders</em> shows where the frontier of sender composition is heading — runtime dynamic graphs, the <span class="ic">branch</span> primitive.</p>
-      </div>
     </div>
   </div>
+  <div class="notes"><b>Frontier pointer, if there's appetite:</b> Leahy's C++ on Sea 2025 talk on higher-order senders shows where sender composition is heading — runtime dynamic graphs, the branch primitive. It's on the references slide.</div>
 </div>
 
 <!-- S20 BEMAN -->
@@ -814,17 +815,17 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="row mt" style="gap:1.4em;">
     <div class="col-60">
       <p>Volunteer-run, founded C++Now 2024. Goal: clean, spec-faithful implementations suitable for eventual upstreaming into libstdc++ / libc++.</p>
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">What it implements:</p>
-      <ul style="font-size:.78em;">
-        <li>Core P2300 vocabulary and all fundamental algorithms</li>
-        <li><span class="ic">just</span>, <span class="ic">then</span>, <span class="ic">let_value</span>, <span class="ic">on</span>, <span class="ic">transfer</span>, <span class="ic">when_all</span>, <span class="ic">bulk</span>, <span class="ic">sync_wait</span></li>
-        <li>Basic <span class="ic">counting_scope</span> and coroutine <span class="ic">task</span></li>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">What it implements:</p>
+      <ul style="font-size:.92em;">
+        <li>Essentially the <strong>entire C++26 execution surface</strong> — vocabulary and all algorithms, tracked clause-by-clause</li>
+        <li><span class="ic">just</span>, <span class="ic">then</span>, <span class="ic">let_value</span>, <span class="ic">starts_on</span>, <span class="ic">continues_on</span>, <span class="ic">when_all</span>, <span class="ic">bulk</span>, <span class="ic">sync_wait</span></li>
+        <li>Full scope suite (<span class="ic">counting_scope</span>, <span class="ic">spawn</span>, <span class="ic">spawn_future</span>) and coroutine <span class="ic">task</span> + <span class="ic">task_scheduler</span></li>
+        <li><span class="ic">parallel_scheduler</span> (P2079) — the standard system context</li>
         <li>Requires C++23 (not C++20 like stdexec)</li>
       </ul>
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">What it doesn't have:</p>
-      <ul style="font-size:.78em;">
-        <li>No concrete thread pool scheduler (just <span class="ic">run_loop</span>)</li>
-        <li>No <span class="ic">when_any</span>, sequence senders, type erasure, or GPU</li>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin:.5em 0 .25em;">What it doesn't have:</p>
+      <ul style="font-size:.92em;">
+        <li>Nothing beyond the spec: no <span class="ic">when_any</span>, sequence senders, type erasure, or GPU</li>
         <li>No I/O — but <span class="ic">bemanproject/net</span> (P2762) is being built alongside</li>
       </ul>
     </div>
@@ -833,36 +834,13 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
         <p><strong>Watch this</strong> to track what will eventually land in the standard library. Spec-fidelity is the explicit primary goal.</p>
       </div>
       <div class="box gr mt">
-        <p>Self-described: "under development and not yet ready for production use." Refreshingly honest about its status.</p>
+        <p>Self-described: "under development and not yet ready for production use." Their clause-by-clause status doc shows implementation and tests essentially complete; review and docs still catching up.</p>
       </div>
       <div class="box bl mt">
-        <p><span class="ic">bemanproject/net</span> implements P2762 — sender-based networking. This is where standard async networking will eventually come from. Very early stage, C++29 target.</p>
+        <p><span class="ic">bemanproject/net</span> implements P2762 — sender-based networking, where standard async networking will come from. Early: only a <span class="ic">poll(2)</span> backend so far; io_uring / epoll / kqueue planned. C++29 target.</p>
       </div>
     </div>
   </div>
-</div>
-
-<!-- S21 COMPARISON TABLE -->
-<div class="slide" id="s24">
-  <div class="aline"></div>
-  <h2>Ecosystem at a glance</h2>
-  <table class="ct mt">
-    <thead>
-      <tr><th>Feature</th><th>stdexec (NVIDIA)</th><th>Beman execution</th><th>libstdc++ / libc++</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>P2300 core vocabulary &amp; algorithms</td><td class="ck">✓</td><td class="ck">✓</td><td class="cx">✗ not yet</td></tr>
-      <tr><td>sync_wait, coroutine task</td><td class="ck">✓</td><td class="cpt">partial</td><td class="cx">✗</td></tr>
-      <tr><td>Thread pool scheduler</td><td class="ck">✓ static_thread_pool</td><td class="cx">✗</td><td class="cx">✗</td></tr>
-      <tr><td>async_scope (structured spawn)</td><td class="ck">✓</td><td class="cpt">basic</td><td class="cx">✗</td></tr>
-      <tr><td>when_any, finally</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
-      <tr><td>Type erasure (any_sender_of)</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
-      <tr><td>io_uring scheduler</td><td class="cpt">✓ timers &amp; cancellation only ⚠</td><td class="cx">✗</td><td class="cx">✗</td></tr>
-      <tr><td>Async file / network I/O ops</td><td class="cx">✗ community projects only</td><td class="cpt">net: very early</td><td class="cx">✗</td></tr>
-      <tr><td>GPU / CUDA (nvexec)</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
-      <tr><td>Production-ready</td><td class="cpt">⚠ experimental</td><td class="cx">✗ self-stated</td><td class="cx">✗ not shipped</td></tr>
-    </tbody>
-  </table>
 </div>
 
 <!-- S22 SECTION: I/O GAP -->
@@ -881,7 +859,7 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
     <div class="col-55">
       <p>Intentional, not an oversight. The authors scoped P2300 to the execution framework only. Concrete I/O is a separate layer to build on top. The proposal authors have always said networking and file I/O are C++29 territory.</p>
       <p class="mt">What stdexec's io_uring integration <em>actually</em> is:</p>
-      <ul style="font-size:.8em;margin-top:.3em;">
+      <ul style="font-size:.95em;margin-top:.3em;">
         <li>A scheduler that proves the wiring compiles and runs</li>
         <li>Timers (<span class="ic">async_wait</span>) and stop propagation</li>
         <li>The example in the repo only demonstrates cancellation flow</li>
@@ -890,13 +868,10 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
       <div class="box rd mt">
         <p>GitHub issue #1062: "io_uring reading files." Filed 2023. The only response was a link to a separate external project. That's the current state.</p>
       </div>
-      <div class="box gr mt">
-        <p>Worth noting: libunifex — the Facebook library that P2300 grew out of — actually had working io_uring and epoll schedulers. That I/O coverage was deliberately left out of the standardization scope. The gap didn't happen by accident; it was a scoping decision.</p>
-      </div>
     </div>
     <div class="col">
-      <p style="font-size:.79em;font-weight:700;color:var(--text);margin-bottom:.3em;">What actually exists for sender-based I/O:</p>
-      <ul style="font-size:.79em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">What actually exists for sender-based I/O:</p>
+      <ul style="font-size:.92em;">
         <li><strong>Asio + Leahy's stdexec adaptation</strong> — the only viable production path today. Asio has genuine async file I/O (<span class="ic">stream_file</span>, <span class="ic">random_access_file</span>) and network I/O, exposed as senders via Leahy's CppCon 2025 work. Requires Asio, and on Linux requires io_uring (<span class="ic">BOOST_ASIO_HAS_IO_URING</span>). Windows uses IOCP.</li>
         <li class="mt"><strong>uring_exec</strong> — thin wrapper over every <span class="ic">io_uring_prep_*</span> op. Has read, write, accept, send, recv. Linux only. Research-grade.</li>
         <li class="mt"><strong>maikel/senders-io</strong> — more designed file + network senders. Experimental, stale, old stdexec API.</li>
@@ -908,6 +883,7 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
       </div>
     </div>
   </div>
+  <div class="notes"><b>History, worth a beat:</b> libunifex — the Facebook library P2300 grew out of — had working io_uring and epoll schedulers. That I/O coverage was deliberately left out of standardization scope. The gap didn't happen by accident; it was a scoping decision.</div>
 </div>
 
 <!-- S24 PLATFORM SPLIT -->
@@ -916,34 +892,31 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <h2>The platform picture is worse than it looks</h2>
   <div class="row mt" style="gap:1.2em;">
     <div class="col">
-      <p style="font-size:.8em;font-weight:700;color:var(--text);margin-bottom:.3em;">Linux with io_uring <span class="tag tg">best supported</span></p>
-      <ul style="font-size:.79em;">
+      <p style="font-size:.95em;font-weight:700;color:var(--text);margin-bottom:.3em;">Linux with io_uring <span class="tag tg">best supported</span></p>
+      <ul style="font-size:.92em;">
         <li>io_uring is Linux-only (kernel 5.1+)</li>
-        <li>Community projects exist (uring_exec, maikel/senders-io)</li>
-        <li>Research-grade — not production-ready</li>
+        <li>Community projects exist (uring_exec, maikel/senders-io, and my own fiberexec) — research-grade, not production</li>
         <li>File I/O and network sockets both technically possible</li>
       </ul>
       <hr class="d mt">
-      <p style="font-size:.8em;font-weight:700;color:var(--text);margin-bottom:.3em;">Linux epoll / macOS kqueue <span class="tag tr">DIY</span></p>
-      <ul style="font-size:.79em;">
+      <p style="font-size:.95em;font-weight:700;color:var(--text);margin-bottom:.3em;">Linux epoll / macOS kqueue <span class="tag tr">DIY</span></p>
+      <ul style="font-size:.92em;">
         <li>No sender-based scheduler wrapping epoll or kqueue exists</li>
         <li>You'd write your own — exposing completions as <span class="ic">set_value()</span></li>
         <li>Niebler's blog "What are Senders Good For?" is the guide</li>
       </ul>
     </div>
     <div class="col">
-      <p style="font-size:.8em;font-weight:700;color:var(--text);margin-bottom:.3em;">Windows IOCP <span class="tag tr">nothing</span></p>
-      <ul style="font-size:.79em;">
+      <p style="font-size:.95em;font-weight:700;color:var(--text);margin-bottom:.3em;">Windows IOCP <span class="tag tr">nothing</span></p>
+      <ul style="font-size:.92em;">
         <li>No sender-based IOCP scheduler exists publicly</li>
         <li>Asio wraps IOCP — so Leahy's Asio adaptation is the path for now</li>
       </ul>
       <hr class="d mt">
-      <p style="font-size:.8em;font-weight:700;color:var(--text);margin-bottom:.3em;">Embedded / bare-metal <span class="tag tb">partial</span></p>
-      <ul style="font-size:.79em;">
-        <li>Intel's bare-metal senders implements P2300 subset</li>
-        <li>Targets microcontrollers — interrupt-driven, no OS, no alloc</li>
-        <li>Shows the model generalizes all the way to metal</li>
-        <li>Different library, not interoperable with stdexec directly</li>
+      <p style="font-size:.95em;font-weight:700;color:var(--text);margin-bottom:.3em;">Embedded / bare-metal <span class="tag tb">partial</span></p>
+      <ul style="font-size:.92em;">
+        <li>Intel's bare-metal senders: a P2300 subset — interrupt-driven, no OS, no alloc</li>
+        <li>Shows the model generalizes to metal; separate library, not stdexec-interoperable</li>
       </ul>
       <div class="box gr mt">
         <p>For raw socket users on any platform today: wrap your existing async layer to produce senders. The computation model is ready. The I/O layer is yours to bring.</p>
@@ -956,16 +929,16 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
 <div class="slide" id="s28">
   <div class="aline b"></div>
   <h2>The bridge: wrapping your existing async I/O as senders</h2>
-  <p>If you have an io_uring scheduler, epoll loop, or any callback-based system — you can expose it as a scheduler today and gain composability without rewriting anything.</p>
-  <div class="row mt" style="gap:1.2em;">
-    <div class="col-55">
+  <p>If you have an io_uring scheduler, epoll loop, or any callback-based system — expose it as a scheduler today and gain composability without rewriting anything. I've done this integration in a research project, <span class="ic">fiberexec</span>: fibers inside, senders outside.</p>
+  <div class="row mt" style="gap:1.4em;">
+    <div class="col-60">
 <pre><code><span class="cm">// Your existing C-style async API:</span>
 <span class="cm">// void async_read(fd, buf, len,</span>
 <span class="cm">//   void(*cb)(int result, void* ctx), void* ctx);</span>
 
 <span class="cm">// Wrap it as a sender:</span>
 <span class="kw">struct</span> <span class="fn">read_sender</span> {
-    <span class="kw">using</span> sender_concept = stdexec::sender_t; <span class="cm">// P2300R9+ style</span>
+    <span class="kw">using</span> sender_concept = stdexec::sender_t; <span class="cm">// C++26 final style</span>
     <span class="kw">using</span> completion_signatures = stdexec::completion_signatures&lt;
         stdexec::set_value_t(<span class="kw">int</span>),
         stdexec::set_error_t(std::error_code)&gt;;
@@ -980,13 +953,9 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
     <span class="cm">// or set_error(ec) on the receiver.</span>
 };
 
-<span class="cm">// Now your I/O flows into the sender pipeline:</span>
-<span class="kw">auto</span> work =
-    read_sender{fd, buf, <span class="num">4096</span>}
-    | stdexec::<span class="fn">then</span>([](<span class="kw">int</span> bytes) {
-          <span class="kw">return</span> <span class="fn">parse</span>(buf, bytes);
-      })
-    | stdexec::<span class="fn">then</span>(process_result);</code></pre>
+<span class="cm">// Now your I/O flows into any sender pipeline:</span>
+<span class="kw">auto</span> work = read_sender{fd, buf, <span class="num">4096</span>}
+          | stdexec::<span class="fn">then</span>(parse) | stdexec::<span class="fn">then</span>(process);</code></pre>
     </div>
     <div class="col">
       <div class="box bl">
@@ -995,22 +964,61 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
       <div class="box g mt">
         <p>This is the practical adoption path <em>right now</em> for I/O engineers: keep your existing async I/O layer, expose it as a sender, gain composability at the computation level today.</p>
       </div>
-      <div class="box rd mt">
-        <p><strong>Watch out:</strong> older stdexec examples and early P2300 talks use <span class="ic">tag_invoke</span> for customization — <span class="ic">friend auto tag_invoke(connect_t, ...)</span> etc. That mechanism was removed from the spec in P2300R9. The final C++26 standard uses plain member functions: <span class="ic">connect()</span>, <span class="ic">start()</span>, <span class="ic">set_value()</span>, and <span class="ic">using sender_concept = sender_t</span>. The code above reflects the correct final style.</p>
-      </div>
       <div class="box gr mt">
         <p>When standard I/O senders eventually arrive (P2762, C++29+), you swap the wrapper for the standard primitive. The pipeline logic above doesn't change.</p>
       </div>
     </div>
   </div>
+  <div class="notes"><b>Attribution beat, say out loud:</b> "This adoption strategy is Leahy's — what I'm adding is the view from someone who owns one of these schedulers and has prototyped the integration." <b>fiberexec, held to the same standard as everyone else's project:</b> research-grade, not production. It does the thing the caveats slide warns about correctly — io_uring ECANCELED maps to set_stopped, so cancellation is real, not decorative. Repo is on the references slide. The next slide diagrams its cancellation flow — no repo visit needed.</div>
 </div>
 
-<!-- S26 SECTION: ADOPTION -->
-<div class="slide sect" id="s29">
-  <div class="snum">06</div>
-  <div class="slabel">The Question</div>
-  <div class="stitle">Should you adopt?<br>Depends what you're building.</div>
-  <p class="sdesc">The answer is genuinely different for compute-heavy vs I/O-heavy workloads.</p>
+<!-- WRAPPING CAVEATS (split) -->
+<div class="slide" id="s28b">
+  <div class="aline r"></div>
+  <h2>Before you wrap: two things to watch out for</h2>
+  <div class="box rd mt">
+        <p><strong>Watch out:</strong> older stdexec examples and early P2300 talks use <span class="ic">tag_invoke</span> for customization — <span class="ic">friend auto tag_invoke(connect_t, ...)</span> etc. That mechanism was replaced in P2300R10, the final adopted revision. The C++26 standard uses plain member functions: <span class="ic">connect()</span>, <span class="ic">start()</span>, <span class="ic">set_value()</span>, and <span class="ic">using sender_concept = sender_t</span>. The code above reflects the correct final style.</p>
+      </div>
+  <div class="box bl mt">
+    <p><strong>Cancellation:</strong> wire the receiver's stop token into your layer's own cancellation so <span class="ic">set_stopped()</span> is real, not decorative — it's where hand-rolled wrappers cut corners. The actual flow inside <span class="ic">fiberexec::run</span>:</p>
+  </div>
+  <svg viewBox="0 0 1160 250" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;margin-top:.4em;" role="img" aria-label="Cancellation flow: stop request bridges from the sender world into the fiber and io_uring world and returns as set_stopped">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--dim);"/>
+      </marker>
+    </defs>
+    <text x="580" y="13" text-anchor="middle" style="font-family:var(--fm);font-size:12px;letter-spacing:.14em;fill:var(--muted);">SENDER WORLD</text>
+    <text x="580" y="247" text-anchor="middle" style="font-family:var(--fm);font-size:12px;letter-spacing:.14em;fill:var(--muted);">FIBER + IO_URING WORLD</text>
+    <line x1="8" y1="124" x2="1152" y2="124" style="stroke:var(--muted);stroke-width:1;stroke-dasharray:7 6;opacity:.6;"/>
+    <text x="580" y="117" text-anchor="middle" style="font-family:var(--fm);font-size:12.5px;fill:var(--muted);">the seam — fiberexec::run bridges the stop token at fiber start</text>
+
+    <rect x="14" y="16" width="206" height="62" rx="8" style="fill:rgba(0,223,162,.06);stroke:var(--accent);stroke-width:1;"/>
+    <text x="117" y="42" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2460; stop requested</text>
+    <text x="117" y="63" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">receiver's stop token</text>
+
+    <rect x="118" y="168" width="240" height="62" rx="8" style="fill:rgba(77,166,255,.06);stroke:var(--blue);stroke-width:1;"/>
+    <text x="238" y="194" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2461; fiber-local token fires</text>
+    <text x="238" y="215" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">std::stop_callback</text>
+
+    <rect x="436" y="168" width="250" height="62" rx="8" style="fill:rgba(77,166,255,.06);stroke:var(--blue);stroke-width:1;"/>
+    <text x="561" y="194" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2462; ASYNC_CANCEL queued</text>
+    <text x="561" y="215" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">for the suspended op's SQE</text>
+
+    <rect x="744" y="168" width="212" height="62" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1;"/>
+    <text x="850" y="194" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2463; CQE: -ECANCELED</text>
+    <text x="850" y="215" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">throws std::system_error</text>
+
+    <rect x="934" y="16" width="212" height="62" rx="8" style="fill:rgba(0,223,162,.06);stroke:var(--accent);stroke-width:1;"/>
+    <text x="1040" y="42" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2464; catch &#8594; set_stopped()</text>
+    <text x="1040" y="63" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">downstream: upon_stopped</text>
+
+    <line x1="117" y1="80" x2="234" y2="164" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
+    <line x1="360" y1="199" x2="432" y2="199" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
+    <line x1="688" y1="199" x2="740" y2="199" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
+    <line x1="854" y1="166" x2="1036" y2="82" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
+  </svg>
+  <div class="notes"><b>Narrate the U-shape:</b> the stop request crosses the seam twice — down into the kernel as ASYNC_CANCEL, back up as set_stopped. That round trip is what "cancellation is real" means. This is fiberexec's verified flow (run.hpp + fiber_context.cpp), not pseudocode. <b>Why ③ says "queued":</b> the stop_callback runs on whatever thread called request_stop — not the ring's owner — and only the owning thread may touch the SQ ring. So request_cancel does a mutex-guarded queue push plus an eventfd write to wake the ring; the owning thread drains the queue into ASYNC_CANCEL SQEs on its next pass (ring-full handled: leftovers wait for the next wakeup). Bonus detail if probed: linked SQE chains cascade -ECANCELED; already-completed ops return -ENOENT and are discarded.</div>
 </div>
 
 <!-- S27 ADOPTION BY WORKLOAD -->
@@ -1019,9 +1027,9 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <h2>Adoption is workload-dependent</h2>
   <div class="row mt" style="gap:1.2em;">
     <div class="col">
-      <p style="font-size:.79em;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3em;">Compute-heavy async work</p>
-      <p style="font-size:.79em;">(parallel pipelines, GPU offload, CPU-bound task graphs)</p>
-      <ul style="font-size:.79em;margin-top:.3em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3em;">Compute-heavy async work</p>
+      <p style="font-size:.92em;">(parallel pipelines, GPU offload, CPU-bound task graphs)</p>
+      <ul style="font-size:.92em;margin-top:.3em;">
         <li>stdexec's story is <strong>good here today</strong></li>
         <li>Thread pool + GPU schedulers are the most mature part</li>
         <li><span class="ic">when_all</span>, <span class="ic">bulk</span>, nvexec all work well in practice</li>
@@ -1032,9 +1040,9 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
       </div>
     </div>
     <div class="col">
-      <p style="font-size:.79em;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3em;">I/O-heavy async work</p>
-      <p style="font-size:.79em;">(network servers, file pipelines, embedded I/O, storage systems)</p>
-      <ul style="font-size:.79em;margin-top:.3em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3em;">I/O-heavy async work</p>
+      <p style="font-size:.92em;">(network servers, file pipelines, embedded I/O, storage systems)</p>
+      <ul style="font-size:.92em;margin-top:.3em;">
         <li>The composition model is sound and ready</li>
         <li>The I/O primitives are <strong>not production-ready</strong></li>
         <li>Pragmatic path: wrap your existing async layer as senders</li>
@@ -1047,7 +1055,7 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
     </div>
   </div>
   <div class="box gr mt">
-    <p><strong>Universal:</strong> Learn and experiment with stdexec on Godbolt now. Plan production adoption when libstdc++ or libc++ ships P2300 (~2–3 years). The concepts won't change even if the headers do.</p>
+    <p><strong>Universal:</strong> Learn and experiment with stdexec on Godbolt now. Plan production adoption when libstdc++ or libc++ ships P2300 (likely 2–4 years). The concepts won't change even if the headers do.</p>
   </div>
 </div>
 
@@ -1058,55 +1066,50 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="bq mt">
     "std::execution is what I call C++'s async model — it provides a unified framework to express and control concurrency and parallelism… it also has important safety properties because it makes it easier to write programs that use structured concurrency and parallelism to be data-race-free by construction. That's a big deal."
   </div>
-  <div class="qa">— Herb Sutter, WG21 chair, March 2026 London trip report</div>
+  <div class="qa">— Herb Sutter, former WG21 chair (2002–2025), March 2026 London trip report</div>
   <div class="box gr mt">
-    <p>He also said: this feature is <strong>great but currently harder to adopt than most</strong> — it lacks great documentation and some "fingers and toes" libraries. Those gaps will close fast now that C++26 is done and the committee's attention turns to C++29.</p>
+    <p>He also said: this feature is <strong>great but currently harder to adopt than most</strong> — it lacks great documentation and some "fingers and toes" libraries. Notably, his company (Citadel Securities) is already using it in production. He expects the gaps to close now that C++26 is done and attention turns to C++29.</p>
   </div>
   <div class="box rd mt">
     <p>What he didn't address: the I/O story for non-GPU, non-thread-pool workloads is genuinely thin right now. That's the gap your team needs to understand and plan around. It's a real limitation — not a reason to ignore P2300, but a reason to be clear-eyed about the timeline.</p>
   </div>
 </div>
 
-<!-- S29 SECTION: RESOURCES -->
-<div class="slide sect" id="s32">
-  <div class="snum">07</div>
-  <div class="slabel">Next Steps</div>
-  <div class="stitle">Where to go<br>from here</div>
-  <p class="sdesc">Resources, starting points, and specific things to watch for I/O engineers.</p>
-</div>
-
 <!-- S30 RESOURCES -->
 <div class="slide" id="s33">
   <div class="aline"></div>
   <h2>References</h2>
+  <p style="font-size:.85em;color:var(--muted);">Slides will be shared — no need to transcribe.</p>
   <div class="row mt" style="gap:1.4em;">
     <div class="col">
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.3em;">Essential reading</p>
-      <ul style="font-size:.77em;">
+      <p style="font-size:.88em;font-weight:700;color:var(--text);margin-bottom:.3em;">Essential reading</p>
+      <ul style="font-size:.85em;">
         <li><strong>"Senders/Receivers: An Introduction"</strong> — Teodorescu, ACCU Overload Dec 2024. Best written intro available.</li>
         <li><strong>"What are Senders Good For, Anyway?"</strong> — Niebler, blog Feb 2024. The guide to wrapping C-style async APIs.</li>
         <li><strong>cppreference.com/w/cpp/execution</strong> — final C++26 wording. The reference.</li>
       </ul>
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin:.6em 0 .3em;">Talks</p>
-      <ul style="font-size:.77em;">
+      <p style="font-size:.88em;font-weight:700;color:var(--text);margin:.6em 0 .3em;">Talks</p>
+      <ul style="font-size:.85em;">
         <li>"Think Parallel" — Bryce Lelbach, ACCU 2024. Best accessible motivation talk.</li>
-        <li>"Working with Asynchrony Generically" pts 1&amp;2 — Niebler, CppCon 2021. Canonical deep dive (some API details changed since).</li>
+        <li>"Working with Asynchrony Generically" pts 1&amp;2 — Niebler, CppCon 2021. Canonical deep dive (API details dated).</li>
         <li>"std::execution in Asio Codebases" — Leahy, CppCon 2025. The migration path for existing async code.</li>
         <li>"Extending std::execution: Higher-Order Senders" — Leahy, C++ on Sea 2025. The composition frontier.</li>
         <li>"Embedded Async Abstraction Without an OS" — Deane, C++Now 2024. Bare-metal angle.</li>
+        <li><strong>New in 2026:</strong> "The Async Pattern Graveyard" — Leahy, ACCU on Sea 2026 (C++ on Sea merged into ACCU this year): how 20 years of Asio lessons shaped senders. Plus two further Leahy sender sessions and Ažman on C++26 concurrency at C++Now 2026 — recordings releasing through summer 2026.</li>
       </ul>
     </div>
     <div class="col">
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin-bottom:.3em;">Repositories</p>
-      <ul style="font-size:.77em;">
+      <p style="font-size:.88em;font-weight:700;color:var(--text);margin-bottom:.3em;">Repositories</p>
+      <ul style="font-size:.85em;">
         <li><span class="ic">github.com/NVIDIA/stdexec</span> — use this for experimentation and evaluation now</li>
         <li><span class="ic">github.com/bemanproject/execution</span> — watch for stdlib direction</li>
         <li><span class="ic">github.com/bemanproject/net</span> — P2762 sender networking, very early</li>
         <li><span class="ic">github.com/Caturra000/uring_exec</span> — if you need io_uring I/O ops today</li>
+        <li><span class="ic">github.com/catfinated/fiberexec</span> — my research runtime: io_uring + fibers + senders</li>
         <li><span class="ic">intel.github.io/cpp-baremetal-senders-and-receivers</span> — embedded use case</li>
       </ul>
-      <p style="font-size:.78em;font-weight:700;color:var(--text);margin:.6em 0 .3em;">Watch for I/O progress specifically</p>
-      <ul style="font-size:.77em;">
+      <p style="font-size:.88em;font-weight:700;color:var(--text);margin:.6em 0 .3em;">Watch for I/O progress specifically</p>
+      <ul style="font-size:.85em;">
         <li><strong>P2762</strong> — sender networking proposal, C++29 target. Track its revisions.</li>
         <li>libstdc++ and libc++ C++26 status pages — watch for P2300R10 row to get a version number</li>
         <li>Beman net project commit activity — leading indicator of stdlib direction</li>
@@ -1119,29 +1122,18 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   </div>
 </div>
 
-<!-- S31 SUMMARY -->
+<!-- SUMMARY -->
 <div class="slide" id="s34">
   <div class="aline"></div>
   <h2>Summary</h2>
-  <div class="row mt" style="gap:1.4em;">
-    <div class="col">
-      <ul style="font-size:.82em;">
-        <li class="mt"><strong>Why:</strong> Every async C++ codebase built before P2300 is correct but isolated. The standard gave us primitives and left us to invent incompatible models.</li>
-        <li class="mt"><strong>What:</strong> Senders are lazy descriptions of work. Compose with <span class="ic">then</span>, <span class="ic">when_all</span>, <span class="ic">let_value</span>. Run with <span class="ic">sync_wait</span>. The scheduler is swappable — your io_uring ring can be one.</li>
-        <li class="mt"><strong>Safety:</strong> Structured concurrency — the model makes it natural for child work to complete before the parent scope exits. The default path is safe; misuse requires going out of your way.</li>
-        <li class="mt"><strong>Stdlib status:</strong> C++26 is done. No public implementation progress visible. Likely 2–4 years based on precedent for both GCC and Clang.</li>
-      </ul>
-    </div>
-    <div class="col">
-      <ul style="font-size:.82em;">
-        <li class="mt"><strong>The I/O gap:</strong> P2300 deliberately excludes I/O. The only viable path today is Asio + Leahy's stdexec adaptation — not standard, requires Asio, and on Linux requires io_uring. Standard async I/O senders are C++29 territory.</li>
-        <li class="mt"><strong>The bridge:</strong> Wrap your existing async I/O layer as senders. Get composability now; swap the I/O layer when standards catch up.</li>
-        <li class="mt"><strong>For compute:</strong> stdexec is ready for experimentation and greenfield adoption today.</li>
-        <li class="mt"><strong>For I/O:</strong> adapt, don't rewrite. Watch P2762 and Beman net for when the I/O layer arrives.</li>
-        <li class="mt"><strong>Verdict:</strong> Learn now. Plan carefully. The model is right — the ecosystem is still catching up.</li>
-      </ul>
-    </div>
-  </div>
+  <ul class="plist mt2" style="font-size:1.13em;">
+    <li><span class="pi good">▸</span><span><strong>Why:</strong> every pre-P2300 async codebase is correct but isolated — the standard gave us primitives, never a model.</span></li>
+    <li><span class="pi good">▸</span><span><strong>What:</strong> senders are lazy, composable descriptions of work; the scheduler is swappable — your io_uring ring can be one.</span></li>
+    <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 2–4 years) — and P2300 deliberately excludes I/O.</span></li>
+    <li><span class="pi good">▸</span><span><strong>The bridge:</strong> wrap your existing async I/O layer as senders today; swap in standard I/O when P2762 lands.</span></li>
+    <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
+  </ul>
+  <div class="notes"><b>Dropped nuance, deploy if useful:</b> structured concurrency makes the safe path the default — child work completes before the parent scope exits. Standard names are continues_on / starts_on (stdexec keeps transfer / on as aliases). stdexec is experimental with ongoing API churn (a Dec 2025 PR dropped its non-conforming static connect members); Beman tracks spec fidelity for eventual stdlib upstreaming.</div>
 </div>
 
 <!-- S32 Q&A -->
@@ -1158,21 +1150,47 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
     <div class="box gr"><p><strong>Watch</strong><br>bemanproject/net · P2762 · libc++ status</p></div>
     <div class="box gr"><p><strong>Wrap</strong><br>Your async layer → senders → composability</p></div>
   </div>
+  <div class="notes"><b>The cost question (it will come):</b> the default composed path is allocation-free — connect() builds a single operation state, typically on the stack; no type erasure, no ref-counting. Allocation is opt-in at specific boundaries: async_scope / counting_scope spawn, any_sender_of, split. sync_wait is a blocking join — fine at the program edge, wrong inside pipelines. Codegen: deep template inlining; say "measure your workload" rather than promising numbers. Social proof: Citadel runs std::execution in production (Sutter, Mar 2026). <b>"Did you wrap your own scheduler?"</b> — honest answer: "Not at work — different priorities, and the ecosystem gaps in this talk are part of why the internal case is hard to make yet. But I built a personal research runtime, fiberexec, that does this exact integration end to end — io_uring under fibers under senders — and the findings are public."</div>
+</div>
+
+<!-- APPENDIX: COMPARISON TABLE -->
+<div class="slide" id="s24">
+  <div class="aline"></div>
+  <h2>Appendix — ecosystem at a glance</h2>
+  <p style="font-size:.95em;color:var(--muted);">Reference for Q&amp;A — not presented live.</p>
+  <table class="ct mt">
+    <thead>
+      <tr><th>Feature</th><th>stdexec (NVIDIA)</th><th>Beman execution</th><th>libstdc++ / libc++</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>C++26 execution vocabulary &amp; algorithms</td><td class="ck">✓</td><td class="ck">✓</td><td class="cx">✗ not yet</td></tr>
+      <tr><td>sync_wait, coroutine task</td><td class="ck">✓</td><td class="ck">✓</td><td class="cx">✗</td></tr>
+      <tr><td>Thread pool / system scheduler</td><td class="ck">✓ static_thread_pool, parallel_scheduler</td><td class="ck">✓ parallel_scheduler</td><td class="cx">✗</td></tr>
+      <tr><td>Structured scopes (counting_scope / spawn)</td><td class="ck">✓</td><td class="ck">✓</td><td class="cx">✗</td></tr>
+      <tr><td>when_any, finally</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
+      <tr><td>Type erasure (any_sender_of)</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
+      <tr><td>io_uring scheduler</td><td class="cpt">✓ timers &amp; cancellation only ⚠</td><td class="cx">✗</td><td class="cx">✗</td></tr>
+      <tr><td>Async file / network I/O ops</td><td class="cx">✗ community projects only</td><td class="cpt">net: early, poll(2) only</td><td class="cx">✗</td></tr>
+      <tr><td>GPU / CUDA (nvexec)</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
+      <tr><td>Production-ready</td><td class="cpt">⚠ experimental</td><td class="cx">✗ self-stated</td><td class="cx">✗ not shipped</td></tr>
+    </tbody>
+  </table>
 </div>
 
 </div><!-- /stage -->
 
 <div id="nav">
   <button class="nbtn" onclick="go(-1)">← prev</button>
-  <span id="counter">1 / 35</span>
+  <span id="counter">1 / 33</span>
   <button class="nbtn" onclick="go(1)">next →</button>
-  <span style="font-family:var(--fm);font-size:.65em;color:var(--muted);margin-left:1.5em;">arrow keys · F = fullscreen</span>
+  <span style="font-family:var(--fm);font-size:.8em;color:var(--muted);margin-left:1.5em;">arrow keys · F fullscreen · N notes</span>
 </div>
 <div id="progress"></div>
 
 <script>
-const TOTAL = 35;
-let cur = 1;
+const slides = Array.from(document.querySelectorAll('#stage .slide'));
+const TOTAL = slides.length;
+let cur = Math.max(0, slides.findIndex(s => s.classList.contains('active')));
 
 function scale() {
   const stage = document.getElementById('stage');
@@ -1184,14 +1202,17 @@ function scale() {
   stage.style.transform = `translate(${ox}px, ${oy}px) scale(${s})`;
 }
 
+function render() {
+  slides.forEach((s, i) => s.classList.toggle('active', i === cur));
+  document.getElementById('counter').textContent = (cur + 1) + ' / ' + TOTAL;
+  document.getElementById('progress').style.width = (((cur + 1) / TOTAL) * 100) + '%';
+}
+
 function go(dir) {
-  const next = Math.max(1, Math.min(TOTAL, cur + dir));
+  const next = Math.max(0, Math.min(TOTAL - 1, cur + dir));
   if (next === cur) return;
-  document.getElementById('s' + cur).classList.remove('active');
   cur = next;
-  document.getElementById('s' + cur).classList.add('active');
-  document.getElementById('counter').textContent = cur + ' / ' + TOTAL;
-  document.getElementById('progress').style.width = ((cur / TOTAL) * 100) + '%';
+  render();
 }
 
 window.addEventListener('resize', scale);
@@ -1199,10 +1220,34 @@ window.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
   if (e.key === 'f' || e.key === 'F') document.documentElement.requestFullscreen?.();
+  if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('shownotes');
 });
 
 scale();
-document.getElementById('progress').style.width = ((1 / TOTAL) * 100) + '%';
+render();
+
+// Dev aid: flag any slide whose real content exceeds the 720px stage.
+// Measures descendant element rects (pseudo-element decoration is excluded).
+(function () {
+  const bad = [];
+  slides.forEach((s, i) => {
+    s.classList.add('measure');
+    const limit = s.getBoundingClientRect().bottom + 2;
+    let over = false;
+    s.querySelectorAll('*').forEach(el => {
+      if (el.closest('.notes')) return;
+      if (el.getBoundingClientRect().bottom > limit) over = true;
+    });
+    if (over) bad.push(i + 1);
+    s.classList.remove('measure');
+  });
+  if (bad.length) {
+    const c = document.getElementById('counter');
+    c.style.color = '#ff6b4a';
+    c.title = 'Content overflows on slide(s): ' + bad.join(', ');
+    console.warn('OVERFLOW on slides:', bad.join(', '));
+  }
+})();
 </script>
 </body>
 </html>
