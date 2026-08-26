@@ -238,6 +238,9 @@ body.shownotes .slide.active .notes { display:block; }
 .r-text { color:var(--warn); }
 .m-text { color:var(--muted); }
 .sm { font-size:.9em; }
+a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(77,166,255,.35); }
+a:hover { border-bottom-color:var(--blue); }
+.appxtag { font-family:var(--fm); font-size:.62em; letter-spacing:.1em; text-transform:uppercase; color:var(--warn); border:1px solid rgba(255,107,74,.35); border-radius:4px; padding:.25em .7em; align-self:flex-start; margin-bottom:.5em; }
 hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shrink:0; }
 </style>
 </head>
@@ -262,9 +265,9 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     <div class="col">
       <ul class="plist">
         <li><span class="pi good">▸</span><span><strong>Nick Milkovits</strong> — Principal Software Engineer</span></li>
-        <li><span class="pi good">▸</span><span><strong>Currently:</strong> autonomous systems infrastructure for the past 6 years, including building an async I/O scheduler on io_uring four years ago for a self-driving vehicle software stack</span></li>
+        <li><span class="pi good">▸</span><span><strong>Currently:</strong> autonomous systems infrastructure for the past 6 years, including building an async I/O scheduler on io_uring</span></li>
         <li><span class="pi good">▸</span><span><strong>Previously:</strong> a decade in high-frequency trading — low-latency, high-throughput systems where async I/O performance is existential</span></li>
-        <li><span class="pi good">▸</span><span><strong>Tonight:</strong> what I found when I held that infrastructure up against P2300</span></li>
+        <li><span class="pi good">▸</span><span><strong>Tonight:</strong> what I found when I held my own io_uring infrastructure up against P2300</span></li>
       </ul>
       <div class="box bl mt2">
         <p>I'm coming at this from a <strong>user and implementer perspective</strong> — not as a proposal author or compiler vendor. What works, what doesn't, and what's still missing.</p>
@@ -289,12 +292,42 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   </div>
 </div>
 
+<!-- WHY I'M HERE -->
+<div class="slide" id="s3">
+  <div class="aline"></div>
+  <h2>Why I'm giving this talk</h2>
+  <div class="row mt" style="gap:1.6em;">
+    <div class="col">
+      <ul class="plist">
+        <li><span class="pi good">▸</span><span>I followed the executor proposals for years — and <strong>tuned out</strong> when they missed C++20, then C++23.</span></li>
+        <li><span class="pi good">▸</span><span><strong>Leahy's asioexec talk at CppCon last year</strong> pulled me back in. A lot of this talk is me catching up on what I missed.</span></li>
+        <li><span class="pi good">▸</span><span>I came home excited, tried to share it — and got <strong>mixed to negative</strong> feedback from colleagues and friends in similar roles.</span></li>
+      </ul>
+      <div class="box gr mt">
+        <p>These are good engineers running real systems. So the objections are worth answering rather than dismissing — and answering them is half of what tonight is.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5em;">What I heard back</p>
+      <ul class="alist" style="font-size:.95em;">
+        <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"It's too hard to use."</span><span class="ad" style="flex:0 0 40%;">Largely conceded — the committee chair says the same.</span></li>
+        <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"I don't see how this is better than what we already have."</span><span class="ad" style="flex:0 0 40%;">Depends on your workload. Own one async domain and it may not be.</span></li>
+        <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"The pipes are just syntactic sugar around callbacks."</span><span class="ad" style="flex:0 0 40%;">Testable — and I think wrong. We'll come back to this.</span></li>
+      </ul>
+      <div class="box rd mt">
+        <p>The sharpest version: <em>cancellation only happens at program termination, so who cares. Errors get handled locally or terminate the process. And finalization — flushing the last buffers — can go in destructors.</em></p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>Deliver this without a trace of "and here's why they're wrong."</b> A good chunk of this room already agrees with them. You're taking a real disagreement seriously in public, not knocking down a strawman. <b>Names stay out of it</b> — "a very good engineer I work with" is as specific as you go. <b>Set the contract:</b> concede the first, call the second workload-dependent, and promise to spend real time on the third, because it makes a factual claim about C++ that doesn't hold. Then pay that off at the end of this section. <b>Ninety seconds.</b> <b>Poll here, not later:</b> ask by show of hands who has written code against stdexec, libunifex, or Asio's sender adaptation. Behaviour, not knowledge — nobody has to admit ignorance in front of colleagues, and the count tells you how fast to take section 02.</div>
+</div>
+
 <!-- S3 SECTION: PROBLEM -->
 <div class="slide sect" id="s4">
   <div class="snum">01</div>
   <div class="slabel">The Problem</div>
-  <div class="stitle">Why async C++<br>has been broken</div>
-  <p class="sdesc">The standard library gave us primitives. It never gave us a model. So we all built our own and none of them compose.</p>
+  <div class="stitle">What problem is this<br>actually solving?</div>
+  <p class="sdesc">The standard library gave us primitives. It never gave us a model. So we all built our own — and none of them compose.</p>
 </div>
 
 <!-- S4 THE STORY -->
@@ -341,9 +374,9 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     <div class="col">
       <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">What's broken</p>
       <ul class="plist">
-        <li><span class="pi bad">✗</span><span><strong>No continuations.</strong> <span class="ic">.then()</span> has been stuck in the Concurrency TS since 2013 — chaining means blocking on <span class="ic">.get()</span> or spawning another thread.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>No continuations.</strong> <span class="ic">.then()</span> was proposed in 2013 (N3721), shipped in the Concurrency TS in 2016, and never merged into the IS — chaining means blocking on <span class="ic">.get()</span> or spawning another thread.</span></li>
         <li><span class="pi bad">✗</span><span><strong>No cancellation, no readiness callback.</strong> You poll in a loop or you block.</span></li>
-        <li><span class="pi bad">✗</span><span><strong>No scheduler control.</strong> <span class="ic">std::async</span> runs work wherever it likes — implementation-defined.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>No scheduler control.</strong> <span class="ic">std::async</span> gives you one bit — new thread or lazy — and under the default policy even that bit is implementation-defined. You can never say <em>which</em> context.</span></li>
         <li><span class="pi bad">✗</span><span><strong>Blocking fan-in, messy errors.</strong> Join N futures serially; exceptions hide in shared state, incompatible with <span class="ic">error_code</span> I/O.</span></li>
       </ul>
     </div>
@@ -358,7 +391,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     </div>
   </div>
   <div class="box g mt">
-    <p>Each ✗ maps to the ✓ beside it. Two more requirements we'll meet in the model section: <strong>zero overhead on the default path</strong> (allocation opts in, never sneaks in) and <strong>structured lifetimes</strong> — child work completes before its parent scope exits.</p>
+    <p>Each ✗ maps to the ✓ beside it. Two more requirements we'll meet in the model section: <strong>zero overhead on the default path</strong> (allocation opts in, never sneaks in) and <strong>structured lifetimes</strong> — the model is shaped so child work completes before its parent scope exits.</p>
   </div>
   <div class="notes"><b>Detail dropped from the slide:</b> futures always heap-allocate shared state, even for trivial work. launch::deferred is laziness without value — runs on the retrieving thread, can't target a scheduler, can't compose. jthread fixes thread lifetime but is still a thread: no when_all, no error propagation out. The coroutine ecosystem's failure modes are different — next slide.</div>
 </div>
@@ -380,27 +413,67 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     <div class="col">
       <p style="font-size:.92em;font-weight:700;color:var(--accent);margin-bottom:.35em;">The good news: they interoperate</p>
       <p style="font-size:.92em;">P2300 deliberately treats coroutines as a first-class citizen. You don't have to choose.</p>
-<pre style="margin-top:.5em;"><code><span class="cm">// co_await any sender inside a coroutine</span>
+<pre style="margin-top:.5em;"><code><span class="cm">// Name the sender, then await it.</span>
 exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
-    <span class="cm">// sender becomes awaitable</span>
-    <span class="kw">auto</span> val = <span class="kw">co_await</span> stdexec::<span class="fn">just</span>(<span class="num">42</span>)
-                   | stdexec::<span class="fn">then</span>([](<span class="kw">int</span> x) {
-                         <span class="kw">return</span> x * <span class="num">2</span>;
-                     });
-    co_return val;
+    <span class="kw">auto</span> doubled = stdexec::<span class="fn">just</span>(<span class="num">42</span>)
+                 | stdexec::<span class="fn">then</span>([](<span class="kw">int</span> x) { <span class="kw">return</span> x * <span class="num">2</span>; });
+
+    co_return <span class="kw">co_await</span> std::<span class="fn">move</span>(doubled);
 }
 
 <span class="cm">// A coroutine task is itself a sender</span>
-<span class="kw">auto</span> work = stdexec::<span class="fn">when_all</span>(
-    <span class="fn">my_coroutine</span>(),   <span class="cm">// sender ✓</span>
-    <span class="fn">other_work</span>()      <span class="cm">// sender ✓</span>
-);</code></pre>
+<span class="kw">auto</span> work = stdexec::<span class="fn">when_all</span>(<span class="fn">my_coroutine</span>(),  <span class="cm">// sender ✓</span>
+                              <span class="fn">other_work</span>());   <span class="cm">// sender ✓</span></code></pre>
+      <div class="box rd mt">
+        <p><strong>Gotcha:</strong> <span class="ic">co_await</span> binds tighter than <span class="ic">|</span>. <span class="ic">co_await s | then(f)</span> awaits <span class="ic">s</span> and pipes the <em>result</em> into <span class="ic">then</span>. Parenthesize, or name it first.</p>
+      </div>
       <div class="box g mt">
         <p>Use <span class="ic">co_await</span> for sequential async steps where it reads well. Use sender algorithms for parallelism, fan-out, and scheduler control. Compose them freely.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Framing line before advancing:</b> coroutines and std::future have DIFFERENT failure modes — futures fail at composability; the coroutine ecosystem fails at parallelism, cancellation, and portability. P2300 provides the missing infrastructure and treats coroutines as a first-class citizen in the process.</div>
+  <div class="notes"><b>The gotcha is worth 15 seconds:</b> co_await is a unary-expression operator, so it outranks the pipe. The failure is usually a confusing type error, occasionally something that compiles and is wrong. Also note the std::move — these are single-shot senders and connecting from an lvalue is the wrong habit. <b>Framing line before advancing:</b> coroutines and std::future have DIFFERENT failure modes — futures fail at composability; the coroutine ecosystem fails at parallelism, cancellation, and portability. P2300 provides the missing infrastructure and treats coroutines as a first-class citizen in the process.</div>
+</div>
+
+<!-- REBUTTAL: ASYNC CLEANUP -->
+<div class="slide" id="s7c">
+  <div class="aline b"></div>
+  <h2>"Just do it in a destructor"</h2>
+  <p>Take the strongest form of the objection at face value: cancellation is termination, errors terminate, cleanup goes in <span class="ic">~T()</span>. Here is that program.</p>
+  <div class="row mt" style="gap:1.2em;">
+    <div class="col-55">
+<pre style="font-size:.92em;"><code><span class="fn">~BufferWriter</span>() {
+    <span class="cm">// flush what's still pending before we go</span>
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp; b : pending_) {
+        ::<span class="fn">write</span>(fd_, b.<span class="fn">data</span>(), b.<span class="fn">size</span>());
+    }
+}</code></pre>
+      <ul class="plist" style="font-size:.9em;">
+        <li><span class="pi bad">✗</span><span>A <strong>blocking</strong> write on the shutdown path. No timeout, and nothing can cancel <em>it</em>.</span></li>
+        <li><span class="pi bad">✗</span><span>Destructors can't throw. A failed flush is <strong>silent data loss</strong>.</span></li>
+        <li><span class="pi bad">✗</span><span>Destruction order is <strong>lexical scope order, not dependency order</strong> — the ring this needs may already be gone.</span></li>
+        <li><span class="pi bad">✗</span><span>If the flush must go through your async layer, you're blocking a thread waiting on a context that is being torn down. That's the classic shutdown deadlock.</span></li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="box rd">
+        <p><strong>The language forbids it outright.</strong> Neither a constructor nor a destructor may be a coroutine — <span class="ic">[class.ctor.general]</span> and <span class="ic">[class.dtor]</span> say so normatively. This isn't a style argument. There is no async destructor to write.</p>
+      </div>
+      <div class="box g mt">
+        <p><strong>C++26 already hit this wall.</strong> <span class="ic">simple_counting_scope</span>'s cleanup — <span class="ic">join()</span> — is asynchronous, so its <em>synchronous</em> destructor calls <span class="ic">terminate()</span> if you forgot to do it. A standard type whose correctness depends on remembering an idiom: exactly the C-style problem RAII was invented to kill.</p>
+      </div>
+      <div class="box bl mt">
+        <p><strong>So async RAII is being built in the sender domain.</strong> Shoop's <span class="ic">P2849</span>, now Leahy's <span class="ic">P3955</span> (Jan 2026) — implemented on stdexec, with an io_uring example that closes sockets via <span class="ic">IORING_OP_CLOSE</span>. On your platform even <em>close</em> is async.</p>
+      </div>
+      <div class="box bl mt">
+        <p>And the other two objections: completion signatures are a <strong>compile-time</strong> contract about what can go wrong; the operation state lives in the caller's frame, not one heap allocation per step.</p>
+      </div>
+    </div>
+  </div>
+  <div class="box gr mt" style="margin-bottom:0;">
+    <p><strong>But hold the concession open:</strong> if your process only ever exits by <span class="ic">abort()</span>, every error is genuinely fatal, and nothing needs flushing — they're right, and you don't need any of this. Know which system you have before you argue about it.</p>
+  </div>
+  <div class="notes"><b>This is the one slide where you're allowed to be pointed</b> — but aim it at the claim, never the person. The factual core: async cleanup is not expressible as a destructor, full stop. That isn't an opinion about style, it's a property of the language. <b>The line to land:</b> "callbacks can't express it either — so it isn't sugar over callbacks, because there's nothing underneath to be sugar for." <b>The generous framing, and the true one:</b> wanting cleanup in a destructor is wanting async RAII. That instinct is right and the committee agreed — P1662 tried to put it in the language in 2019 and failed. What shipped instead is the library version, in the sender domain. So the objection isn't an argument against senders; it's a request for something senders provide. <b>P3955R0 "It's Scopes All the Way Down" (Leahy, 14 Jan 2026)</b> is the paper: enter-scope senders that yield exit-scope senders, with within / enter_scopes / nest_scopes / lifetime, continuing Kirk Shoop's P2849 with his permission. Implemented on stdexec, not yet published. He's presenting "Implementing Async RAII" at CppCon 2026 — mention that, it's a genuine service to the room. <b>If you want one more example:</b> the paper reformulates an async mutex as acquire() returning an enter-scope sender, which lets you take three mutexes in parallel — impossible with the wrap-a-sender shape. <b>VERIFY:</b> P3955 is R0 and pre-LEWG; say "proposed", never "coming in C++29." <b>Have the AV example ready if pressed:</b> sensor timeouts, mode transitions, watchdog-triggered subsystem restarts, and simulation runs that stop early are all cancellation that isn't process exit. But don't lead with domain specifics — half the room isn't in your domain. <b>Read the concession box slowly and mean it.</b> If it sounds grudging you lose everyone who came in agreeing with your colleagues, and they're the people you're actually here for.</div>
 </div>
 
 <!-- S8 SECTION: MODEL -->
@@ -411,67 +484,44 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <p class="sdesc">Scheduler · Sender · Receiver — and why as a user you mostly only deal with one of them.</p>
 </div>
 
-<!-- S9 THE THREE ABSTRACTIONS -->
+<!-- MODEL: VOCABULARY + LAZINESS (merged) -->
 <div class="slide" id="s10">
   <div class="aline"></div>
-  <h2>The core vocabulary</h2>
-  <div class="row mt" style="gap:1em;">
-    <div class="col" style="background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:1.1em;">
-      <div style="font-size:1.3em;margin-bottom:.4em;">📍</div>
-      <h3>Scheduler</h3>
-      <p class="mt" style="font-size:.92em;">A lightweight handle to an <strong>execution context</strong> — thread pool, GPU stream, io_uring ring, interrupt handler. Answers: <em>"where does work run?"</em></p>
-      <p class="mt" style="font-size:.92em;">This is what you provide when you plug in your own I/O layer. Your io_uring ring <em>becomes</em> a scheduler.</p>
+  <h2>The vocabulary — and why senders are lazy</h2>
+  <div class="row mt" style="gap:.9em;flex:0 0 auto;">
+    <div class="box gr col" style="margin:0;">
+      <p><strong>📍 Scheduler</strong> — a handle to an execution context. <em>Where does work run?</em> <strong>Your io_uring ring becomes one.</strong></p>
     </div>
-    <div class="col" style="background:var(--surf);border:1px solid rgba(0,223,162,.2);border-radius:10px;padding:1.1em;">
-      <div style="font-size:1.3em;margin-bottom:.4em;">📦</div>
-      <h3>Sender</h3>
-      <p class="mt" style="font-size:.92em;">A <strong>description of async work</strong> — lazy, composable, zero-overhead until started. Like a recipe, not a running computation.</p>
-      <p class="mt" style="font-size:.92em;color:var(--accent);font-weight:500;">This is what you spend 95% of your time with as a user.</p>
+    <div class="box g col" style="margin:0;">
+      <p><strong>📦 Sender</strong> — a lazy description of async work. <strong>You spend ~95% of your time here.</strong></p>
     </div>
-    <div class="col" style="background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:1.1em;">
-      <div style="font-size:1.3em;margin-bottom:.4em;">📬</div>
-      <h3>Receiver</h3>
-      <p class="mt" style="font-size:.92em;">A <strong>generalized callback</strong> with three channels: value, error, and stopped. Glue between senders inside the framework.</p>
-      <p class="mt" style="font-size:.92em;">As a user you almost never write these. Algorithms handle them internally.</p>
+    <div class="box gr col" style="margin:0;">
+      <p><strong>📬 Receiver</strong> — a generalized callback (value / error / stopped). <strong>You almost never write one — but you'll call into one the moment you wrap your own I/O.</strong></p>
     </div>
   </div>
-  <div class="box g mt2">
-    <p>The key insight: <strong>senders are values</strong>. Pass them around, compose them, store them. No work happens until you explicitly start them with a consumer like <span class="ic">sync_wait()</span>.</p>
-  </div>
-</div>
-
-<!-- S9 SENDERS ARE LAZY -->
-<div class="slide" id="s11">
-  <div class="aline"></div>
-  <h2>Senders are lazy — work is a value</h2>
-  <div class="row mt">
+  <div class="row mt" style="gap:1.2em;">
     <div class="col-60">
-<pre><code><span class="cm">// Nothing runs yet. This is just a description.</span>
+<pre style="font-size:.95em;"><code><span class="cm">// Nothing runs yet. This is just a description.</span>
 <span class="kw">auto</span> work =
     stdexec::<span class="fn">schedule</span>(sched)           <span class="cm">// start on scheduler</span>
-    | stdexec::<span class="fn">then</span>([] {
-          <span class="kw">return</span> <span class="fn">compute_something</span>();   <span class="cm">// runs on scheduler</span>
-      })
-    | stdexec::<span class="fn">then</span>([](<span class="kw">auto</span> result) {
-          <span class="kw">return</span> <span class="fn">transform</span>(result);      <span class="cm">// also on scheduler</span>
-      });
+    | stdexec::<span class="fn">then</span>([] { <span class="kw">return</span> <span class="fn">compute_something</span>(); })
+    | stdexec::<span class="fn">then</span>([](<span class="kw">auto</span> r) { <span class="kw">return</span> <span class="fn">transform</span>(r); });
 
 <span class="cm">// Work STARTS here. Calling thread blocks until done.</span>
 <span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(work).value();</code></pre>
-<pre><code><span class="cm">// Swap the scheduler — pipeline logic is unchanged.</span>
+<pre style="font-size:.95em;"><code><span class="cm">// Swap the scheduler — pipeline logic is unchanged.</span>
 <span class="kw">auto</span> cpu_work  = <span class="fn">pipeline</span>(thread_pool_sched);
 <span class="kw">auto</span> gpu_work  = <span class="fn">pipeline</span>(cuda_stream_sched);
 <span class="kw">auto</span> ring_work = <span class="fn">pipeline</span>(io_uring_sched);  <span class="cm">// your scheduler!</span></code></pre>
     </div>
     <div class="col">
-      <p>Pipeline built left-to-right with <span class="ic">|</span>. Each step returns a new sender — nothing executes.</p>
-      <p class="mt"><span class="ic">sync_wait()</span> is the consumer — it connects everything and starts execution.</p>
+      <p>Pipeline built left-to-right with <span class="ic">|</span>. Each step returns a new sender — nothing executes until a consumer connects and starts it.</p>
       <div class="box bl mt">
-        <p>The full pipeline can be stored, passed to functions, or modified before running. This is what composability actually means.</p>
+        <p><strong>Senders are values.</strong> Store them, pass them to functions, modify them before running. That is what composability actually means.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Say, don't show:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring — the computation logic is unchanged. This is the hook back to the audience's own infrastructure.</div>
+  <div class="notes"><b>If asked "so when WOULD I write a receiver?":</b> separate consuming one from defining one. Wrapping I/O — the rest of this talk — means writing a sender and an operation state; connect hands you a receiver and you call set_value / set_error / set_stopped on it. You never define the type. You define a receiver type only when you write a sender ALGORITHM (then, or a custom adaptor), a custom consumer (your own sync_wait, spawning into your own scope), or type erasure like any_sender_of. If you're writing an adaptor you're extending the framework rather than using it — different talk. <b>Two minutes, not six.</b> Read the three boxes in one breath — this room can define scheduler and receiver without help; the only lines that earn time are "your ring becomes a scheduler" and "you almost never write a receiver." <b>Then land the hook:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring and the computation logic is unchanged. That's the whole promise of the talk in one line.</div>
 </div>
 
 <!-- S10 THREE CHANNELS -->
@@ -480,7 +530,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <h2>Three ways work completes — all uniform</h2>
   <div class="row mt" style="gap:1em;flex:0 0 auto;">
     <div class="box g col" style="margin:0;">
-      <p><strong>set_value(args...)</strong><br>Success. Zero <em>or more</em> result values forwarded downstream. A sender can complete with multiple independent values in a single call — something <span class="ic">std::future</span> cannot express at all.</p>
+      <p><strong>set_value(args...)</strong><br>Success. Zero <em>or more</em> values forwarded downstream — a single completion can carry several independent results, which <span class="ic">std::future</span> cannot express at all.</p>
     </div>
     <div class="box rd col" style="margin:0;">
       <p><strong>set_error(err)</strong><br>Failure. <span class="ic">exception_ptr</span>, <span class="ic">error_code</span>, or any type. Propagates automatically through the chain.</p>
@@ -489,21 +539,29 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       <p><strong>set_stopped()</strong><br>Cancellation. Structured and explicit — not an exception, not an error code.</p>
     </div>
   </div>
-<pre class="mt"><code><span class="cm">// Errors propagate automatically — no try/catch at every step</span>
+<pre class="mt" style="font-size:.94em;"><code><span class="cm">// Errors propagate automatically — no try/catch at every step</span>
 <span class="kw">auto</span> pipeline =
     <span class="fn">async_read</span>(sched, fd, buf)         <span class="cm">// might set_error()</span>
     | stdexec::<span class="fn">then</span>([](Buffer b) {
           <span class="kw">return</span> <span class="fn">parse</span>(b);               <span class="cm">// only runs if no error</span>
       })
-    | stdexec::<span class="fn">upon_error</span>([](std::error_code ec) {
-          <span class="fn">log_error</span>(ec);
+    | stdexec::<span class="fn">upon_error</span>([](<span class="kw">auto</span> err) {   <span class="cm">// error_code AND exception_ptr</span>
+          <span class="fn">log_error</span>(err);
           <span class="kw">return</span> <span class="fn">fallback_value</span>();        <span class="cm">// recover and continue</span>
       })
-    | stdexec::<span class="fn">upon_stopped</span>([] { <span class="fn">cleanup</span>(); });</code></pre>
-  <div class="box g mt">
-    <p>One uniform completion story — no more per-library mix of exceptions, error codes, and silent failures.</p>
+    | stdexec::<span class="fn">upon_stopped</span>([] {
+          <span class="fn">cleanup</span>();
+          <span class="kw">return</span> <span class="fn">fallback_value</span>();        <span class="cm">// same type as the value path</span>
+      });</code></pre>
+  <div class="row mt" style="gap:1em;flex:0 0 auto;">
+    <div class="box rd col" style="margin:0;">
+      <p><strong>Why <span class="ic">auto err</span>:</strong> <span class="ic">then</span> adds <span class="ic">set_error_t(exception_ptr)</span> unless the callable is <span class="ic">noexcept</span> — a handler taking only <span class="ic">error_code</span> won't compile.</p>
+    </div>
+    <div class="box g col" style="margin:0;">
+      <p>One uniform completion story — no more per-library mix of exceptions, error codes, and silent failures.</p>
+    </div>
   </div>
-  <div class="notes"><b>Say, don't show:</b> the multi-value capability is why sync_wait always returns optional&lt;tuple&lt;...&gt;&gt; even for one value — the optional is empty on cancellation, the tuple carries all values. when_all uses this to deliver one result per branch in a single completion.</div>
+  <div class="notes"><b>Say, don't show:</b> the multi-value capability is why sync_wait always returns optional&lt;tuple&lt;...&gt;&gt; even for one value — the optional is empty on cancellation, the tuple carries all values. when_all uses this to deliver one result per branch in a single completion. <b>Why upon_stopped returns a value here:</b> a void handler would give the sender two distinct set_value signatures — set_value(T) from the happy path and set_value() from the stopped path. That's legal, but sync_wait wants a single value completion signature, so the obvious-looking void version fails to compile at the consumer. Mention only if someone asks; it's a good "you've clearly written this" beat.</div>
 </div>
 
 <!-- S11 SECTION: ALGORITHMS -->
@@ -523,11 +581,13 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     <li><span class="an">schedule(sched)</span><span class="ad">Sender factory. Schedules a kick-off on an execution context. Chain work with <span class="ic">then()</span>.</span></li>
     <li><span class="an">then(sndr, fn)</span><span class="ad">Transform success values synchronously. The result of <span class="ic">fn</span> becomes the new value downstream.</span></li>
     <li><span class="an">let_value(sndr, fn)</span><span class="ad">Like <span class="ic">then</span> but <span class="ic">fn</span> returns a <em>sender</em> — for chaining operations that are themselves async.</span></li>
-    <li><span class="an">when_all(sndrs...)</span><span class="ad">Fan-in. Runs all senders concurrently, completes when all finish. Returns tuple of all results.</span></li>
-    <li><span class="an">upon_error(sndr, fn)</span><span class="ad">Handle errors mid-chain. Recover and continue, rethrow, or return a fallback value.</span></li>
     <li><span class="an">sync_wait(sndr)</span><span class="ad">Consumer. Blocks calling thread until sender completes. Returns <span class="ic">optional&lt;tuple&lt;values...&gt;&gt;</span>. In the final standard it lives in <span class="ic">std::this_thread::sync_wait</span>; stdexec spells it <span class="ic">stdexec::sync_wait</span>.</span></li>
   </ul>
-  <div class="notes"><b>Mention verbally, not row-by-row:</b> upon_stopped(sndr, fn) — handle cancellation explicitly mid-pipeline (already shown in code on the three-channels slide). bulk — parallel for over indices 0..n-1; final C++26 bulk takes an execution policy (P3481) and adds bulk_chunked / bulk_unchunked; older stdexec examples show bulk(sndr, n, fn). <b>Speak to five only:</b> just, schedule, then, let_value, sync_wait — the demo uses exactly these. The rest are "on the slide for your reference."</div>
+  <div class="box bl mt">
+    <p><strong>Full cheatsheet — every algorithm, with signatures and gotchas:</strong><br>
+    <a href="https://github.com/catfinated/talks/blob/main/bring-your-own-io/sender-algorithms-cheatsheet.md"><span style="font-family:var(--fm);font-size:.95em;">github.com/catfinated/talks</span></a> <span style="color:var(--muted);">→ bring-your-own-io/sender-algorithms-cheatsheet.md</span></p>
+  </div>
+  <div class="notes"><b>Point at the cheatsheet and move on</b> — it's the reason this slide can be five rows instead of twenty. Say the repo name once; it's on the references slide too, and the deck is being shared. <b>These five are exactly what the demo uses — thirty seconds, don't read the table aloud.</b> when_all and upon_error were cut from this list on purpose; both appear in real code later, and the cheatsheet in the repo has the complete set. <b>Mention verbally, not row-by-row:</b> upon_stopped(sndr, fn) — handle cancellation explicitly mid-pipeline (already shown in code on the three-channels slide). bulk — parallel for over indices 0..n-1; final C++26 bulk takes an execution policy (P3481) and adds bulk_chunked / bulk_unchunked; older stdexec examples show bulk(sndr, n, fn). <b>Speak to five only:</b> just, schedule, then, let_value, sync_wait — the demo uses exactly these. The rest are "on the slide for your reference."</div>
 </div>
 
 <!-- DEMO SLIDE -->
@@ -571,14 +631,14 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <div class="notes"><b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-loaded example → if compiles are slow, narrate the expected output → if Godbolt is down entirely, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
 </div>
 
-<!-- S13 WHEN_ALL + LET_VALUE -->
+<!-- PATTERNS: FAN-OUT + SCHEDULER HAND-OFF (merged) -->
 <div class="slide" id="s16">
   <div class="aline"></div>
-  <h2>The two most important patterns</h2>
-  <div class="row mt" style="gap:1.2em;">
+  <h2>The two patterns that matter</h2>
+  <div class="row mt" style="gap:1.1em;">
     <div class="col">
-      <h3 style="margin-bottom:.4em;">Fan-out with when_all</h3>
-<pre><code><span class="cm">// Three operations run concurrently</span>
+      <h3 style="margin-bottom:.3em;">Fan-out with when_all</h3>
+<pre style="font-size:.9em;"><code><span class="cm">// Three operations run concurrently</span>
 <span class="kw">auto</span> work = stdexec::<span class="fn">when_all</span>(
     stdexec::<span class="fn">starts_on</span>(sched,
         <span class="fn">async_read</span>(fd_a) | stdexec::<span class="fn">then</span>(process)),
@@ -590,108 +650,30 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
 | stdexec::<span class="fn">then</span>([](A a, B b, C c) {
     <span class="kw">return</span> <span class="fn">combine</span>(a, b, c); <span class="cm">// after all three</span>
 });</code></pre>
-      <div class="box g" style="margin-top:.4em;">
+      <div class="box g" style="margin-top:.3em;">
         <p>No blocking between steps. No thread-per-operation. One clean join point.</p>
       </div>
     </div>
     <div class="col">
-      <h3 style="margin-bottom:.4em;">Chaining async with let_value</h3>
-<pre><code><span class="cm">// then() — fn returns a plain value</span>
-<span class="fn">just</span>(x) | <span class="fn">then</span>([](<span class="kw">int</span> x) {
-    <span class="kw">return</span> x * <span class="num">2</span>;   <span class="cm">// value ✓</span>
-});
+      <h3 style="margin-bottom:.3em;">Scheduler hand-off with continues_on</h3>
+<pre style="font-size:.9em;"><code><span class="cm">// Three schedulers, one pipeline.</span>
+async_recv(io_sched, socket, buf)      <span class="cm">// on your ring</span>
 
-<span class="cm">// let_value — fn returns a sender</span>
-<span class="fn">just</span>(path) | <span class="fn">let_value</span>([&amp;](string p) {
-    <span class="kw">return</span> <span class="fn">async_read</span>(sched, p);
-    <span class="cm">// ↑ sender ✓ — async op chained in</span>
-})
-| <span class="fn">then</span>([](Buffer buf) {
-    <span class="kw">return</span> <span class="fn">parse</span>(buf);
-});</code></pre>
-      <div class="box bl" style="margin-top:.4em;">
-        <p>Use <span class="ic">then</span> for sync transforms. Use <span class="ic">let_value</span> when the next step is itself async.</p>
+| stdexec::<span class="fn">continues_on</span>(gpu_sched)     <span class="cm">// hand off</span>
+| stdexec::<span class="fn">then</span>([](Buffer b) {
+      <span class="kw">return</span> <span class="fn">process_data</span>(b);       <span class="cm">// runs on GPU</span>
+  })
+
+| stdexec::<span class="fn">continues_on</span>(io_sched)      <span class="cm">// back to ring</span>
+| stdexec::<span class="fn">let_value</span>([](Result r) {     <span class="cm">// fn returns a SENDER</span>
+      <span class="kw">return</span> <span class="fn">async_write</span>(io_sched, file, r);
+  });</code></pre>
+      <div class="box bl" style="margin-top:.3em;">
+        <p>Swap CPU↔GPU and the control flow doesn't change. Errors and cancellation cross scheduler boundaries automatically.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Why starts_on, not on:</b> since P3175, on(sch, s) is the round-trip adaptor — it hops completion back to the environment's current scheduler, and is ill-formed when the env has none (e.g. inside scope.spawn). starts_on says exactly what these examples mean: start the work there, no return hop. stdexec implements the new semantics too. <b>Caveat if asked about the (A a, B b, C c) signature:</b> each when_all branch here returns exactly one value. A branch returning void or multiple values changes the downstream signature — check the completion signatures when you hit surprising compile errors.</div>
-</div>
-
-<!-- TRANSFER SLIDE -->
-<div class="slide" id="s17">
-  <div class="aline"></div>
-  <h2>Composing schedulers — the real payoff</h2>
-  <p class="mt"><span class="ic">continues_on(sndr, sched)</span> hands execution off to a different scheduler mid-pipeline. (Renamed from <span class="ic">transfer</span> in P2300R10; the old <span class="ic">on</span> is now <span class="ic">starts_on</span>, with a new round-trip <span class="ic">on</span> added. stdexec keeps the old spellings as aliases.) This is something no hand-rolled async system does cleanly.</p>
-  <div class="row mt" style="gap:1.2em;">
-    <div class="col-60">
-<pre><code><span class="cm">// Three schedulers, one pipeline.</span>
-<span class="cm">// Each step runs where it makes sense.</span>
-
-<span class="kw">auto</span> pipeline =
-    <span class="cm">// 1. Receive data on the io_uring ring</span>
-    async_recv(io_sched, socket, buf)
-
-    <span class="cm">// 2. Hand off to GPU/CPU for compute</span>
-    | stdexec::<span class="fn">continues_on</span>(gpu_sched)
-    | stdexec::<span class="fn">then</span>([](Buffer b) {
-          <span class="kw">return</span> <span class="fn">process_data</span>(b);   <span class="cm">// continuation runs on GPU context</span>
-      })
-
-    <span class="cm">// 3. Continue on io_uring to write result</span>
-    | stdexec::<span class="fn">continues_on</span>(io_sched)
-    | stdexec::<span class="fn">let_value</span>([](Result r) {
-          <span class="kw">return</span> <span class="fn">async_write</span>(io_sched, file, r);  <span class="cm">// returns a sender — chained in</span>
-      });
-
-stdexec::<span class="fn">sync_wait</span>(std::move(pipeline));</code></pre>
-    </div>
-    <div class="col">
-      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.4em;">Why this matters</p>
-      <ul style="font-size:.92em;">
-        <li>Each scheduler is independently sourced — io_uring from your own layer, thread pool or GPU from stdexec or nvexec</li>
-        <li>Swap the compute scheduler CPU↔GPU — the <strong>control flow</strong> doesn't change</li>
-        <li>Error and cancellation propagate across scheduler boundaries automatically — no special handling at the transfer points</li>
-      </ul>
-      <div class="box g mt">
-        <p>This is the pipeline pattern that motivated P2300 in the first place — heterogeneous execution where <strong>the computation describes what runs where</strong>, not the scheduler.</p>
-      </div>
-    </div>
-  </div>
-  <div class="notes"><b>"Why no starts_on here?"</b> — async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; the previous slide's async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. And: once sender-based async_recv / async_write exist, this pipeline compiles as written — today you'd wrap your own io_uring layer to produce those senders. GPU caveat: you'd still manage host-device memory transfer; nvexec has facilities. <b>If probed on step 3:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>"Isn't continues_on(io_sched) redundant if async_write is already bound to the ring?"</b> — it repositions where the lambda itself runs; kept here to show scheduler hand-off, which is the point of the slide.</div>
-</div>
-
-<!-- S14 STRUCTURED CONCURRENCY -->
-<div class="slide" id="s18">
-  <div class="aline"></div>
-  <h2>Structured concurrency — safety by construction</h2>
-  <div class="row mt" style="gap:1.4em;">
-    <div class="col">
-      <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The old way — danger</p>
-<pre><code><span class="cm">// Thread may outlive `data`</span>
-std::thread([&amp;data] {
-    <span class="fn">process</span>(data); <span class="cm">// dangling ref! 💥</span>
-}).detach();
-<span class="cm">// data destroyed here</span></code></pre>
-      <div class="box rd" style="margin-top:.4em;">
-        <p>Detached threads are a well-known footgun. No way to know when — or whether — they complete.</p>
-      </div>
-    </div>
-    <div class="col">
-      <p class="g-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The sender way — safe</p>
-<pre><code><span class="cm">// Work is nested — cannot outlive scope</span>
-stdexec::<span class="fn">sync_wait</span>(
-    stdexec::<span class="fn">starts_on</span>(sched,
-        stdexec::<span class="fn">just</span>(data)
-        | stdexec::<span class="fn">then</span>(process)
-    )
-);
-<span class="cm">// Guaranteed: process() is done here ✓</span></code></pre>
-      <div class="box g" style="margin-top:.4em;">
-        <p>Child work <strong>always</strong> completes before the parent scope exits — the default of the model, not a discipline you maintain.</p>
-      </div>
-    </div>
-  </div>
-  <div class="notes"><b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still fundamentally a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. And yes, you can still misuse the low-level primitives — the high-level API steers you away from it.</div>
+  <div class="notes"><b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix A</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
 </div>
 
 <!-- ASYNC_SCOPE (split from structured concurrency) -->
@@ -700,7 +682,8 @@ stdexec::<span class="fn">sync_wait</span>(
   <h2><span class="ic">async_scope</span> — fire-and-forget, still structured</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-55">
-<pre><code><span class="kw">exec</span>::async_scope scope;
+<pre><code><span class="cm">// stdexec today</span>
+exec::async_scope scope;
 
 scope.<span class="fn">spawn</span>(
     stdexec::<span class="fn">starts_on</span>(sched, <span class="fn">do_work</span>())
@@ -709,16 +692,28 @@ scope.<span class="fn">spawn</span>(
 
 stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span>());
 <span class="cm">// ...but all spawned work is done here ✓</span></code></pre>
+<pre style="margin-top:.5em;"><code><span class="cm">// C++26 — not just a rename</span>
+<span class="kw">namespace</span> ex = std::execution;
+ex::counting_scope scope;
+
+ex::<span class="fn">spawn</span>(ex::<span class="fn">starts_on</span>(sched, <span class="fn">do_work</span>()),
+          scope.<span class="fn">get_token</span>());     <span class="cm">// ← token</span>
+
+std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join</span>());</code></pre>
     </div>
     <div class="col">
       <div class="box g">
         <p>The old model gives two bad choices: block on everything, or detach and hope. This is the third option — <strong>spawn work and continue</strong>, while the scope tracks every outstanding operation and you choose exactly when to join.</p>
       </div>
       <div class="box gr mt">
-        <p>Standardized in C++26 as <span class="ic">counting_scope</span> / <span class="ic">spawn</span> / <span class="ic">spawn_future</span> (P3149). Note: <span class="ic">spawn</span> is one of the few places the model allocates — by design.</p>
+        <p><span class="ic">spawn</span> takes a <strong>scope token</strong>, not the scope — that indirection is what lets a scope live safely as a data member. <span class="ic">counting_scope</span> also gives you <span class="ic">close()</span> and <span class="ic">request_stop()</span> (P3149).</p>
+      </div>
+      <div class="box rd mt">
+        <p><span class="ic">spawn</span> requires a sender that completes with <strong>no values</strong> — hence <span class="ic">do_work()</span> returning void. Need the result? That's <span class="ic">spawn_future</span>. And <span class="ic">spawn</span> is one of the few places the model allocates — by design.</p>
       </div>
     </div>
   </div>
+  <div class="notes"><b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. <b>If asked how faithful stdexec is here:</b> exec::async_scope predates P3149 and the shapes differ — on_empty() vs join(), scope-as-argument vs token. Porting is mechanical but it is not sed. <b>The point to land:</b> spawn is where structured concurrency meets reality — you genuinely need unbounded fan-out sometimes, and this is the version that still lets you prove everything finished.</div>
 </div>
 
 <!-- S17 SECTION: ECOSYSTEM -->
@@ -734,44 +729,47 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="aline"></div>
   <h2>The road to P2300</h2>
   <ul class="tl mt">
-    <li><span class="ty">2005</span><span><strong>Async I/O starts it all</strong> — Kohlhoff's Boost.Asio-based networking proposals bring asynchronous I/O into the standards process. The Networking TS grows from here — and its need for an executor model triggers everything below.</span></li>
+    <li><span class="ty">2005–07</span><span><strong>Async I/O starts it all</strong> — Asio appears (2005); Kohlhoff's networking proposals enter the committee (N2175, 2007). The Networking TS grows from here — and its need for an executor model triggers everything below.</span></li>
     <li><span class="ty">2011</span><span><strong>C++11</strong> — <span class="ic">std::thread</span>, <span class="ic">std::future</span>, <span class="ic">std::async</span>. Useful primitives. No composable model. The complaints start immediately.</span></li>
-    <li><span class="ty">2012–18</span><span><strong>The executor wars</strong> — years of competing proposals, multiple rounds through the committee. The Networking TS stalls waiting for an executor model that never lands. No consensus on the async model.</span></li>
-    <li><span class="ty">2018</span><span><strong>Libunifex</strong> born at Facebook. Eric Niebler and colleagues build a production sender/receiver system. This becomes the field-experience foundation for P2300.</span></li>
-    <li><span class="ty">2019–20</span><span>Many of us write our own async systems out of necessity. io_uring lands in kernel 5.1. C++20 coroutines land as language features with no standard library support.</span></li>
-    <li><span class="ty">2021</span><span><strong>P2300 R0</strong> — Niebler, Lelbach, Baker et al. submit the sender/receiver proposal. NVIDIA funds stdexec as the reference implementation. Senders win; the Networking TS path is retired, to restart as sender-based P2762.</span></li>
-    <li><span class="ty">Jun 2024</span><span><strong>P2300R10 adopted</strong> at WG21 St. Louis plenary — consensus, but with notable minority opposition reflecting concerns about complexity and review thoroughness.</span></li>
+    <li><span class="ty">2012–21</span><span><strong>The executor wars</strong> — years of competing proposals; P0443 unified executors runs until senders replace it. The Networking TS stalls waiting for an executor model that never lands.</span></li>
+    <li><span class="ty">2018–19</span><span><strong>Libunifex</strong> developed at Facebook, open-sourced 2019. Eric Niebler and colleagues build a production sender/receiver system — the field-experience foundation for P2300.</span></li>
+    <li><span class="ty">2019–20</span><span><strong>io_uring</strong> lands in kernel 5.1. <strong>C++20 coroutines</strong> land as language features with no standard library support.</span></li>
+    <li><span class="ty">2021–23</span><span><strong>P2300 R0</strong> — Niebler, Lelbach, Baker et al. submit the sender/receiver proposal; NVIDIA funds stdexec as the reference implementation. Over the next two years direction settles on senders, the Networking TS is not pursued, and sender-based networking restarts as P2762 (2023).</span></li>
+    <li><span class="ty">Jun 2024</span><span><strong>P2300R10 adopted</strong> at WG21 St. Louis plenary — but narrowly: roughly a third of the room voted against, on grounds of complexity and teachability.</span></li>
     <li><span class="ty">Mar 2026</span><span><strong>C++26 technical work completed</strong> March 28 in London (Croydon). DIS ballot / ISO publication pending. Compiler stdlib implementations: no public progress visible as of August 2026.</span></li>
   </ul>
-  <div class="notes"><b>The punchline of this slide, say it:</b> the standardization effort that STARTED with async I/O ended, twenty years later, with a standard async model containing everything EXCEPT the I/O. The Networking TS died so senders could live, and the senders shipped without the sockets. <b>For the P0443 veterans in the room:</b> P2300 didn't descend from the TS — its design lineage is Facebook's pushmi/libunifex. The connection is the executor layer: the TS's needs fed unified executors (P0443, Kohlhoff co-authored), P2300 replaced P0443, and the P2444-vs-P2464 debate settled it in senders' favor.</div>
+  <div class="box bl mt" style="margin-bottom:0;">
+    <p><strong>All along, underneath:</strong> every shop builds its own async framework from whatever primitives exist — or on Boost. That has been continuous since before C++11, it is still going on, and it is precisely why none of our systems compose.</p>
+  </div>
+  <div class="notes"><b>The band under the timeline is the one to make personal:</b> every place you have worked since 2006 has built or maintained an in-house async framework. The rows above are what the committee was doing; the band is what the rest of the industry was doing the whole time, and it never stopped waiting for them. Say it in first person — it's the line that earns the room's agreement before you ask them for anything. <b>The punchline of this slide, say it:</b> the standardization effort that STARTED with async I/O ended, twenty years later, with a standard async model containing everything EXCEPT the I/O. The Networking TS died so senders could live, and the senders shipped without the sockets. <b>If asked who objected in St. Louis, and why:</b> the minutes record individual objections, not national-body ones — Sutter polled the other NBs and found none. The substance: sender/receiver complexity is extremely high; an average programmer can't and won't use it; "what we are developing is a full language in the library"; and the teaching story for beginners is missing. Worth drawing the thread forward out loud: those 2024 objections were complexity and documentation, and Sutter's 2026 warning is documentation and missing helper libraries — same complaint, two years apart, from opposite sides of the vote. <b>For the P0443 veterans in the room:</b> P2300 didn't descend from the TS — its design lineage is Facebook's pushmi/libunifex. The connection is the executor layer: the TS's needs fed unified executors (P0443, Kohlhoff co-authored), P2300 replaced P0443, and the P2444-vs-P2464 debate settled it in senders' favor.</div>
 </div>
 
 <!-- S18 STDLIB STATUS -->
 <div class="slide" id="s21">
   <div class="aline r"></div>
-  <h2>The standard library situation</h2>
-  <p>C++26 is finalized. The standard library implementations are not.</p>
+  <h2>The standard library situation <span class="tag tr">checked 25 Aug 2026</span></h2>
+  <p>C++26 is finalized. No shipping standard library exposes <span class="ic">std::execution</span>. Each claim below names the artifact it comes from — check them yourself, they move.</p>
   <div class="row mt" style="gap:1em;">
     <div class="col">
       <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.35em;">GCC / libstdc++</p>
-      <p style="font-size:.92em;">The <span class="ic">&lt;execution&gt;</span> header exists but only wires up C++17 parallel policies via Intel TBB. The source tree has <strong>no P2300 code</strong> — no visible implementation work or public timeline. (GCC 16 prioritized reflection and contracts.)</p>
+      <p style="font-size:.92em;">The <span class="ic">&lt;execution&gt;</span> header exists but only wires up C++17 parallel policies via Intel TBB. <strong>No P2300 code in the source tree</strong>; no public timeline. (GCC 16 shipped reflection and contracts first.)<br><span style="color:var(--muted);font-size:.9em;">source: libstdc++ tree + C++26 status page</span></p>
     </div>
     <div class="col">
       <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.35em;">Clang / libc++</p>
-      <p style="font-size:.92em;">The official C++26 status page lists P2300R10 with a <strong>blank status and no version number</strong>. Work hasn't started or isn't tracked. No public timeline.</p>
+      <p style="font-size:.92em;">The C++26 status page lists P2300R10 with a <strong>blank status and no version number</strong> — work hasn't started, or isn't tracked. No public timeline.<br><span style="color:var(--muted);font-size:.9em;">source: libc++ Cxx26 status page</span></p>
     </div>
     <div class="col">
       <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.35em;">MSVC / Microsoft STL</p>
-      <p style="font-size:.92em;">A tracking issue exists (<span class="ic">microsoft/STL #4768</span>) with planned feature test macros documented. However the team has explicitly stated <strong>no C++26 PRs will be accepted</strong> until remaining C++23 work is complete. Nothing shipped.</p>
+      <p style="font-size:.92em;">A tracking issue exists (<span class="ic">microsoft/STL #4768</span>) listing P2300R10 and its follow-ons with planned feature-test macros. The issue carries a note — <strong>dated 2024</strong> — that C++26 PRs won't be accepted until C++23 library work is finished.<br><span style="color:var(--muted);font-size:.9em;">source: microsoft/STL #4768 — re-check, this is the one most likely to have moved</span></p>
     </div>
   </div>
   <div class="box rd mt">
-    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. The sender/receiver framework is not in any shipping standard library across GCC, Clang, or MSVC. Likely arrival: 2–4 years based on precedent, but no public timelines from any vendor.</p>
+    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. Likely arrival: 2–4 years based on precedent, but no vendor has published a timeline. <strong>If you know otherwise, say so — I check this before every talk and it is the claim most likely to age.</strong></p>
   </div>
   <div class="box bl mt">
     <p><strong>And C++26 execution is bigger than P2300:</strong> the standard also adopted <span class="ic">counting_scope</span> / <span class="ic">spawn</span> (P3149), a standard <span class="ic">parallel_scheduler</span> system context (P2079), a coroutine task type <span class="ic">std::execution::task</span> (P3552), and a policy-taking <span class="ic">bulk</span> (P3481). None of that has shipped in any stdlib either — but "the standard has no scheduler or task type" is no longer true on paper.</p>
   </div>
-  <div class="notes"><b>Precedent, if asked "why so slow?":</b> std::format took ~3 years to land in both libstdc++ and libc++ after C++20 — and P2300 is far larger. The standardization-to-implementation gap is normal, not a red flag; it just matters for adoption planning.</div>
+  <div class="notes"><b>Re-verify within 48 hours of the talk</b> — libc++ Cxx26 status page (P2300R10 row), microsoft/STL #4768, libstdc++ tree — and update the date stamp. There are Microsoft and Google people in this room; a stale claim here is the easiest possible correction to land on you. <b>If you ARE corrected:</b> take it as a gift. Ask what shipped and when, say out loud that it pulls your timeline in, and note it changes nothing about the I/O conclusion — which is the actual thesis. <b>Precedent, if asked "why so slow?":</b> std::format took ~3 years to land in both libstdc++ and libc++ after C++20 — and P2300 is far larger. The standardization-to-implementation gap is normal, not a red flag; it just matters for adoption planning.</div>
 </div>
 
 <!-- S19 STDEXEC -->
@@ -789,7 +787,7 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
         <li><span class="ic">async_scope</span> — structured fire-and-forget with lifetime tracking (standardized as <span class="ic">counting_scope</span> in C++26)</li>
         <li><span class="ic">when_any</span>, <span class="ic">finally</span>, sequence senders</li>
         <li>Type erasure: <span class="ic">any_sender_of</span>, <span class="ic">any_scheduler</span></li>
-        <li><strong>io_uring scheduler</strong> — proves wiring works, timers &amp; cancellation only</li>
+        <li><strong>io_uring scheduler</strong> — real scheduler: schedule, timers, stop propagation. No I/O <em>operations</em>.</li>
         <li><strong>nvexec</strong>: full CUDA / multi-GPU scheduler layer</li>
       </ul>
     </div>
@@ -857,13 +855,13 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <h2>P2300 deliberately excludes I/O — here's what that means</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-55">
-      <p>Intentional, not an oversight. The authors scoped P2300 to the execution framework only. Concrete I/O is a separate layer to build on top. The proposal authors have always said networking and file I/O are C++29 territory.</p>
+      <p>Intentional, not an oversight. P2300 was scoped to the execution framework only; concrete I/O is a separate layer on top, and the authors have always said networking and file I/O are C++29 territory.</p>
       <p class="mt">What stdexec's io_uring integration <em>actually</em> is:</p>
       <ul style="font-size:.95em;margin-top:.3em;">
-        <li>A scheduler that proves the wiring compiles and runs</li>
-        <li>Timers (<span class="ic">async_wait</span>) and stop propagation</li>
-        <li>The example in the repo only demonstrates cancellation flow</li>
-        <li><strong>No <span class="ic">async_read</span>, <span class="ic">async_write</span>, <span class="ic">async_accept</span>, <span class="ic">async_connect</span></strong></li>
+        <li>A genuine scheduler — <span class="ic">schedule</span>, timers (<span class="ic">async_wait</span>), stop propagation</li>
+        <li>Not a toy: the wiring compiles, runs, and cancels correctly</li>
+        <li>But the repo example only demonstrates cancellation flow</li>
+        <li><strong>No I/O operations: no <span class="ic">async_read</span>, <span class="ic">async_write</span>, <span class="ic">async_accept</span>, <span class="ic">async_connect</span></strong></li>
       </ul>
       <div class="box rd mt">
         <p>GitHub issue #1062: "io_uring reading files." Filed 2023. The only response was a link to a separate external project. That's the current state.</p>
@@ -871,19 +869,20 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
     </div>
     <div class="col">
       <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">What actually exists for sender-based I/O:</p>
-      <ul style="font-size:.92em;">
-        <li><strong>Asio + Leahy's stdexec adaptation</strong> — the only viable production path today. Asio has genuine async file I/O (<span class="ic">stream_file</span>, <span class="ic">random_access_file</span>) and network I/O, exposed as senders via Leahy's CppCon 2025 work. Requires Asio, and on Linux requires io_uring (<span class="ic">BOOST_ASIO_HAS_IO_URING</span>). Windows uses IOCP.</li>
+      <ul style="font-size:.87em;">
+        <li><strong>Asio + Leahy's stdexec adaptation</strong> — the only viable production path today. Real async file I/O (<span class="ic">stream_file</span>, <span class="ic">random_access_file</span>) and network I/O exposed as senders (CppCon 2025). Needs Asio; io_uring on Linux (<span class="ic">BOOST_ASIO_HAS_IO_URING</span>), IOCP on Windows.</li>
         <li class="mt"><strong>uring_exec</strong> — thin wrapper over every <span class="ic">io_uring_prep_*</span> op. Has read, write, accept, send, recv. Linux only. Research-grade.</li>
-        <li class="mt"><strong>maikel/senders-io</strong> — more designed file + network senders. Experimental, stale, old stdexec API.</li>
-        <li class="mt"><strong>Beman net (P2762)</strong> — the standards-track approach. Very early. C++29 target.</li>
+        <li class="mt"><strong>maikel/senders-io</strong> — more designed file + network senders. Stale, old stdexec API.</li>
+        <li class="mt"><strong>Beman net (P2762)</strong> — the sender-based standards-track approach. Very early. C++29 target.</li>
+        <li class="mt"><strong>P4003 / P4007 (C++ Alliance)</strong> — a competing <em>coroutine-first</em> direction. P4003 "Ask: A Minimal Coroutine Execution Model" (Falco, Gill, Gerbino; R3 May 2026) goes to LEWG at Brno, alongside P4007 "Senders and Coroutines" and the Network Endeavor paper series.</li>
         <li class="mt"><strong>Intel bare-metal senders</strong> — P2300 subset for embedded/interrupt-driven I/O. No OS required.</li>
       </ul>
       <div class="box bl mt">
-        <p>If you're already using Asio and on Linux with io_uring — Leahy's adaptation work is the most complete sender-based I/O story available today. Everyone else is in DIY territory.</p>
+        <p>Already on Asio with io_uring? Leahy's adaptation is the most complete sender-based I/O available today. Everyone else is in DIY territory.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>History, worth a beat:</b> libunifex — the Facebook library P2300 grew out of — had working io_uring and epoll schedulers. That I/O coverage was deliberately left out of standardization scope. The gap didn't happen by accident; it was a scoping decision.</div>
+  <div class="notes"><b>The question you will get, so ask it first:</b> "isn't the C++ Alliance pushing a different answer?" Yes — as of the Croydon meeting there are two live standards-track directions for async I/O, sender-based (P2762) and coroutine-first (P4003/P4007), and the committee has not chosen. That uncertainty is an argument FOR the talk's thesis, not against it: whichever wins, the safe move today is your own I/O behind a sender-shaped seam you control. Don't editorialize about which is better — you don't have a dog in that fight and half the room might. <b>History, worth a beat:</b> libunifex — the Facebook library P2300 grew out of — had working io_uring and epoll schedulers. That I/O coverage was deliberately left out of standardization scope. The gap didn't happen by accident; it was a scoping decision.</div>
 </div>
 
 <!-- S24 PLATFORM SPLIT -->
@@ -929,28 +928,26 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
 <div class="slide" id="s28">
   <div class="aline b"></div>
   <h2>The bridge: wrapping your existing async I/O as senders</h2>
-  <p>If you have an io_uring scheduler, epoll loop, or any callback-based system — expose it as a scheduler today and gain composability without rewriting anything. I've done this integration in a research project, <span class="ic">fiberexec</span>: fibers inside, senders outside.</p>
+  <p>If you have an io_uring scheduler, epoll loop, or any callback-based system — expose it as a scheduler today and gain composability without rewriting anything.</p>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-60">
-<pre><code><span class="cm">// Your existing C-style async API:</span>
-<span class="cm">// void async_read(fd, buf, len,</span>
+<pre style="font-size:.95em;"><code><span class="cm">// Your existing C-style async API:</span>
+<span class="cm">// void async_read(int fd, char* buf, size_t len,</span>
 <span class="cm">//   void(*cb)(int result, void* ctx), void* ctx);</span>
 
 <span class="cm">// Wrap it as a sender:</span>
 <span class="kw">struct</span> <span class="fn">read_sender</span> {
-    <span class="kw">using</span> sender_concept = stdexec::sender_t; <span class="cm">// C++26 final style</span>
+    <span class="kw">using</span> sender_concept = stdexec::sender_t;
     <span class="kw">using</span> completion_signatures = stdexec::completion_signatures&lt;
-        stdexec::set_value_t(<span class="kw">int</span>),
-        stdexec::set_error_t(std::error_code)&gt;;
+        stdexec::set_value_t(std::size_t),
+        stdexec::set_error_t(std::error_code),
+        stdexec::set_stopped_t()&gt;;  <span class="cm">// you cancel — declare it</span>
+
     <span class="kw">int</span> fd; <span class="kw">char</span>* buf; std::size_t len;
 
-    <span class="kw">template</span>&lt;stdexec::receiver R&gt;
-    <span class="kw">auto</span> <span class="fn">connect</span>(R receiver) {
-        <span class="kw">return</span> read_op{fd, buf, len,
-                       std::move(receiver)};
+    <span class="kw">auto</span> <span class="fn">connect</span>(stdexec::receiver <span class="kw">auto</span> rcvr) &amp;&amp; {
+        <span class="kw">return</span> read_op&lt;<span class="kw">decltype</span>(rcvr)&gt;{fd, buf, len, std::move(rcvr)};
     }
-    <span class="cm">// Your ring's completion calls set_value(bytes)</span>
-    <span class="cm">// or set_error(ec) on the receiver.</span>
 };
 
 <span class="cm">// Now your I/O flows into any sender pipeline:</span>
@@ -958,18 +955,69 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
           | stdexec::<span class="fn">then</span>(parse) | stdexec::<span class="fn">then</span>(process);</code></pre>
     </div>
     <div class="col">
-      <div class="box bl">
-        <p><strong>Niebler's blog</strong> "What are Senders Good For, Anyway?" (Feb 2024) walks this pattern in detail — wrapping a C-style async API to produce senders. Essential reading.</p>
+      <div class="box g">
+        <p>This is the practical adoption path <em>right now</em> for I/O engineers: keep your existing async I/O layer, expose it as a sender, gain composability at the computation level today. <strong>This part is boilerplate — the next slide is where the heavy lifting happens.</strong></p>
       </div>
-      <div class="box g mt">
-        <p>This is the practical adoption path <em>right now</em> for I/O engineers: keep your existing async I/O layer, expose it as a sender, gain composability at the computation level today.</p>
+      <div class="box bl mt">
+        <p><strong>Niebler's blog</strong> "What are Senders Good For, Anyway?" (Feb 2024) walks this pattern in detail — wrapping a C-style async API to produce senders. Essential reading.</p>
       </div>
       <div class="box gr mt">
         <p>When standard I/O senders eventually arrive (P2762, C++29+), you swap the wrapper for the standard primitive. The pipeline logic above doesn't change.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Attribution beat, say out loud:</b> "This adoption strategy is Leahy's — what I'm adding is the view from someone who owns one of these schedulers and has prototyped the integration." <b>fiberexec, held to the same standard as everyone else's project:</b> research-grade, not production. It does the thing the caveats slide warns about correctly — io_uring ECANCELED maps to set_stopped, so cancellation is real, not decorative. Repo is on the references slide. The next slide diagrams its cancellation flow — no repo visit needed.</div>
+  <div class="notes"><b>Attribution beat, say out loud:</b> "This adoption strategy is Leahy's — what I'm adding is the view from someone who owns one of these schedulers and has prototyped the integration." <b>Don't introduce fiberexec here</b> — the code on this slide is generic, not fiberexec's. It gets introduced on the next slide, where the diagram actually is its flow.</div>
+</div>
+
+<!-- OPERATION STATE (the part nobody shows) -->
+<div class="slide" id="s28a">
+  <div class="aline b"></div>
+  <h2>The operation state — where the real work lives</h2>
+  <div class="row mt" style="gap:1.4em;">
+    <div class="col-60">
+<pre style="font-size:.85em;"><code><span class="cm">// using namespace stdexec; — elided below for width</span>
+<span class="kw">template</span> &lt;stdexec::receiver R&gt;
+<span class="kw">struct</span> <span class="fn">read_op</span> {
+    <span class="kw">using</span> operation_state_concept = operation_state_t;
+    <span class="fn">read_op</span>(read_op&amp;&amp;) = <span class="kw">delete</span>;      <span class="cm">// pinned: built in place</span>
+
+    <span class="kw">void</span> <span class="fn">start</span>() &amp; <span class="kw">noexcept</span> {
+        <span class="cm">// 1. hook the receiver's stop token into YOUR layer</span>
+        stop_.<span class="fn">emplace</span>(<span class="fn">get_stop_token</span>(<span class="fn">get_env</span>(rcvr_)), on_stop{<span class="kw">this</span>});
+        <span class="cm">// 2. submit; `this` is the completion context</span>
+        ::<span class="fn">async_read</span>(fd_, buf_, len_, &amp;on_complete, <span class="kw">this</span>);
+    }
+
+    <span class="kw">static</span> <span class="kw">void</span> <span class="fn">on_complete</span>(<span class="kw">int</span> result, <span class="kw">void</span>* ctx) <span class="kw">noexcept</span> {
+        <span class="kw">auto</span>&amp; self = *<span class="kw">static_cast</span>&lt;read_op*&gt;(ctx);
+        self.stop_.<span class="fn">reset</span>();          <span class="cm">// unregister BEFORE completing</span>
+
+        <span class="kw">if</span> (result &gt;= <span class="num">0</span>)
+            <span class="fn">set_value</span>(std::move(self.rcvr_), std::size_t(result));
+        <span class="kw">else</span> <span class="kw">if</span> (result == -ECANCELED)
+            <span class="fn">set_stopped</span>(std::move(self.rcvr_));     <span class="cm">// not an error!</span>
+        <span class="kw">else</span>
+            <span class="fn">set_error</span>(std::move(self.rcvr_),
+                      std::error_code(-result, std::system_category()));
+    }
+
+    <span class="kw">int</span> fd_; <span class="kw">char</span>* buf_; std::size_t len_; R rcvr_;
+    std::optional&lt;<span class="cm">/* R's stop-callback type */</span>&gt; stop_;
+};</code></pre>
+    </div>
+    <div class="col">
+      <div class="box g">
+        <p><strong>Pinned, caller-owned storage.</strong> <span class="ic">connect()</span> constructs the op state in place and it never moves. This is where "no allocation on the default path" actually comes from — it isn't a slogan, it's this <span class="ic">= delete</span>.</p>
+      </div>
+      <div class="box bl mt">
+        <p><strong>Stop callback lifetime.</strong> Registered in <span class="ic">start()</span>, torn down before the completion fires. Get that ordering wrong and you have a use-after-free on the cancellation path — the bug that doesn't show up until production.</p>
+      </div>
+      <div class="box rd mt">
+        <p><strong>Three-way completion is the whole game.</strong> <span class="ic">-ECANCELED</span> maps to <span class="ic">set_stopped</span>, not <span class="ic">set_error</span>. Collapse those two and every <span class="ic">upon_stopped</span> downstream is dead code.</p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>Slow down here.</b> The pipeline syntax is familiar to this room; the seam is the part that's worth their time. Walk it in three beats: pinned storage (that's the zero-overhead claim, made concrete), stop-callback ordering (the use-after-free), three-way completion (the difference between real and decorative cancellation). <b>If asked "where's the constructor?":</b> the deleted move ctor makes read_op a non-aggregate, so brace-init on the previous slide needs a real constructor — elided here for space. Say "the ctor is the obvious one" and move on; don't pretend the slide compiles as printed. <b>If asked about the stop_ declaration:</b> yes, it's ugly — you need the receiver's own stop-token type, not std::stop_callback, because in-place stop sources are the common case. Real code hides it behind an alias. <b>If asked why connect is &amp;&amp;-qualified:</b> these are single-shot senders; connecting from an lvalue is how you accidentally submit the same op twice. <b>Bridge to the next slide:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
 </div>
 
 <!-- WRAPPING CAVEATS (split) -->
@@ -977,10 +1025,10 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="aline r"></div>
   <h2>Before you wrap: two things to watch out for</h2>
   <div class="box rd mt">
-        <p><strong>Watch out:</strong> older stdexec examples and early P2300 talks use <span class="ic">tag_invoke</span> for customization — <span class="ic">friend auto tag_invoke(connect_t, ...)</span> etc. That mechanism was replaced in P2300R10, the final adopted revision. The C++26 standard uses plain member functions: <span class="ic">connect()</span>, <span class="ic">start()</span>, <span class="ic">set_value()</span>, and <span class="ic">using sender_concept = sender_t</span>. The code above reflects the correct final style.</p>
+        <p><strong>Watch out:</strong> older stdexec examples and early P2300 talks use <span class="ic">tag_invoke</span> for customization — <span class="ic">friend auto tag_invoke(connect_t, ...)</span> etc. That mechanism was replaced in P2300R10, the final adopted revision. The C++26 standard uses plain member functions: <span class="ic">connect()</span>, <span class="ic">start()</span>, <span class="ic">set_value()</span>, and <span class="ic">using sender_concept = sender_t</span>. The code on the previous two slides reflects the correct final style.</p>
       </div>
   <div class="box bl mt">
-    <p><strong>Cancellation:</strong> wire the receiver's stop token into your layer's own cancellation so <span class="ic">set_stopped()</span> is real, not decorative — it's where hand-rolled wrappers cut corners. The actual flow inside <span class="ic">fiberexec::run</span>:</p>
+    <p><strong>Cancellation:</strong> wire the receiver's stop token into your layer's own cancellation so <span class="ic">set_stopped()</span> is real, not decorative — it's where hand-rolled wrappers are most likely to cut corners. Here is the flow from <span class="ic">fiberexec</span>, a personal research runtime where I did this integration end to end — fibers inside, senders outside:</p>
   </div>
   <svg viewBox="0 0 1160 250" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;margin-top:.4em;" role="img" aria-label="Cancellation flow: stop request bridges from the sender world into the fiber and io_uring world and returns as set_stopped">
     <defs>
@@ -1007,10 +1055,10 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
 
     <rect x="744" y="168" width="212" height="62" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1;"/>
     <text x="850" y="194" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2463; CQE: -ECANCELED</text>
-    <text x="850" y="215" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">throws std::system_error</text>
+    <text x="850" y="215" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">fiber unwinds</text>
 
     <rect x="934" y="16" width="212" height="62" rx="8" style="fill:rgba(0,223,162,.06);stroke:var(--accent);stroke-width:1;"/>
-    <text x="1040" y="42" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2464; catch &#8594; set_stopped()</text>
+    <text x="1040" y="42" text-anchor="middle" style="font-family:var(--fm);font-size:15.5px;font-weight:600;fill:var(--text);">&#x2464; set_stopped()</text>
     <text x="1040" y="63" text-anchor="middle" style="font-family:var(--fm);font-size:13px;fill:var(--dim);">downstream: upon_stopped</text>
 
     <line x1="117" y1="80" x2="234" y2="164" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
@@ -1018,7 +1066,8 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
     <line x1="688" y1="199" x2="740" y2="199" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
     <line x1="854" y1="166" x2="1036" y2="82" style="stroke:var(--dim);stroke-width:2;" marker-end="url(#arr)"/>
   </svg>
-  <div class="notes"><b>Narrate the U-shape:</b> the stop request crosses the seam twice — down into the kernel as ASYNC_CANCEL, back up as set_stopped. That round trip is what "cancellation is real" means. This is fiberexec's verified flow (run.hpp + fiber_context.cpp), not pseudocode. <b>Why ③ says "queued":</b> the stop_callback runs on whatever thread called request_stop — not the ring's owner — and only the owning thread may touch the SQ ring. So request_cancel does a mutex-guarded queue push plus an eventfd write to wake the ring; the owning thread drains the queue into ASYNC_CANCEL SQEs on its next pass (ring-full handled: leftovers wait for the next wakeup). Bonus detail if probed: linked SQE chains cascade -ECANCELED; already-completed ops return -ENOENT and are discarded.</div>
+  <p style="font-size:.85em;color:var(--muted);margin-top:.45em;font-style:italic;">The unwind is fiber-internal — it's how a suspended fiber abandons its stack without checking a return code at every await point. It never crosses the seam; the sender world only ever sees <span class="ic">set_stopped()</span>.</p>
+  <div class="notes"><b>If challenged on the completion_signatures typedef:</b> the nested <span class="ic">using completion_signatures = ...</span> is what stdexec accepts and what almost every example shows; the standard also specifies a member <span class="ic">get_completion_signatures(env)</span> form. Re-check which spelling the final wording blesses before the talk, and if unsure, say "that's the stdexec spelling" rather than "that's the standard spelling." <b>Introduce fiberexec in one sentence, then move on:</b> personal research runtime, research-grade and not production, held to exactly the standard this deck applies to everyone else's project. Repo is on the references slide. <b>Narrate the U-shape:</b> the stop request crosses the seam twice — down into the kernel as ASYNC_CANCEL, back up as set_stopped. That round trip is what "cancellation is real" means. This is fiberexec's verified flow (run.hpp + fiber_context.cpp), not pseudocode. <b>Pre-empt the cost question, don't wait for it:</b> yes, there's a throw inside the fiber — one unwind per cancelled operation, off the hot path. The alternative is threading an error check through every suspension point in the fiber, which is the exact thing fibers exist to avoid. Say this before someone asks; it reads as ownership rather than scramble. <b>Why ③ says "queued":</b> the stop_callback runs on whatever thread called request_stop — not the ring's owner — and only the owning thread may touch the SQ ring. So request_cancel does a mutex-guarded queue push plus an eventfd write to wake the ring; the owning thread drains the queue into ASYNC_CANCEL SQEs on its next pass (ring-full handled: leftovers wait for the next wakeup). Bonus detail if probed: linked SQE chains cascade -ECANCELED; already-completed ops return -ENOENT and are discarded.</div>
 </div>
 
 <!-- S27 ADOPTION BY WORKLOAD -->
@@ -1062,64 +1111,86 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
 <!-- S28 HERB SUTTER QUOTE -->
 <div class="slide" id="s31">
   <div class="aline"></div>
-  <h2>This has strong endorsement — with a caveat</h2>
+  <h2>The chair's own warning is this talk's thesis</h2>
   <div class="bq mt">
-    "std::execution is what I call C++'s async model — it provides a unified framework to express and control concurrency and parallelism… it also has important safety properties because it makes it easier to write programs that use structured concurrency and parallelism to be data-race-free by construction. That's a big deal."
+    std::execution is <em>"currently harder to adopt than most C++ features."</em>
   </div>
-  <div class="qa">— Herb Sutter, former WG21 chair (2002–2025), March 2026 London trip report</div>
+  <div class="qa">— Herb Sutter, March 2026 Croydon trip report. Chair of WG21, 2002–2025; technical fellow at Citadel Securities.</div>
   <div class="box gr mt">
-    <p>He also said: this feature is <strong>great but currently harder to adopt than most</strong> — it lacks great documentation and some "fingers and toes" libraries. Notably, his company (Citadel Securities) is already using it in production. He expects the gaps to close now that C++26 is done and attention turns to C++29.</p>
+    <p>He attributes that to thin documentation and missing small convenience libraries, and tells new adopters to budget learning time with someone who already knows it — and to expect to <strong>write their own adapter layers</strong> bridging <span class="ic">std::execution</span> to their existing async code. He also notes his own company is already running it in production.</p>
+  </div>
+  <div class="box g mt">
+    <p>That last instruction is the whole of tonight's talk, from the person who chaired the committee for 23 years. <strong>Writing the adapter is the expected path, not a workaround.</strong></p>
   </div>
   <div class="box rd mt">
-    <p>What he didn't address: the I/O story for non-GPU, non-thread-pool workloads is genuinely thin right now. That's the gap your team needs to understand and plan around. It's a real limitation — not a reason to ignore P2300, but a reason to be clear-eyed about the timeline.</p>
+    <p>What he doesn't address: for non-GPU, non-thread-pool workloads the adapter you're expected to write is <em>the entire I/O layer</em>. That's the gap to plan around — not a reason to ignore P2300, a reason to be clear-eyed about the timeline.</p>
   </div>
+  <div class="notes"><b>Don't oversell the endorsement — the value here is corroboration, not authority.</b> He also calls std::execution "C++'s async model" and credits it with data-race-freedom-by-construction properties; mention that only if someone asks whether the committee is enthusiastic. <b>Sourcing, if challenged:</b> the production-use line is his — he writes that his company has already been using it; the Citadel attribution is from his own author bio, not from the trip report. Don't attribute anything else to him: he does NOT say the gaps will close in the C++29 cycle, and an earlier draft of these slides did. <b>The beat that lands:</b> read the quote, pause, then say "he's telling you to write the wrapper. So let's talk about writing the wrapper."</div>
 </div>
 
 <!-- S30 RESOURCES -->
 <div class="slide" id="s33">
   <div class="aline"></div>
-  <h2>References</h2>
+  <h2>References — reading &amp; talks</h2>
   <p style="font-size:.85em;color:var(--muted);">Slides will be shared — no need to transcribe.</p>
   <div class="row mt" style="gap:1.4em;">
     <div class="col">
-      <p style="font-size:.88em;font-weight:700;color:var(--text);margin-bottom:.3em;">Essential reading</p>
-      <ul style="font-size:.85em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">Essential reading</p>
+<ul style="font-size:.88em;">
         <li><strong>"Senders/Receivers: An Introduction"</strong> — Teodorescu, ACCU Overload Dec 2024. Best written intro available.</li>
         <li><strong>"What are Senders Good For, Anyway?"</strong> — Niebler, blog Feb 2024. The guide to wrapping C-style async APIs.</li>
         <li><strong>cppreference.com/w/cpp/execution</strong> — final C++26 wording. The reference.</li>
       </ul>
-      <p style="font-size:.88em;font-weight:700;color:var(--text);margin:.6em 0 .3em;">Talks</p>
-      <ul style="font-size:.85em;">
+    </div>
+    <div class="col">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">Talks</p>
+<ul style="font-size:.88em;">
         <li>"Think Parallel" — Bryce Lelbach, ACCU 2024. Best accessible motivation talk.</li>
-        <li>"Working with Asynchrony Generically" pts 1&amp;2 — Niebler, CppCon 2021. Canonical deep dive (API details dated).</li>
+        <li>"Working with Asynchrony Generically" 1&amp;2 — Niebler, CppCon 2021. Canonical, API dated.</li>
         <li>"std::execution in Asio Codebases" — Leahy, CppCon 2025. The migration path for existing async code.</li>
         <li>"Extending std::execution: Higher-Order Senders" — Leahy, C++ on Sea 2025. The composition frontier.</li>
         <li>"Embedded Async Abstraction Without an OS" — Deane, C++Now 2024. Bare-metal angle.</li>
-        <li><strong>New in 2026:</strong> "The Async Pattern Graveyard" — Leahy, ACCU on Sea 2026 (C++ on Sea merged into ACCU this year): how 20 years of Asio lessons shaped senders. Plus two further Leahy sender sessions and Ažman on C++26 concurrency at C++Now 2026 — recordings releasing through summer 2026.</li>
+        <li><strong>CppCon 2026:</strong> Leahy, "Implementing Async RAII" — the P3955 design, implemented on stdexec.</li>
+        <li><strong>New in 2026:</strong> "The Async Pattern Graveyard" — Leahy, ACCU on Sea 2026: how 20 years of Asio lessons shaped senders. Plus two further Leahy sender sessions and Ažman on C++26 concurrency at C++Now 2026 — recordings through summer 2026.</li>
       </ul>
     </div>
+  </div>
+  <div class="notes"><b>Do not read this slide aloud.</b> Say "slides are shared" and name the two you'd actually start with — Teodorescu's Overload article and Niebler's wrapping post — then advance. <b>If someone asks where to begin:</b> the article, then Godbolt, in that order.</div>
+</div>
+
+<!-- REFERENCES 2 -->
+<div class="slide" id="s33b">
+  <div class="aline"></div>
+  <h2>References — code &amp; what to watch</h2>
+  <div class="row mt" style="gap:1.4em;">
     <div class="col">
-      <p style="font-size:.88em;font-weight:700;color:var(--text);margin-bottom:.3em;">Repositories</p>
-      <ul style="font-size:.85em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">Repositories</p>
+<ul style="font-size:.88em;">
         <li><span class="ic">github.com/NVIDIA/stdexec</span> — use this for experimentation and evaluation now</li>
         <li><span class="ic">github.com/bemanproject/execution</span> — watch for stdlib direction</li>
         <li><span class="ic">github.com/bemanproject/net</span> — P2762 sender networking, very early</li>
         <li><span class="ic">github.com/Caturra000/uring_exec</span> — if you need io_uring I/O ops today</li>
         <li><span class="ic">github.com/catfinated/fiberexec</span> — my research runtime: io_uring + fibers + senders</li>
+        <li><a href="https://github.com/catfinated/talks/blob/main/bring-your-own-io/sender-algorithms-cheatsheet.md"><span class="ic">catfinated/talks</span></a> — these slides, plus a <strong>sender algorithm cheatsheet</strong> alongside them</li>
         <li><span class="ic">intel.github.io/cpp-baremetal-senders-and-receivers</span> — embedded use case</li>
       </ul>
-      <p style="font-size:.88em;font-weight:700;color:var(--text);margin:.6em 0 .3em;">Watch for I/O progress specifically</p>
-      <ul style="font-size:.85em;">
+    </div>
+    <div class="col">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">Watch for I/O progress specifically</p>
+<ul style="font-size:.88em;">
         <li><strong>P2762</strong> — sender networking proposal, C++29 target. Track its revisions.</li>
+        <li><strong>P4003 / P4007</strong> — the C++ Alliance's coroutine-first alternative. LEWG review from Brno, June 2026.</li>
+        <li><strong>P3955</strong> — Leahy, "It's Scopes All the Way Down": async RAII for senders, including async construction and destruction. Continues Shoop's P2849.</li>
         <li>libstdc++ and libc++ C++26 status pages — watch for P2300R10 row to get a version number</li>
         <li>Beman net project commit activity — leading indicator of stdlib direction</li>
         <li>WG21 mailing list for any file I/O sender proposals in the C++29 cycle</li>
       </ul>
       <div class="box g mt">
-        <p>Start on Godbolt: add stdexec as a library → try the minimal just/then/sync_wait example → work up to the thread pool examples in the stdexec GitHub repo.</p>
+        <p>Start on Godbolt: add stdexec as a library → try the minimal <span class="ic">just</span>/<span class="ic">then</span>/<span class="ic">sync_wait</span> example → work up to the thread pool examples in the stdexec repo.</p>
       </div>
     </div>
   </div>
+  <div class="notes"><b>The two lines worth saying out loud:</b> stdexec is what you experiment with today, and the cheatsheet lives next to these slides in the talks repo. Everything else is for the photograph. <b>If asked what you'd watch:</b> the P2762-vs-P4003 question is the one that decides what standard async I/O looks like, and it is genuinely open.</div>
 </div>
 
 <!-- SUMMARY -->
@@ -1153,10 +1224,80 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <div class="notes"><b>The cost question (it will come):</b> the default composed path is allocation-free — connect() builds a single operation state, typically on the stack; no type erasure, no ref-counting. Allocation is opt-in at specific boundaries: async_scope / counting_scope spawn, any_sender_of, split. sync_wait is a blocking join — fine at the program edge, wrong inside pipelines. Codegen: deep template inlining; say "measure your workload" rather than promising numbers. Social proof: Citadel runs std::execution in production (Sutter, Mar 2026). <b>"Did you wrap your own scheduler?"</b> — honest answer: "Not at work — different priorities, and the ecosystem gaps in this talk are part of why the internal case is hard to make yet. But I built a personal research runtime, fiberexec, that does this exact integration end to end — io_uring under fibers under senders — and the findings are public."</div>
 </div>
 
-<!-- APPENDIX: COMPARISON TABLE -->
-<div class="slide" id="s24">
+<!-- S9 THE THREE ABSTRACTIONS -->
+<div class="slide appx" id="ax3">
   <div class="aline"></div>
-  <h2>Appendix — ecosystem at a glance</h2>
+  <div class="appxtag">Appendix A · reference for Q&amp;A — not presented live</div>
+  <h2><span class="ic">then</span> vs <span class="ic">let_value</span></h2>
+  <p class="mt">The whole rule: <span class="ic">then</span>'s callable returns a <strong>value</strong>; <span class="ic">let_value</span>'s returns a <strong>sender</strong>. Reach for <span class="ic">let_value</span> whenever the next step is itself asynchronous.</p>
+  <div class="row mt" style="gap:1.2em;">
+    <div class="col">
+      <p class="g-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">then — synchronous transform</p>
+<pre><code><span class="fn">just</span>(x) | <span class="fn">then</span>([](<span class="kw">int</span> x) {
+    <span class="kw">return</span> x * <span class="num">2</span>;      <span class="cm">// a value ✓</span>
+});
+<span class="cm">// downstream sees: set_value(int)</span></code></pre>
+      <div class="box g" style="margin-top:.4em;">
+        <p>Runs on whatever context the previous step completed on. No new async work is introduced.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p class="sm" style="color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">let_value — chain in async work</p>
+<pre><code><span class="fn">just</span>(path) | <span class="fn">let_value</span>([&amp;](string p) {
+    <span class="kw">return</span> <span class="fn">async_read</span>(sched, p);
+    <span class="cm">// ↑ a sender ✓</span>
+})
+| <span class="fn">then</span>([](Buffer buf) {
+    <span class="kw">return</span> <span class="fn">parse</span>(buf);
+});</code></pre>
+      <div class="box bl" style="margin-top:.4em;">
+        <p>The returned sender is connected and started; the pipeline's completion is <em>its</em> completion. This is how you nest one async operation inside another.</p>
+      </div>
+    </div>
+  </div>
+  <div class="box rd mt">
+    <p><strong>The common mistake:</strong> using <span class="ic">then</span> with a callable that returns a sender. It compiles — and gives you a value completion carrying an unstarted sender that nobody ever connects. The work silently never runs.</p>
+  </div>
+  <div class="notes"><b>Pull this up if someone asks for the distinction in code.</b> The failure mode in the red box is the one worth saying out loud — it's the quiet bug, not a compile error, and everyone hits it once. <b>If pushed further:</b> let_value keeps the predecessor's values alive for the duration of the returned sender, which is why the lambda can capture and reference them; then's result is moved downstream immediately.</div>
+</div>
+
+<div class="slide appx" id="ax4">
+  <div class="aline"></div>
+  <div class="appxtag">Appendix B · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
+  <div class="row mt" style="gap:1.4em;">
+    <div class="col">
+      <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The old way — danger</p>
+<pre><code><span class="cm">// Thread may outlive `data`</span>
+std::thread([&amp;data] {
+    <span class="fn">process</span>(data); <span class="cm">// dangling ref! 💥</span>
+}).detach();
+<span class="cm">// data destroyed here</span></code></pre>
+      <div class="box rd" style="margin-top:.4em;">
+        <p>Detached threads are a well-known footgun. No way to know when — or whether — they complete.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p class="g-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The sender way — safe</p>
+<pre><code><span class="cm">// Work is nested — cannot outlive scope</span>
+stdexec::<span class="fn">sync_wait</span>(
+    stdexec::<span class="fn">starts_on</span>(sched,
+        stdexec::<span class="fn">just</span>(data)
+        | stdexec::<span class="fn">then</span>(process)
+    )
+);
+<span class="cm">// Guaranteed: process() is done here ✓</span></code></pre>
+      <div class="box g" style="margin-top:.4em;">
+        <p>Child work completes before the parent scope exits — and P2300 <strong>removed</strong> the escape hatches (<span class="ic">start_detached</span>, <span class="ic">ensure_started</span>) before shipping, so the unstructured version is no longer a one-liner.</p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>Do NOT show this unprompted: the detached-thread panel is a strawman for this room. It exists only in case someone asks how senders compare to raw threads.</b> <b>Don't overclaim this one:</b> a counting_scope you never join is still a bug, and you can still write unstructured code by hand. What changed isn't a guarantee, it's that the committee took the easy detach out of the standard before it shipped — that's a fact about their behaviour, which is a stronger thing to say than a promise about yours. <b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still fundamentally a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. And yes, you can still misuse the low-level primitives — the high-level API steers you away from it.</div>
+</div>
+
+<!-- APPENDIX: COMPARISON TABLE -->
+<div class="slide appx" id="s24">
+  <div class="aline"></div>
+  <h2>Appendix C — ecosystem at a glance</h2>
   <p style="font-size:.95em;color:var(--muted);">Reference for Q&amp;A — not presented live.</p>
   <table class="ct mt">
     <thead>
@@ -1169,7 +1310,7 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
       <tr><td>Structured scopes (counting_scope / spawn)</td><td class="ck">✓</td><td class="ck">✓</td><td class="cx">✗</td></tr>
       <tr><td>when_any, finally</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
       <tr><td>Type erasure (any_sender_of)</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
-      <tr><td>io_uring scheduler</td><td class="cpt">✓ timers &amp; cancellation only ⚠</td><td class="cx">✗</td><td class="cx">✗</td></tr>
+      <tr><td>io_uring scheduler</td><td class="cpt">✓ scheduler + timers + stop; no I/O ops ⚠</td><td class="cx">✗</td><td class="cx">✗</td></tr>
       <tr><td>Async file / network I/O ops</td><td class="cx">✗ community projects only</td><td class="cpt">net: early, poll(2) only</td><td class="cx">✗</td></tr>
       <tr><td>GPU / CUDA (nvexec)</td><td class="ck">✓</td><td class="cx">✗</td><td class="cx">✗</td></tr>
       <tr><td>Production-ready</td><td class="cpt">⚠ experimental</td><td class="cx">✗ self-stated</td><td class="cx">✗ not shipped</td></tr>
@@ -1183,13 +1324,16 @@ stdexec::<span class="fn">sync_wait</span>(scope.<span class="fn">on_empty</span
   <button class="nbtn" onclick="go(-1)">← prev</button>
   <span id="counter">1 / 33</span>
   <button class="nbtn" onclick="go(1)">next →</button>
-  <span style="font-family:var(--fm);font-size:.8em;color:var(--muted);margin-left:1.5em;">arrow keys · F fullscreen · N notes</span>
+  <span style="font-family:var(--fm);font-size:.8em;color:var(--muted);margin-left:1.5em;">arrow keys · F fullscreen · N notes · A appendix</span>
 </div>
 <div id="progress"></div>
 
 <script>
 const slides = Array.from(document.querySelectorAll('#stage .slide'));
 const TOTAL = slides.length;
+const MAIN_TOTAL = slides.filter(s => !s.classList.contains('appx')).length;
+const APPX_START = MAIN_TOTAL;
+let returnTo = null;
 let cur = Math.max(0, slides.findIndex(s => s.classList.contains('active')));
 
 function scale() {
@@ -1204,8 +1348,14 @@ function scale() {
 
 function render() {
   slides.forEach((s, i) => s.classList.toggle('active', i === cur));
-  document.getElementById('counter').textContent = (cur + 1) + ' / ' + TOTAL;
-  document.getElementById('progress').style.width = (((cur + 1) / TOTAL) * 100) + '%';
+  const c = document.getElementById('counter');
+  if (slides[cur].classList.contains('appx')) {
+    c.textContent = 'appendix ' + (cur - MAIN_TOTAL + 1) + ' / ' + (TOTAL - MAIN_TOTAL);
+    document.getElementById('progress').style.width = '100%';
+  } else {
+    c.textContent = (cur + 1) + ' / ' + MAIN_TOTAL;
+    document.getElementById('progress').style.width = (((cur + 1) / MAIN_TOTAL) * 100) + '%';
+  }
 }
 
 function go(dir) {
@@ -1219,6 +1369,12 @@ window.addEventListener('resize', scale);
 window.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
+  if (e.key === 'a' || e.key === 'A') {
+    e.preventDefault();
+    if (slides[cur].classList.contains('appx')) { cur = (returnTo === null ? 0 : returnTo); returnTo = null; }
+    else { returnTo = cur; cur = APPX_START; }
+    render();
+  }
   if (e.key === 'f' || e.key === 'F') document.documentElement.requestFullscreen?.();
   if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('shownotes');
 });
