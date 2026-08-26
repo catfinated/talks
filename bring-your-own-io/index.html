@@ -378,6 +378,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
         <li><span class="pi bad">✗</span><span><strong>No cancellation, no readiness callback.</strong> You poll in a loop or you block.</span></li>
         <li><span class="pi bad">✗</span><span><strong>No scheduler control.</strong> <span class="ic">std::async</span> gives you one bit — new thread or lazy — and under the default policy even that bit is implementation-defined. You can never say <em>which</em> context.</span></li>
         <li><span class="pi bad">✗</span><span><strong>Blocking fan-in, one error channel.</strong> Join N futures serially. The only built-in failure path is <span class="ic">set_exception</span>, so an <span class="ic">error_code</span> I/O layer either throws <span class="ic">system_error</span> per <span class="ic">errno</span>, or smuggles results through <span class="ic">expected&lt;&gt;</span> and leaves the error channel unused.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>No ownership.</strong> A launched future is nobody's child. Drop it and the work runs on unwatched — there is no way to ask "is everything I started finished?"</span></li>
       </ul>
     </div>
     <div class="col">
@@ -387,11 +388,12 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
         <li><span class="pi good">✓</span><span><strong>First-class cancellation.</strong> Stopped is its own completion channel, not an exception in disguise.</span></li>
         <li><span class="pi good">✓</span><span><strong>Scheduler-agnostic.</strong> Thread pool, GPU, io_uring ring, interrupt handler — the computation shouldn't care.</span></li>
         <li><span class="pi good">✓</span><span><strong>Uniform completion.</strong> Value / error / stopped, propagated automatically through the chain.</span></li>
+        <li><span class="pi good">✓</span><span><strong>Structured concurrency.</strong> Every async operation has an owner and none outlives it — RAII's discipline, applied to work in flight rather than memory.</span></li>
       </ul>
     </div>
   </div>
   <div class="box g mt">
-    <p>Each ✗ maps to the ✓ beside it. Two more requirements we'll meet in the model section: <strong>zero overhead on the default path</strong> (allocation opts in, never sneaks in) and <strong>structured lifetimes</strong> — the model is shaped so child work completes before its parent scope exits.</p>
+    <p>Each ✗ maps to the ✓ beside it. One more requirement we'll meet in the model section: <strong>zero overhead on the default path</strong> — allocation opts in, never sneaks in.</p>
   </div>
   <div class="notes"><b>Be precise if challenged on the error point</b> — promise&lt;expected&lt;T, error_code&gt;&gt; obviously works, so don't say futures are "incompatible" with error_code I/O. The claim is that there's exactly one built-in failure channel and it's an exception: either you throw system_error for routine errno values, or you push failure into the value channel and the type stops telling anyone that failure is possible. And .get() rethrows wherever you happened to join, not where the error occurred. <b>Detail dropped from the slide:</b> futures always heap-allocate shared state, even for trivial work. launch::deferred is laziness without value — runs on the retrieving thread, can't target a scheduler, can't compose. jthread fixes thread lifetime but is still a thread: no when_all, no error propagation out. The coroutine ecosystem's failure modes are different — next slide.</div>
 </div>
@@ -728,7 +730,8 @@ async_recv(io_sched, socket, buf)      <span class="cm">// on your ring</span>
 <!-- ASYNC_SCOPE (split from structured concurrency) -->
 <div class="slide" id="s18b">
   <div class="aline b"></div>
-  <h2><span class="ic">async_scope</span> — fire-and-forget, still structured</h2>
+  <h2>Structured concurrency — fire-and-forget, still owned</h2>
+  <p><strong>Every async operation has an owner, and no operation outlives it.</strong> The discipline scoped variables and RAII gave us for memory, applied to work in flight. <span class="ic">async_scope</span> is where you meet it.</p>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-55">
 <pre><code><span class="cm">// stdexec today</span>
@@ -1067,7 +1070,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       </div>
     </div>
   </div>
-  <div class="notes"><b>Slow down here.</b> The pipeline syntax is familiar to this room; the seam is the part that's worth their time. Walk it in three beats: pinned storage (that's the zero-overhead claim, made concrete), stop-callback ordering (the use-after-free), three-way completion (the difference between real and decorative cancellation). <b>If asked "where's the constructor?":</b> the deleted move ctor makes read_op a non-aggregate, so brace-init on the previous slide needs a real constructor — elided here for space. Say "the ctor is the obvious one" and move on; don't pretend the slide compiles as printed. <b>If asked about the stop_ declaration:</b> yes, it's ugly — you need the receiver's own stop-token type, not std::stop_callback, because in-place stop sources are the common case. Real code hides it behind an alias. <b>If asked why connect is &amp;&amp;-qualified:</b> these are single-shot senders; connecting from an lvalue is how you accidentally submit the same op twice. <b>Bridge to the next slide:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
+  <div class="notes"><b>Slow down here.</b> The pipeline syntax is familiar to this room; the seam is the part that's worth their time. Walk it in three beats: pinned storage (that's the zero-overhead claim, made concrete), stop-callback ordering (the use-after-free), three-way completion (the difference between real and decorative cancellation). <b>If asked "where's the constructor?":</b> the deleted move ctor makes read_op a non-aggregate, so brace-init on the previous slide needs a real constructor — elided here for space. Say "the ctor is the obvious one" and move on; don't pretend the slide compiles as printed. <b>If asked about the stop_ declaration:</b> yes, it's ugly — you need the receiver's own stop-token type, not std::stop_callback, because in-place stop sources are the common case. Real code hides it behind an alias. <b>If asked what guarantees exactly-once completion:</b> the sender/receiver protocol itself, not structured concurrency — start() runs at most once, and the operation must invoke exactly one of set_value / set_error / set_stopped, exactly once. That is the primitive; structured concurrency is built ON it, because you cannot write a correct join over N children if a child might complete twice or never. Don't let anyone reverse that dependency. <b>And it's a contract you uphold, not one the compiler enforces:</b> nothing stops this code calling set_value and then set_stopped. Where it bites in io_uring is the cancellation race — a stop request arrives while the CQE for a successful read is already in flight. Complete on both paths and you have broken the protocol. That is why stop_.reset() comes first and then exactly one branch runs; the ordering is load-bearing, not incidental. <b>If asked why connect is &amp;&amp;-qualified:</b> these are single-shot senders; connecting from an lvalue is how you accidentally submit the same op twice. <b>Bridge to the next slide:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
 </div>
 
 <!-- WRAPPING CAVEATS (split) -->
@@ -1375,7 +1378,7 @@ stdexec::<span class="fn">sync_wait</span>(
       </div>
     </div>
   </div>
-  <div class="notes"><b>Do NOT show this unprompted: the detached-thread panel is a strawman for this room. It exists only in case someone asks how senders compare to raw threads.</b> <b>Don't overclaim this one:</b> a counting_scope you never join is still a bug, and you can still write unstructured code by hand. What changed isn't a guarantee, it's that the committee took the easy detach out of the standard before it shipped — that's a fact about their behaviour, which is a stronger thing to say than a promise about yours. <b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still fundamentally a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. And yes, you can still misuse the low-level primitives — the high-level API steers you away from it.</div>
+  <div class="notes"><b>Do NOT show this unprompted: the detached-thread panel is a strawman for this room. It exists only in case someone asks how senders compare to raw threads.</b> <b>This is the slide that owns the term</b> — senders and structured concurrency get named together constantly, and the deck uses the phrase on half a dozen slides, so define it once, here, out loud: every async operation has an owner, and none outlives it. Same discipline as RAII, applied to work rather than memory. <b>Don't overclaim this one:</b> a counting_scope you never join is still a bug, and you can still write unstructured code by hand. What changed isn't a guarantee, it's that the committee took the easy detach out of the standard before it shipped — that's a fact about their behaviour, which is a stronger thing to say than a promise about yours. <b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still fundamentally a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. And yes, you can still misuse the low-level primitives — the high-level API steers you away from it.</div>
 </div>
 
 <!-- APPENDIX: COMPARISON TABLE -->
