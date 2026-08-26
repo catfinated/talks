@@ -439,7 +439,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
 <div class="slide" id="s7c">
   <div class="aline b"></div>
   <h2>"Just do it in a destructor"</h2>
-  <p>Take the strongest form of the objection at face value: cancellation is termination, errors terminate, cleanup goes in <span class="ic">~T()</span>. Here is that program.</p>
+  <p>Back to <em>"the pipes are just syntactic sugar around callbacks."</em> Take its strongest form at face value: cancellation is termination, errors terminate, cleanup goes in <span class="ic">~T()</span>. Here is that program.</p>
   <div class="row mt" style="gap:1.2em;">
     <div class="col-55">
 <pre style="font-size:.92em;"><code><span class="fn">~BufferWriter</span>() {
@@ -452,7 +452,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
         <li><span class="pi bad">✗</span><span>A <strong>blocking</strong> write on the shutdown path. No timeout, and nothing can cancel <em>it</em>.</span></li>
         <li><span class="pi bad">✗</span><span>Destructors can't throw. A failed flush is <strong>silent data loss</strong>.</span></li>
         <li><span class="pi bad">✗</span><span>Destruction order is <strong>lexical scope order, not dependency order</strong> — the ring this needs may already be gone.</span></li>
-        <li><span class="pi bad">✗</span><span>If the flush must go through your async layer, you're blocking a thread waiting on a context that is being torn down. That's the classic shutdown deadlock.</span></li>
+        <li><span class="pi bad">✗</span><span>If the flush goes through your async layer, you're blocking a thread on a context being torn down — the classic shutdown deadlock.</span></li>
       </ul>
     </div>
     <div class="col">
@@ -460,20 +460,20 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
         <p><strong>The language forbids it outright.</strong> Neither a constructor nor a destructor may be a coroutine — <span class="ic">[class.ctor.general]</span> and <span class="ic">[class.dtor]</span> say so normatively. This isn't a style argument. There is no async destructor to write.</p>
       </div>
       <div class="box g mt">
-        <p><strong>C++26 already hit this wall.</strong> <span class="ic">simple_counting_scope</span>'s cleanup — <span class="ic">join()</span> — is asynchronous, so its <em>synchronous</em> destructor calls <span class="ic">terminate()</span> if you forgot to do it. A standard type whose correctness depends on remembering an idiom: exactly the C-style problem RAII was invented to kill.</p>
+        <p><strong>C++26 already hit this wall.</strong> <span class="ic">simple_counting_scope</span>'s cleanup — <span class="ic">join()</span> — is async, so its <em>synchronous</em> destructor calls <span class="ic">terminate()</span> if you forgot. A standard type whose correctness depends on remembering an idiom: the C-style problem RAII was invented to kill.</p>
       </div>
       <div class="box bl mt">
         <p><strong>So async RAII is being built in the sender domain.</strong> Shoop's <span class="ic">P2849</span>, now Leahy's <span class="ic">P3955</span> (Jan 2026) — implemented on stdexec, with an io_uring example that closes sockets via <span class="ic">IORING_OP_CLOSE</span>. On your platform even <em>close</em> is async.</p>
       </div>
       <div class="box bl mt">
-        <p>And the other two objections: completion signatures are a <strong>compile-time</strong> contract about what can go wrong; the operation state lives in the caller's frame, not one heap allocation per step.</p>
+        <p>Add the <strong>compile-time</strong> error contract and caller-frame operation states, and <strong>none of it has a callback equivalent. There is nothing underneath for the pipes to be sugar <em>for</em>.</strong></p>
       </div>
     </div>
   </div>
   <div class="box gr mt" style="margin-bottom:0;">
     <p><strong>But hold the concession open:</strong> if your process only ever exits by <span class="ic">abort()</span>, every error is genuinely fatal, and nothing needs flushing — they're right, and you don't need any of this. Know which system you have before you argue about it.</p>
   </div>
-  <div class="notes"><b>This is the one slide where you're allowed to be pointed</b> — but aim it at the claim, never the person. The factual core: async cleanup is not expressible as a destructor, full stop. That isn't an opinion about style, it's a property of the language. <b>The line to land:</b> "callbacks can't express it either — so it isn't sugar over callbacks, because there's nothing underneath to be sugar for." <b>The generous framing, and the true one:</b> wanting cleanup in a destructor is wanting async RAII. That instinct is right and the committee agreed — P1662 tried to put it in the language in 2019 and failed. What shipped instead is the library version, in the sender domain. So the objection isn't an argument against senders; it's a request for something senders provide. <b>P3955R0 "It's Scopes All the Way Down" (Leahy, 14 Jan 2026)</b> is the paper: enter-scope senders that yield exit-scope senders, with within / enter_scopes / nest_scopes / lifetime, continuing Kirk Shoop's P2849 with his permission. Implemented on stdexec, not yet published. He's presenting "Implementing Async RAII" at CppCon 2026 — mention that, it's a genuine service to the room. <b>If you want one more example:</b> the paper reformulates an async mutex as acquire() returning an enter-scope sender, which lets you take three mutexes in parallel — impossible with the wrap-a-sender shape. <b>VERIFY:</b> P3955 is R0 and pre-LEWG; say "proposed", never "coming in C++29." <b>Have the AV example ready if pressed:</b> sensor timeouts, mode transitions, watchdog-triggered subsystem restarts, and simulation runs that stop early are all cancellation that isn't process exit. But don't lead with domain specifics — half the room isn't in your domain. <b>Read the concession box slowly and mean it.</b> If it sounds grudging you lose everyone who came in agreeing with your colleagues, and they're the people you're actually here for.</div>
+  <div class="notes"><b>This is the one slide where you're allowed to be pointed</b> — but aim it at the claim, never the person. The factual core: async cleanup is not expressible as a destructor, full stop. That isn't an opinion about style, it's a property of the language. <b>This is the payoff for the promise you made on slide 3 — say so explicitly.</b> "I said we'd come back to the syntactic-sugar objection. This is it." Otherwise the callback is invisible and the room never registers that you kept your word. <b>The line to land:</b> "callbacks can't express it either — so it isn't sugar over callbacks, because there's nothing underneath to be sugar for." <b>The generous framing, and the true one:</b> wanting cleanup in a destructor is wanting async RAII. That instinct is right and the committee agreed — P1662 tried to put it in the language in 2019 and failed. What shipped instead is the library version, in the sender domain. So the objection isn't an argument against senders; it's a request for something senders provide. <b>P3955R0 "It's Scopes All the Way Down" (Leahy, 14 Jan 2026)</b> is the paper: enter-scope senders that yield exit-scope senders, with within / enter_scopes / nest_scopes / lifetime, continuing Kirk Shoop's P2849 with his permission. Implemented on stdexec, not yet published. He's presenting "Implementing Async RAII" at CppCon 2026 — mention that, it's a genuine service to the room. <b>If you want one more example:</b> the paper reformulates an async mutex as acquire() returning an enter-scope sender, which lets you take three mutexes in parallel — impossible with the wrap-a-sender shape. <b>VERIFY:</b> P3955 is R0 and pre-LEWG; say "proposed", never "coming in C++29." <b>Have the AV example ready if pressed:</b> sensor timeouts, mode transitions, watchdog-triggered subsystem restarts, and simulation runs that stop early are all cancellation that isn't process exit. But don't lead with domain specifics — half the room isn't in your domain. <b>Read the concession box slowly and mean it.</b> If it sounds grudging you lose everyone who came in agreeing with your colleagues, and they're the people you're actually here for.</div>
 </div>
 
 <!-- S8 SECTION: MODEL -->
@@ -1202,6 +1202,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     <li><span class="pi good">▸</span><span><strong>What:</strong> senders are lazy, composable descriptions of work; the scheduler is swappable — your io_uring ring can be one.</span></li>
     <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 2–4 years) — and P2300 deliberately excludes I/O.</span></li>
     <li><span class="pi good">▸</span><span><strong>The bridge:</strong> wrap your existing async I/O layer as senders today; swap in standard I/O when P2762 lands.</span></li>
+    <li><span class="pi good">▸</span><span><strong>Not sugar:</strong> async cleanup, a compile-time error contract, and caller-frame operation states have no callback equivalent — that was the objection worth answering.</span></li>
     <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
   </ul>
   <div class="notes"><b>Dropped nuance, deploy if useful:</b> structured concurrency makes the safe path the default — child work completes before the parent scope exits. Standard names are continues_on / starts_on (stdexec keeps transfer / on as aliases). stdexec is experimental with ongoing API churn (a Dec 2025 PR dropped its non-conforming static connect members); Beman tracks spec fidelity for eventual stdlib upstreaming.</div>
