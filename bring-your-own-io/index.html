@@ -1180,6 +1180,40 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
 </div>
 
 <!-- S30 RESOURCES -->
+<!-- SUMMARY -->
+<div class="slide" id="s34">
+  <div class="aline"></div>
+  <h2>Summary</h2>
+  <ul class="plist mt2" style="font-size:1.13em;">
+    <li><span class="pi good">▸</span><span><strong>Why:</strong> every pre-P2300 async codebase is correct but isolated — the standard gave us primitives, never a model.</span></li>
+    <li><span class="pi good">▸</span><span><strong>What:</strong> senders are lazy, composable descriptions of work; the scheduler is swappable — your io_uring ring can be one.</span></li>
+    <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 2–4 years) — and P2300 deliberately excludes I/O.</span></li>
+    <li><span class="pi good">▸</span><span><strong>The bridge:</strong> wrap your existing async I/O layer as senders today; swap in standard I/O when P2762 lands.</span></li>
+    <li><span class="pi good">▸</span><span><strong>Not just sugar:</strong> a callback is a function you give away; a sender is a value you keep — which is why the consumer, not the algorithm, decides how work runs.</span></li>
+        <li><span class="pi good">▸</span><span><strong>Not just destructors:</strong> the language forbids async construction and destruction outright, so cleanup that does I/O has to live somewhere else — and async RAII is being built in the sender domain.</span></li>
+        <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
+  </ul>
+  <div class="notes"><b>Dropped nuance, deploy if useful:</b> structured concurrency makes the safe path the default — child work completes before the parent scope exits. Standard names are continues_on / starts_on (stdexec keeps transfer / on as aliases). stdexec is experimental with ongoing API churn (a Dec 2025 PR dropped its non-conforming static connect members); Beman tracks spec fidelity for eventual stdlib upstreaming.</div>
+</div>
+
+<!-- S32 Q&A -->
+<div class="slide title-slide" id="s35">
+  <div class="eyebrow">End of talk</div>
+  <div class="title-main" style="font-size:2.5em;">Questions?</div>
+  <p class="title-sub" style="margin-bottom:1.4em;">
+    To get started on Godbolt: <strong>compiler-explorer.com</strong> → add library <strong>stdexec</strong> → explore the examples at <strong>github.com/NVIDIA/stdexec/tree/main/examples</strong><br><br>
+    If you're using raw sockets, io_uring, epoll, or any callback-based async system and want to think through wrapping it as senders — let's talk.
+  </p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7em;max-width:560px;">
+    <div class="box g"><p><strong>Experiment</strong><br>godbolt.org + stdexec · examples on GitHub</p></div>
+    <div class="box bl"><p><strong>Read</strong><br>Niebler blog · Teodorescu ACCU Dec 2024</p></div>
+    <div class="box gr"><p><strong>Watch</strong><br>bemanproject/net · P2762 · libc++ status</p></div>
+    <div class="box gr"><p><strong>Wrap</strong><br>Your async layer → senders → composability</p></div>
+  </div>
+  <div class="notes"><b>Advance once past this slide as soon as the first question lands.</b> The two references slides sit immediately behind it — that is what should be on screen while people are asking and photographing, not the word "Questions?". Press A from there for the appendix if a question needs it, and A again to come back. <b>The cost question (it will come):</b> the default composed path is allocation-free — connect() builds a single operation state, typically on the stack; no type erasure, no ref-counting. Allocation is opt-in at specific boundaries: async_scope / counting_scope spawn, any_sender_of, split. sync_wait is a blocking join — fine at the program edge, wrong inside pipelines. Codegen: deep template inlining; say "measure your workload" rather than promising numbers. Social proof: Citadel runs std::execution in production (Sutter, Mar 2026). <b>"Did you wrap your own scheduler?"</b> — honest answer: "Not at work — different priorities, and the ecosystem gaps in this talk are part of why the internal case is hard to make yet. But I built a personal research runtime, fiberexec, that does this exact integration end to end — io_uring under fibers under senders — and the findings are public."</div>
+</div>
+
+<!-- S9 THE THREE ABSTRACTIONS -->
 <div class="slide" id="s33">
   <div class="aline"></div>
   <h2>References — reading &amp; talks</h2>
@@ -1244,40 +1278,6 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="notes"><b>The two lines worth saying out loud:</b> stdexec is what you experiment with today, and the cheatsheet lives next to these slides in the talks repo. Everything else is for the photograph. <b>If asked what you'd watch:</b> the P2762-vs-P4003 question is the one that decides what standard async I/O looks like, and it is genuinely open.</div>
 </div>
 
-<!-- SUMMARY -->
-<div class="slide" id="s34">
-  <div class="aline"></div>
-  <h2>Summary</h2>
-  <ul class="plist mt2" style="font-size:1.13em;">
-    <li><span class="pi good">▸</span><span><strong>Why:</strong> every pre-P2300 async codebase is correct but isolated — the standard gave us primitives, never a model.</span></li>
-    <li><span class="pi good">▸</span><span><strong>What:</strong> senders are lazy, composable descriptions of work; the scheduler is swappable — your io_uring ring can be one.</span></li>
-    <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 2–4 years) — and P2300 deliberately excludes I/O.</span></li>
-    <li><span class="pi good">▸</span><span><strong>The bridge:</strong> wrap your existing async I/O layer as senders today; swap in standard I/O when P2762 lands.</span></li>
-    <li><span class="pi good">▸</span><span><strong>Not just sugar:</strong> a callback is a function you give away; a sender is a value you keep — which is why the consumer, not the algorithm, decides how work runs.</span></li>
-    <li><span class="pi good">▸</span><span><strong>Not just destructors:</strong> the language forbids async construction and destruction outright, so cleanup that does I/O has to live somewhere else — and async RAII is being built in the sender domain.</span></li>
-    <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
-  </ul>
-  <div class="notes"><b>Dropped nuance, deploy if useful:</b> structured concurrency makes the safe path the default — child work completes before the parent scope exits. Standard names are continues_on / starts_on (stdexec keeps transfer / on as aliases). stdexec is experimental with ongoing API churn (a Dec 2025 PR dropped its non-conforming static connect members); Beman tracks spec fidelity for eventual stdlib upstreaming.</div>
-</div>
-
-<!-- S32 Q&A -->
-<div class="slide title-slide" id="s35">
-  <div class="eyebrow">End of talk</div>
-  <div class="title-main" style="font-size:2.5em;">Questions?</div>
-  <p class="title-sub" style="margin-bottom:1.4em;">
-    To get started on Godbolt: <strong>compiler-explorer.com</strong> → add library <strong>stdexec</strong> → explore the examples at <strong>github.com/NVIDIA/stdexec/tree/main/examples</strong><br><br>
-    If you're using raw sockets, io_uring, epoll, or any callback-based async system and want to think through wrapping it as senders — let's talk.
-  </p>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7em;max-width:560px;">
-    <div class="box g"><p><strong>Experiment</strong><br>godbolt.org + stdexec · examples on GitHub</p></div>
-    <div class="box bl"><p><strong>Read</strong><br>Niebler blog · Teodorescu ACCU Dec 2024</p></div>
-    <div class="box gr"><p><strong>Watch</strong><br>bemanproject/net · P2762 · libc++ status</p></div>
-    <div class="box gr"><p><strong>Wrap</strong><br>Your async layer → senders → composability</p></div>
-  </div>
-  <div class="notes"><b>The cost question (it will come):</b> the default composed path is allocation-free — connect() builds a single operation state, typically on the stack; no type erasure, no ref-counting. Allocation is opt-in at specific boundaries: async_scope / counting_scope spawn, any_sender_of, split. sync_wait is a blocking join — fine at the program edge, wrong inside pipelines. Codegen: deep template inlining; say "measure your workload" rather than promising numbers. Social proof: Citadel runs std::execution in production (Sutter, Mar 2026). <b>"Did you wrap your own scheduler?"</b> — honest answer: "Not at work — different priorities, and the ecosystem gaps in this talk are part of why the internal case is hard to make yet. But I built a personal research runtime, fiberexec, that does this exact integration end to end — io_uring under fibers under senders — and the findings are public."</div>
-</div>
-
-<!-- S9 THE THREE ABSTRACTIONS -->
 <div class="slide appx" id="ax3">
   <div class="aline"></div>
   <div class="appxtag">Appendix A · reference for Q&amp;A — not presented live</div>
