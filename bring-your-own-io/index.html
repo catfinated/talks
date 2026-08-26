@@ -722,7 +722,7 @@ async_recv(io_sched, socket, buf)      <span class="cm">// on your ring</span>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix A</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
+  <div class="notes"><b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix B</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
 </div>
 
 <!-- ASYNC_SCOPE (split from structured concurrency) -->
@@ -834,7 +834,8 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       <ul style="font-size:.92em;">
         <li><span class="ic">static_thread_pool</span> — actual multi-thread scheduler</li>
         <li><span class="ic">async_scope</span> — structured fire-and-forget with lifetime tracking (standardized as <span class="ic">counting_scope</span> in C++26)</li>
-        <li><span class="ic">when_any</span>, <span class="ic">finally</span>, sequence senders</li>
+        <li><span class="ic">when_any</span>, <span class="ic">finally</span>, <span class="ic">repeat_effect_until</span></li>
+        <li><span class="ic">sequence_senders</span> — streams: <span class="ic">set_next</span>, <span class="ic">iterate</span>, <span class="ic">transform_each</span>, <span class="ic">ignore_all_values</span>. The one abstraction a server needs and C++26 doesn't have.</li>
         <li>Type erasure: <span class="ic">any_sender_of</span>, <span class="ic">any_scheduler</span></li>
         <li><strong>io_uring scheduler</strong> — real scheduler: schedule, timers, stop propagation. No I/O <em>operations</em>.</li>
         <li><strong>nvexec</strong>: full CUDA / multi-GPU scheduler layer</li>
@@ -852,7 +853,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       </div>
     </div>
   </div>
-  <div class="notes"><b>Frontier pointer, if there's appetite:</b> Leahy's C++ on Sea 2025 talk on higher-order senders shows where sender composition is heading — runtime dynamic graphs, the branch primitive. It's on the references slide.</div>
+  <div class="notes"><b>Sequence senders are the bullet worth pausing on</b> — a plain sender completes exactly once, so "recv until the peer closes" needs a different abstraction entirely, and there is no adopted paper for it. Press A for the backup slide if anyone asks how you'd write a server. <b>Frontier pointer, if there's appetite:</b> Leahy's C++ on Sea 2025 talk on higher-order senders shows where sender composition is heading — runtime dynamic graphs, the branch primitive. It's on the references slide.</div>
 </div>
 
 <!-- S20 BEMAN -->
@@ -1276,9 +1277,41 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="notes"><b>The two lines worth saying out loud:</b> stdexec is what you experiment with today, and the cheatsheet lives next to these slides in the talks repo. Everything else is for the photograph. <b>If asked what you'd watch:</b> the P2762-vs-P4003 question is the one that decides what standard async I/O looks like, and it is genuinely open.</div>
 </div>
 
+<div class="slide appx" id="ax0">
+  <div class="aline b"></div>
+  <div class="appxtag">Appendix A · reference for Q&amp;A — not presented live</div>
+  <h2>"Could I write a network server with this?"</h2>
+  <div class="row mt" style="gap:1.2em;">
+    <div class="col-55">
+      <div class="box rd" style="margin-top:0;">
+        <p><strong>First, a terminology trap.</strong> <em>Single-shot</em> vs <em>multi-shot</em> is about how many times a sender can be <span class="ic">connect</span>ed — not how many values it delivers. <span class="ic">just(42)</span> is multi-shot because it's copyable; a coroutine task is single-shot; <span class="ic">split</span> converts one to the other. <strong>Every sender completes exactly once either way.</strong> Multi-shot is not "recv until the peer closes."</p>
+      </div>
+      <div class="box bl mt">
+        <p><strong>Streams need a different abstraction: sequence senders.</strong> A sequence sender emits many items via <span class="ic">set_next</span> before a final completion. stdexec has them in <span class="ic">exec/sequence/</span> — <span class="ic">iterate</span>, <span class="ic">transform_each</span>, <span class="ic">ignore_all_values</span>, <span class="ic">merge_each</span>, <span class="ic">any_sequence_of</span>.</p>
+        <p style="margin-top:.4em;"><strong>Not in C++26. No adopted paper. Nothing in Beman.</strong></p>
+      </div>
+      <div class="box g mt">
+        <p><strong>The lifetime story <em>is</em> ready.</strong> A server's fan-out is unbounded and runtime-determined — N connections, each outliving the accept iteration that made it. That is exactly the shape <span class="ic">counting_scope</span> exists for: spawn each connection through <span class="ic">scope.get_token()</span>, keep accepting, and shut down with <span class="ic">request_stop()</span> then <span class="ic">join()</span>. Provable teardown without <span class="ic">start_detached</span>.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.4em;">Three ways to write the loop today</p>
+      <ul class="plist" style="font-size:.9em;">
+        <li><span class="pi good">▸</span><span><strong>Coroutine per connection.</strong> An <span class="ic">exec::task</span> with an ordinary <span class="ic">while</span> loop over <span class="ic">co_await async_recv(...)</span>. Readable by anyone; one frame allocation per connection, which is noise next to a socket. <strong>What I'd reach for.</strong></span></li>
+        <li><span class="pi good">▸</span><span><strong><span class="ic">repeat_effect_until</span></strong> — the loop in pure sender form. Pitfall: it copies the sender on each connect, so it does <em>not</em> work with type-erased senders. Workaround is to erase a sender <em>factory</em> instead.</span></li>
+        <li><span class="pi good">▸</span><span><strong>Sequence senders</strong> — <span class="ic">accept_seq | transform_each(handle) | ignore_all_values</span>. Experimental; open bugs include type-erased sequences not propagating stop tokens.</span></li>
+      </ul>
+      <div class="box gr mt">
+        <p><strong>"Static pipelines only" is half wrong.</strong> The <em>types</em> are static and monomorphized; the <em>graph</em> is not. <span class="ic">let_value</span> picks the next sender at runtime, <span class="ic">spawn</span> gives runtime child count, <span class="ic">any_sender_of</span> erases shape, coroutines give arbitrary control flow. The dynamic parts cost a frame or an erasure allocation — the zero-allocation property covers the statically-shaped parts only.</p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>The honest verdict, if asked outright:</b> the lifetime and composition story is ready; the stream story is not, and there's no socket to accept from in the first place — which is the thesis of the whole talk. Today you'd use Asio through asioexec for real accept/recv/send senders and coroutines for the per-connection loops. <b>Lead with the terminology correction</b> — most people asking this question have conflated multi-shot with multi-value, and clearing that up answers half the question before you get to the rest. <b>Don't oversell counting_scope:</b> it solves connection lifetime, not streaming. Two different gaps.</div>
+</div>
+
 <div class="slide appx" id="ax3">
   <div class="aline"></div>
-  <div class="appxtag">Appendix A · reference for Q&amp;A — not presented live</div>
+  <div class="appxtag">Appendix B · reference for Q&amp;A — not presented live</div>
   <h2><span class="ic">then</span> vs <span class="ic">let_value</span></h2>
   <p class="mt">The whole rule: <span class="ic">then</span>'s callable returns a <strong>value</strong>; <span class="ic">let_value</span>'s returns a <strong>sender</strong>. Reach for <span class="ic">let_value</span> whenever the next step is itself asynchronous.</p>
   <div class="row mt" style="gap:1.2em;">
@@ -1314,7 +1347,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
 
 <div class="slide appx" id="ax4">
   <div class="aline"></div>
-  <div class="appxtag">Appendix B · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
+  <div class="appxtag">Appendix C · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col">
       <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The old way — danger</p>
@@ -1348,7 +1381,7 @@ stdexec::<span class="fn">sync_wait</span>(
 <!-- APPENDIX: COMPARISON TABLE -->
 <div class="slide appx" id="s24">
   <div class="aline"></div>
-  <h2>Appendix C — ecosystem at a glance</h2>
+  <div class="appxtag">Appendix D · reference for Q&amp;A — not presented live</div><h2>Ecosystem at a glance</h2>
   <p style="font-size:.95em;color:var(--muted);">Reference for Q&amp;A — not presented live.</p>
   <table class="ct mt">
     <thead>
