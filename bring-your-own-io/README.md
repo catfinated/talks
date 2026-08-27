@@ -10,7 +10,7 @@ deliberately left open.
 
 I've built a lot of async infrastructure over my career — I/O and compute
 schedulers both. I also followed the executor proposals for a while, and tuned
-out when they missed C++20, then C++23. The io_uring scheduler came during that
+out when they missed C++20, then C++23. An io_uring scheduler came during that
 gap, designed without reference to senders.
 
 Leahy's *std::execution in Asio Codebases* (CppCon 2025) pulled me back in. This
@@ -18,7 +18,7 @@ talk is what I found holding that infrastructure up against P2300 — what the
 model gives you, what the ecosystem actually ships, and why the standard async
 model arrived without any async I/O in it.
 
-It also takes three objections from colleagues seriously enough to answer them:
+It also takes a few objections from colleagues seriously enough to answer them:
 that it's too hard to use, that the pipes are sugar over callbacks, and that
 cancellation and cleanup can live in destructors.
 
