@@ -28,6 +28,7 @@ cancellation and cleanup can live in destructors.
 |---|---|
 | [`index.html`](index.html) | The slides. Self-contained — open it in a browser, no build step. |
 | [`sender-algorithms-cheatsheet.md`](sender-algorithms-cheatsheet.md) | Every sender algorithm with signatures, gotchas, and stdexec/Beman availability. Also as [PDF](sender-algorithms-cheatsheet.pdf). |
+| [`papers-cited.md`](papers-cited.md) | Every WG21 paper the talk cites, with its latest known revision and a `wg21.link` that stays current as papers are revised. Notes on the ones that are easy to get wrong. |
 | [`timing-plan.md`](timing-plan.md) | Section budgets and checkpoints for delivering it in a 60-minute slot. |
 
 ### Viewing the slides
