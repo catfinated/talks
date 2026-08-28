@@ -46,7 +46,7 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 | `write_env(sndr, env)` | Run child with additional environment entries | ✓ | ✓ |
 | `unstoppable(sndr)` | Hide stop requests from the child — a cancellation firewall | ✓ | ✓ |
 | `stop_when(sndr, token)` | Also request stop when an external token fires | ✓ | ✓ |
-| `affine` | Scheduler-affinity adaptor used by `task` to return to its scheduler (P3552) | ✓ | ✓ |
+| `affine` | Scheduler-affinity adaptor used by `task` to return to its scheduler. Redesigned and made unary by P3941R4; renamed from `affine_on` by P4151R1 | ✓ | ✓ |
 
 ## Sender consumers — leave sender-land
 
@@ -102,9 +102,11 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 |---|---|
 | `async_scope` | Pre-standard ancestor of `counting_scope` (the deck's examples use it) |
 | `when_any(sndrs...)` | First completion wins; the rest are cancelled |
-| `repeat_effect_until` / `repeat_n` | Looping combinators |
+| `repeat` / `repeat_until` / `repeat_n` | Looping combinators. `repeat_effect` / `repeat_effect_until` are deprecated aliases; `<exec/repeat_effect_until.hpp>` warns and forwards to `<exec/repeat_until.hpp>`. Needs the child sender to be copyable **or** lvalue-connectable — type-erased senders are neither, so erase a sender *factory* instead |
 | `finally(sndr, cleanup)` | Unconditional async cleanup (async RAII)³ |
 | `any_sender_of<Sigs...>` | Type-erased sender (this is an allocation point) |
+| `sequence(sndrs...)` | Run senders one after another — serial composition, the basis of P4320. **Not** a stream abstraction |
+| `sequence_senders` | The actual stream abstraction: `set_next`, plus `iterate` / `transform_each` / `ignore_all_values` / `merge_each` / `any_sequence_of` under `exec/sequence/`. Very experimental; open stop-propagation issues through type-erased sequences. No standards paper |
 | `into_tuple(sndr)` | Pack all values into one tuple value |
 | `create(fn)` | Build a sender from a callback-style initiation function — handy for wrapping |
 | `static_thread_pool` | Concrete fixed-size thread-pool scheduler |
@@ -121,7 +123,16 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 2. stdexec's `bulk` still has the pre-P3481 shape (no policy parameter, no
    chunked variants).
 3. `finally` appears in stdexec's standard-track namespace but is **not** in
-   C++26.
+   C++26. It was proposed alongside `write_env` and `unstoppable` in P3284R0/R1,
+   then cut: from R2 the paper is titled for the other two only, and R4 — the
+   adopted revision — carries just `write_env` and `unstoppable`.
+
+**Attribution.** Some material adapted from P4014R2, "The Sender Sub-Language For
+Beginners" (Vinnie Falco, Mungo Gill, 2026), dedicated to the public domain under
+CC0 1.0 — <https://wg21.link/P4014>. That paper covers all thirty C++26 sender
+algorithms with a worked example and a plain-C++ equivalent for each; §2.4 maps
+each algorithm to its theoretical origin. Recommended for depth, with the note
+that its authors also advocate a coroutine-native alternative.
 
 **Caveats.** Beman self-reports "under development, not ready for production";
 its status doc shows a few items (bulk, sync_wait, task, scopes, spawn) as

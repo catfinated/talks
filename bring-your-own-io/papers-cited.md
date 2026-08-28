@@ -33,12 +33,26 @@ was cut from R2 onward; only `write_env` and `unstoppable` were adopted. `finall
 |---|---|---|---|
 | P4003 | "A Minimal Coroutine Execution Model" (Falco, Gill, Gerbino) | R3, May 2026 | https://wg21.link/P4003 |
 | P4007 | "Open Issues in `std::execution::task`" (Falco, Gill) — **informational**, "asks for nothing" | R3, 2026-05-01 | https://wg21.link/P4007 |
+| P4014 | "The Sender Sub-Language For Beginners" (Falco, Gill) — all 30 C++26 algorithms with plain-C++ equivalents. **CC0 public domain.** Informational | R2, 2026-05-01 | https://wg21.link/P4014 |
 | P4041 | "Is `std::execution` a Universal Async Model?" (Falco) | R0, ~May 2026 | https://wg21.link/P4041 |
 
 **Framing note.** Only P4003 is a proposal; P4007 is an informational classification of open
 issues in the C++26 `task` type. Falco's stated position is that coroutine-native I/O and
 `std::execution` are *complementary*, each suited to different domains — not that one replaces
 the other. Don't present this line of work as a competing bid to replace senders.
+
+**On P4014.** The most complete sender tutorial available, and CC0 — explicitly dedicated for
+reuse as teaching material, so you can lift from it for the cheatsheet. §2.4 maps every algorithm
+to its theoretical origin; §13 is a sensor-fusion / collision-detection / actuator-braking
+example. Caveat: the register turns ironic, §14.1 contrasts a recursive backtracker with a
+ten-line plain equivalent, and the conclusion points at the author's own Corosio. Recommend it
+for coverage; say the author is making a case.
+
+**Algorithms P4014 covers that the deck never mentions:** `affine` (renamed from `affine_on` by
+P4151R1, made unary by P3941R4), `schedule_from`, `read_env`, `into_variant`,
+`stopped_as_optional`, `stopped_as_error`, `when_all_with_variant`, `just_error`,
+`just_stopped`, `associate`. Worth a skim in case one of them answers a Q&A question better
+than improvising.
 
 **P4007's four "not fixable post-ship" issues**, if you need specifics: Allocator Timing,
 Allocator Propagation, Error Return (`co_yield with_error` is locked in because `return_value`
@@ -48,9 +62,10 @@ frame growth — Müller called it a potential security vulnerability, and a pro
 reported against stdexec in April 2026). Treat as one party's analysis, but it is sourced to NB
 ballot comments and LWG issues.
 
-P4041 isn't cited in the deck. It collects the public criticism of sender complexity — including
-the Circle author's report that reordering one constraint produced a 5,500-line error that
-triggered an ICE. Worth reading before Q&A even if you don't cite it.
+P4041 isn't cited on any slide, but it now backs the "too hard to use" concession in slide 3's
+speaker notes: Sean Baxter's 5,500-line error that triggered an ICE, Rainer Grimm abandoning
+his C++26 library coverage, and Ben FrantzDale's "sea of underscores" remark. Cite it as a collection of criticism,
+not a neutral assessment — the author is proposing an alternative model.
 
 ### Papers referenced *by* P4007, if you want the trail
 
