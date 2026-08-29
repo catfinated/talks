@@ -891,9 +891,11 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       </div>
       <div class="box bl mt">
         <p><span class="ic">bemanproject/net</span> implements P2762 — sender-based networking, where standard async networking will come from. Early: only a <span class="ic">poll(2)</span> backend so far; io_uring / epoll / kqueue planned. C++29 target.</p>
+        <p style="margin-top:.5em;"><strong>And it won't look like sockets.</strong> SG4 (Tokyo, Feb 2024) recommended <em>against</em> a low-level interface; the public API is to be based on <strong>IETF TAPS</strong> — describe what you need from a connection, the implementation picks the transport. Lower-level access stays underneath, not in front.</p>
       </div>
     </div>
   </div>
+  <div class="notes"><b>The detail almost nobody in the room will know, and it matters:</b> at the February 2024 Tokyo meeting SG4 recommended <em>not</em> to provide a low-level networking interface. The public interface is to be based on <b>IETF TAPS</b> (Transport Services) — you describe what you need from a connection and the implementation selects the transport — with something like the current lower-level interface used underneath. The beman net README states this outright. <b>Why it matters:</b> everyone hears "networking in the standard" and pictures sockets. If TAPS holds, then even after P2762 lands, an engineer who wants to drive an io_uring ring directly is still writing their own layer — so "bring your own I/O" outlives the arrival of standard networking rather than being resolved by it. <b>Say it carefully:</b> this is a direction from 2024 and designs change; frame it as "the current direction is TAPS-shaped, not socket-shaped", not as settled fact. <b>The two lines to say out loud on this slide:</b> spec-fidelity is the explicit goal, so Beman is the leading indicator of what actually lands in libstdc++ and libc++; and it needs C++23, unlike stdexec's C++20.</div>
 </div>
 
 <!-- S22 SECTION: I/O GAP -->
