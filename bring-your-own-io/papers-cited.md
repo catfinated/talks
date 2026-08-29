@@ -88,14 +88,14 @@ Composition" (Gill, Falco), P3950R0 "`return_value` & `return_void` Are Not Mutu
 | P2444 | Referenced in speaker notes | https://wg21.link/P2444 |
 | P2464 | Referenced in speaker notes | https://wg21.link/P2464 |
 
-## Not cited but relevant
+## Cited in the speaker notes
 
 | Paper | Why it matters | Link |
 |---|---|---|
-| P4172 | Falco, companion to P4003 (2026). Argues senders suit DAG-shaped work while byte-oriented I/O is chain-shaped — the graph/chain discriminator now on the adoption slide | https://wg21.link/P4172 |
-| P4029 | Wong, "The SG14 Priority List for C++29/32" (Feb 2026). SG14 advises networking should **not** be built on P2300 — allocation patterns incompatible with low-latency requirements — and recommends P4003 "Direct Style" I/O as the C++29 networking model instead. Now answered in the adoption slide's notes | https://wg21.link/P4029 |
+| P4172 | Falco, companion to P4003 (2026). Argues senders suit DAG-shaped work while byte-oriented I/O is chain-shaped — the source of the graph/chain test on the adoption slide | https://wg21.link/P4172 |
+| P4029 | Wong, "The SG14 Priority List for C++29/32" (Feb 2026). SG14 advises networking should **not** be built on P2300 — allocation patterns incompatible with low-latency requirements — and recommends P4003 "Direct Style" I/O as the C++29 networking model instead. Answered in the adoption slide's notes | https://wg21.link/P4029 |
 
-
+## Not cited but relevant
 
 | Paper | Why it matters | Link |
 |---|---|---|
@@ -109,6 +109,6 @@ for years. Original: herbsutter.com, 23 April 2025, "Living in the future: Using
 
 ## Where each appears in the deck
 
-- **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3552, P3955, P4003, P4007, P4320,
-  P2079, N2175, N3721, P0443
-- **Speaker notes only:** P1662, P3175, P2444, P2464
+- **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3552, P3955, P4003, P4007, P4014,
+  P4320, P2079, N2175, N3721, P0443
+- **Speaker notes only:** P1662, P3175, P2444, P2464, P4029, P4041, P4172
