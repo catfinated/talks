@@ -100,6 +100,14 @@ Composition" (Gill, Falco), P3950R0 "`return_value` & `return_void` Are Not Mutu
 | Paper | Why it matters | Link |
 |---|---|---|
 | P3300 | Lelbach, "C++ Asynchronous Parallel Algorithms" — §6.1 is the source of the "dynamic asynchrony" concern P4320 cites against `let_value` | https://wg21.link/P3300 |
+| P4100 | Falco, "Coroutine-Native I/O for C++29 (The Network Endeavor)" — umbrella paper for the whole coroutine-first series | https://wg21.link/P4100 |
+
+**Capy / Corosio, if the graph-vs-chain line comes up.** Capy (cppalliance/capy) is the library
+P4003 is drawn from: coroutine task type, byte streams, type-erased streams, and concurrency
+facilities including `when_all`, `when_any`, executors, strands and thread pools, with executor
+affinity propagated through every `co_await`. CERN's traccc uses it for GPU reconstruction
+pipelines. Corosio is the networking layer built on it. So coroutine libraries do fan out across
+contexts, and they are on GPUs — don't claim graph-shaped work is sender-only.
 
 **Primary sources beat citations.** P4041 reproduces Sutter's Citadel production quote but omits
 the following sentence — that it was possible because they ran their own in-house implementation
