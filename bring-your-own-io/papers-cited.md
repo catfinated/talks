@@ -92,7 +92,18 @@ Composition" (Gill, Falco), P3950R0 "`return_value` & `return_void` Are Not Mutu
 
 | Paper | Why it matters | Link |
 |---|---|---|
+| P4172 | Falco, companion to P4003 (2026). Argues senders suit DAG-shaped work while byte-oriented I/O is chain-shaped — the graph/chain discriminator now on the adoption slide | https://wg21.link/P4172 |
+| P4029 | Wong, "The SG14 Priority List for C++29/32" (Feb 2026). SG14 advises networking should **not** be built on P2300 — allocation patterns incompatible with low-latency requirements — and recommends P4003 "Direct Style" I/O as the C++29 networking model instead. Now answered in the adoption slide's notes | https://wg21.link/P4029 |
+
+
+
+| Paper | Why it matters | Link |
+|---|---|---|
 | P3300 | Lelbach, "C++ Asynchronous Parallel Algorithms" — §6.1 is the source of the "dynamic asynchrony" concern P4320 cites against `let_value` | https://wg21.link/P3300 |
+
+**Primary sources beat citations.** P4041 reproduces Sutter's Citadel production quote but omits
+the following sentence — that it was possible because they ran their own in-house implementation
+for years. Original: herbsutter.com, 23 April 2025, "Living in the future: Using C++26 at work".
 
 ---
 
