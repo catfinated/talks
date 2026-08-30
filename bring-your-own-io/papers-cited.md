@@ -94,6 +94,11 @@ Composition" (Gill, Falco), P3950R0 "`return_value` & `return_void` Are Not Mutu
 |---|---|---|
 | P4172 | Falco, companion to P4003 (2026). Argues senders suit DAG-shaped work while byte-oriented I/O is chain-shaped — the source of the graph/chain test on the adoption slide | https://wg21.link/P4172 |
 | P4029 | Wong, "The SG14 Priority List for C++29/32" (Feb 2026). SG14 advises networking should **not** be built on P2300 — allocation patterns incompatible with low-latency requirements — and recommends P4003 "Direct Style" I/O as the C++29 networking model instead. Answered in the adoption slide's notes | https://wg21.link/P4029 |
+| P3482 | Rodgers & Kühl, "Design for C++ networking based on IETF TAPS" (2024). Modifies P2762's API to describe connections by property so the implementation picks the transport — the concrete design behind the "it won't look like sockets" point on the beman net slide, and what P4003 positions IoAwaitable beneath | https://wg21.link/P3482 |
+
+**Note on P3482.** `wg21.link/P3482` resolves to `papers/2025/p3482r1.html`, but that
+document's own title block still reads "P3482R0", dated 2024-10-14. The R1 exists; the
+text wasn't restamped. Cite it as R1 and don't be thrown by the header.
 
 ## Not cited but relevant
 
@@ -119,4 +124,4 @@ for years. Original: herbsutter.com, 23 April 2025, "Living in the future: Using
 
 - **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3552, P3955, P4003, P4007, P4014,
   P4320, P2079, N2175, N3721, P0443
-- **Speaker notes only:** P1662, P3175, P2444, P2464, P4029, P4041, P4172
+- **Speaker notes only:** P1662, P3175, P2444, P2464, P3482, P4029, P4041, P4172

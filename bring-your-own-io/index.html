@@ -468,7 +468,12 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
 
 <span class="cm">// Work STARTS here. Calling thread blocks until done.</span>
 <span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(work).value();</code></pre>
-<pre style="font-size:.95em;"><code><span class="cm">// Swap the scheduler — pipeline logic is unchanged.</span>
+<pre style="font-size:.95em;"><code><span class="cm">// Make it a function of its scheduler...</span>
+<span class="kw">auto</span> <span class="fn">pipeline</span>(<span class="kw">auto</span> sched) {
+    <span class="kw">return</span> stdexec::<span class="fn">schedule</span>(sched) | <span class="cm">/* ...same steps... */</span>;
+}
+
+<span class="cm">// ...and the same logic runs anywhere:</span>
 <span class="kw">auto</span> cpu_work  = <span class="fn">pipeline</span>(thread_pool_sched);
 <span class="kw">auto</span> gpu_work  = <span class="fn">pipeline</span>(cuda_stream_sched);
 <span class="kw">auto</span> ring_work = <span class="fn">pipeline</span>(io_uring_sched);  <span class="cm">// your scheduler!</span></code></pre>
@@ -480,7 +485,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       </div>
     </div>
   </div>
-  <div class="notes"><b>If asked "so when WOULD I write a receiver?":</b> separate consuming one from defining one. Wrapping I/O — the rest of this talk — means writing a sender and an operation state; connect hands you a receiver and you call set_value / set_error / set_stopped on it. You never define the type. You define a receiver type only when you write a sender ALGORITHM (then, or a custom adaptor), a custom consumer (your own sync_wait, spawning into your own scope), or type erasure like any_sender_of. If you're writing an adaptor you're extending the framework rather than using it — different talk. <b>Two minutes, not six.</b> Read the three boxes in one breath — this room can define scheduler and receiver without help; the only lines that earn time are "your ring becomes a scheduler" and "you almost never write a receiver." <b>Then land the hook:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring and the computation logic is unchanged. That's the whole promise of the talk in one line.</div>
+  <div class="notes"><b>If asked "so when WOULD I write a receiver?":</b> separate consuming one from defining one. Wrapping I/O — the rest of this talk — means writing a sender and an operation state; connect hands you a receiver and you call set_value / set_error / set_stopped on it. You never define the type. You define a receiver type only when you write a sender ALGORITHM (then, or a custom adaptor), a custom consumer (your own sync_wait, spawning into your own scope), or type erasure like any_sender_of. If you're writing an adaptor you're extending the framework rather than using it — different talk. <b>On the second block:</b> pipeline() is a function returning a sender — that is the point. Because a sender is a value, the whole graph can be produced by a function parameterised on its scheduler, and the three call sites differ only in which scheduler they pass. <b>Two minutes, not six.</b> Read the three boxes in one breath — this room can define scheduler and receiver without help; the only lines that earn time are "your ring becomes a scheduler" and "you almost never write a receiver." <b>Then land the hook:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring and the computation logic is unchanged. That's the whole promise of the talk in one line.</div>
 </div>
 
 <!-- S10 THREE CHANNELS -->
@@ -499,7 +504,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     </div>
   </div>
 <pre class="mt" style="font-size:.94em;"><code><span class="cm">// Errors propagate automatically — no try/catch at every step</span>
-<span class="kw">auto</span> pipeline =
+<span class="kw">auto</span> work =
     <span class="fn">async_read</span>(sched, fd, buf)         <span class="cm">// might set_error()</span>
     | stdexec::<span class="fn">then</span>([](Buffer b) {
           <span class="kw">return</span> <span class="fn">parse</span>(b);               <span class="cm">// only runs if no error</span>
