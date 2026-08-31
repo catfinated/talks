@@ -654,7 +654,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   <div class="row mt" style="gap:1.4em;">
     <div class="col-60">
       <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.5em;">compiler-explorer.com · library: stdexec · example: hello_world.cpp</p>
-<pre><code><span class="cm">// stdexec/examples/hello_world.cpp</span>
+<pre><code><span class="cm">// stdexec/examples/hello_world.cpp — first half only</span>
 <span class="cm">// A minimal but complete sender pipeline:</span>
 <span class="cm">//   · static_thread_pool scheduler</span>
 <span class="cm">//   · schedule() to kick off on the pool</span>
@@ -668,7 +668,10 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
 <span class="cm">//   3. Introduce an error with just_error() and handle</span>
 <span class="cm">//      it with upon_error()</span>
 <span class="cm">//   4. Replace sync_wait with when_all() over two</span>
-<span class="cm">//      parallel branches</span></code></pre>
+<span class="cm">//      parallel branches</span>
+<span class="cm">//   5. Add a second static_thread_pool and use</span>
+<span class="cm">//      continues_on() to hand the value across —</span>
+<span class="cm">//      the same move your io_uring scheduler makes</span></code></pre>
     </div>
     <div class="col">
       <div class="box bl">
@@ -685,7 +688,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
       </div>
     </div>
   </div>
-  <div class="notes"><b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-loaded example → if compiles are slow, narrate the expected output → if Godbolt is down entirely, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
+  <div class="notes"><b>Load only the first half into Godbolt — up to and including the first sync_wait.</b> The rest of hello_world.cpp uses get_scheduler(), the run_loop scheduler, a let_value/starts_on block and a when_all over environment queries, all of which lean on the receiver environment — which this talk does not define until the operation-state slide, twelve slides from here. Trimming the buffer removes the problem rather than requiring you to scroll past it, and it makes the "things to try" list describe exactly the file on screen. <b>If someone has seen the full example upstream and asks:</b> the tail queries the environment that sync_wait provides, and environments come up later in the talk. <b>Try #5 is the one tied to the thesis</b> — handing a value between two schedulers is the move your io_uring ring makes; do that one if there is only time for one. <b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-loaded example → if compiles are slow, narrate the expected output → if Godbolt is down entirely, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
 </div>
 
 <!-- PATTERNS: FAN-OUT + SCHEDULER HAND-OFF (merged) -->
