@@ -736,47 +736,23 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
 <!-- DEMO SLIDE -->
 <div class="slide" id="s15">
   <div class="aline b"></div>
-  <h2>Live demo</h2>
-  <div class="row mt" style="gap:1.4em;">
-    <div class="col-60">
-      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.5em;">stdexec · adapted from <span class="ic">examples/hello_world.cpp</span></p>
-<pre><code><span class="cm">// stdexec/examples/hello_world.cpp — first half only</span>
-<span class="cm">// A minimal but complete sender pipeline:</span>
-<span class="cm">//   · static_thread_pool scheduler</span>
-<span class="cm">//   · schedule() to kick off on the pool</span>
-<span class="cm">//   · then() to transform the result</span>
-<span class="cm">//   · sync_wait() to drive execution</span>
-<span class="cm">//   · structured binding to unpack the tuple</span>
-
-<span class="cm">// Things to try after it compiles:</span>
-<span class="cm">//   1. Change the thread count in static_thread_pool(N)</span>
-<span class="cm">//   2. Chain a second then() step</span>
-<span class="cm">//   3. Introduce an error with just_error() and handle</span>
-<span class="cm">//      it with upon_error()</span>
-<span class="cm">//   4. Replace sync_wait with when_all() over two</span>
-<span class="cm">//      parallel branches</span>
-<span class="cm">//   5. Add a second static_thread_pool and use</span>
-<span class="cm">//      continues_on() to hand the value across —</span>
-<span class="cm">//      the same move your io_uring scheduler makes</span>
-<span class="cm">//   6. spawn() five tasks into an async_scope,</span>
-<span class="cm">//      carry on, then join with on_empty()</span></code></pre>
-    </div>
-    <div class="col">
-      <div class="box bl">
-        <p>Everything here is pre-built and ready to run. We're not writing from scratch — just walking through what's there and running it.</p>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+    <div style="font-size:3.6em;font-weight:700;letter-spacing:-.02em;line-height:1.05;">Demo time</div>
+    <p style="font-size:1.05em;color:var(--muted);margin-top:.6em;">Everything below is pre-built — nothing is being written from scratch.</p>
+    <div class="row" style="gap:1.2em;margin-top:2em;flex:0 0 auto;justify-content:center;">
+      <div class="box bl" style="margin:0;text-align:left;">
+        <p><strong>These examples</strong><br>
+        <a href="https://github.com/catfinated/talks/tree/main/bring-your-own-io/demo"><span style="font-family:var(--fm);font-size:.9em;">github.com/catfinated/talks</span></a><br>
+        <span style="color:var(--muted);font-family:var(--fm);font-size:.85em;">→ bring-your-own-io/demo</span></p>
       </div>
-      <div class="box g mt">
-        <p>Notice: the scheduler is constructed once and passed in. Swap <span class="ic">static_thread_pool</span> for any other scheduler and the pipeline logic is unchanged — that's the whole point.</p>
-      </div>
-      <div class="box gr mt">
-        <p>Full examples directory:<br><span style="font-family:var(--fm);font-size:.95em;">github.com/NVIDIA/stdexec/<br>tree/main/examples</span></p>
-      </div>
-      <div class="box rd mt">
-        <p>If anything misbehaves — skip ahead. The concepts are already established; the demo confirms them, it doesn't carry them.</p>
+      <div class="box gr" style="margin:0;text-align:left;">
+        <p><strong>Upstream examples</strong><br>
+        <span style="font-family:var(--fm);font-size:.9em;">github.com/NVIDIA/stdexec</span><br>
+        <span style="color:var(--muted);font-family:var(--fm);font-size:.85em;">→ tree/main/examples</span></p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Decide at setup whether to run locally or on Compiler Explorer</b> — whichever projects better in the room; the slide names neither, so both work. Using CE? share the URL verbally or in chat so people can follow along. Running locally? the seven pre-built binaries are in the talks repo. <b>Either way, load only the first half — up to and including the first sync_wait.</b> <b>The demo now closes the section deliberately:</b> toolkit, two patterns, structured concurrency, then all of it running. Every algorithm in the "things to try" list has been introduced by the time you get here — that was not true when this slide sat earlier. The rest of hello_world.cpp uses get_scheduler(), the run_loop scheduler, a let_value/starts_on block and a when_all over environment queries, all of which lean on the receiver environment — which this talk does not define until the operation-state slide, twelve slides from here. Trimming the buffer removes the problem rather than requiring you to scroll past it, and it makes the "things to try" list describe exactly the file on screen. <b>If someone has seen the full example upstream and asks:</b> the tail queries the environment that sync_wait provides, and environments come up later in the talk. <b>Priority: base, then #5, then whatever time allows.</b> Handing a value between two schedulers is the move your io_uring ring makes — do that one if there is only time for one. Seven examples will not fit eight minutes and are not meant to; the point of having them all built is that whichever question comes up, you can run the answer. <b>#6 is the best output of the seven</b> — "carrying on, 0 done" prints before any task finishes, then the join reports 5, and task 0 lands last because of the staggered sleeps. Spawn-and-continue-but-still-provable, in seven lines of output. <b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-built binary → if anything misbehaves, narrate the expected output (it is in the demo README) → if the machine or the site is uncooperative, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
+  <div class="notes"><b>This slide is a transition marker, not a reference — you will be in a terminal or a browser for the next eight minutes and nobody will be looking at it.</b> The demo-time reference is demo/README.md: the six variations, their expected output, and the priority order. Have it open on a second screen. <b>The six, in the order they are numbered:</b> 00 base · 01 thread count · 02 second then · 03 error recovery · 04 when_all · 05 two pools with continues_on · 06 spawn into an async_scope. <b>Priority: base, then 05, then whatever time allows.</b> Handing a value between two schedulers is the move your io_uring ring makes. Six will not fit eight minutes and are not meant to — the point of having them all built is that whichever question comes up, you can run the answer. <b>06 is the best output</b> — "carrying on, 0 done" prints before any task finishes, then the join reports 5, and task 0 lands last because of the staggered sleeps. <b>The line to say over 05:</b> replace pool_b with an io_uring scheduler and nothing above or below that line changes. <b>And over the base:</b> the scheduler is constructed once and passed in — swap static_thread_pool for anything else and the pipeline logic is unchanged. That is the whole point. <b>Decide at setup whether to run locally or on Compiler Explorer</b> — whichever projects better in the room; the slide names neither, so both work. Using CE? share the URL verbally or in chat so people can follow along. Running locally? the six pre-built binaries are in the talks repo. <b>Either way, load only the first half — up to and including the first sync_wait.</b> <b>The demo now closes the section deliberately:</b> toolkit, two patterns, structured concurrency, then all of it running. Every algorithm in the "things to try" list has been introduced by the time you get here — that was not true when this slide sat earlier. The rest of hello_world.cpp uses get_scheduler(), the run_loop scheduler, a let_value/starts_on block and a when_all over environment queries, all of which lean on the receiver environment — which this talk does not define until the operation-state slide, twelve slides from here. Trimming the buffer removes the problem rather than requiring you to scroll past it, and it makes the "things to try" list describe exactly the file on screen. <b>If someone has seen the full example upstream and asks:</b> the tail queries the environment that sync_wait provides, and environments come up later in the talk. <b>Priority: base, then #5, then whatever time allows.</b> Handing a value between two schedulers is the move your io_uring ring makes — do that one if there is only time for one. Six examples will not fit eight minutes and are not meant to; the point of having them all built is that whichever question comes up, you can run the answer. <b>#6 is the best output of the six</b> — "carrying on, 0 done" prints before any task finishes, then the join reports 5, and task 0 lands last because of the staggered sleeps. Spawn-and-continue-but-still-provable, in six lines of output. <b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-built binary → if anything misbehaves, narrate the expected output (it is in the demo README) → if the machine or the site is uncooperative, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
 </div>
 
 <!-- S17 SECTION: ECOSYSTEM -->
