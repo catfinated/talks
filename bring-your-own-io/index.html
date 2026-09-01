@@ -982,7 +982,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
 <span class="kw">struct</span> <span class="fn">read_sender</span> {
     <span class="kw">using</span> sender_concept = stdexec::sender_t;
     <span class="kw">using</span> completion_signatures = stdexec::completion_signatures&lt;
-        stdexec::set_value_t(std::size_t),
+        stdexec::set_value_t(<span class="kw">char</span>*, std::size_t),
         stdexec::set_error_t(std::error_code),
         stdexec::set_stopped_t()&gt;;  <span class="cm">// you cancel — declare it</span>
 
@@ -1036,7 +1036,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
         self.stop_.<span class="fn">reset</span>();          <span class="cm">// unregister BEFORE completing</span>
 
         <span class="kw">if</span> (result &gt;= <span class="num">0</span>)
-            <span class="fn">set_value</span>(std::move(self.rcvr_), std::size_t(result));
+            <span class="fn">set_value</span>(std::move(self.rcvr_), self.buf_, std::size_t(result));
         <span class="kw">else</span> <span class="kw">if</span> (result == -ECANCELED)
             <span class="fn">set_stopped</span>(std::move(self.rcvr_));     <span class="cm">// not an error!</span>
         <span class="kw">else</span>
@@ -1061,6 +1061,63 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     </div>
   </div>
   <div class="notes"><b>Slow down here.</b> The pipeline syntax is familiar to this room; the seam is the part that's worth their time. Walk it in three beats: pinned storage (that's the zero-overhead claim, made concrete), stop-callback ordering (the use-after-free), three-way completion (the difference between real and decorative cancellation). <b>If asked "where's the constructor?":</b> the deleted move ctor makes read_op a non-aggregate, so brace-init on the previous slide needs a real constructor — elided here for space. Say "the ctor is the obvious one" and move on; don't pretend the slide compiles as printed. <b>If asked about the stop_ declaration:</b> yes, it's ugly — you need the receiver's own stop-token type, not std::stop_callback, because in-place stop sources are the common case. Real code hides it behind an alias. <b>More on the environment, if asked:</b> read_env pulls a query out of it, write_env overlays entries onto it for a child sender, and unstoppable is write_env replacing the stop token with one that never fires. It is a reader-monad-style context — the mechanism behind spawn finding its allocator, affine finding its scheduler, and stop reaching your wrapper, all without a parameter anywhere. <b>If asked what guarantees exactly-once completion:</b> the sender/receiver protocol itself, not structured concurrency — start() runs at most once, and the operation must invoke exactly one of set_value / set_error / set_stopped, exactly once. That is the primitive; structured concurrency is built ON it, because you cannot write a correct join over N children if a child might complete twice or never. Don't let anyone reverse that dependency. <b>And it's a contract you uphold, not one the compiler enforces:</b> nothing stops this code calling set_value and then set_stopped. Where it bites in io_uring is the cancellation race — a stop request arrives while the CQE for a successful read is already in flight. Complete on both paths and you have broken the protocol. That is why stop_.reset() comes first and then exactly one branch runs; the ordering is load-bearing, not incidental. <b>If asked why connect is &amp;&amp;-qualified:</b> these are single-shot senders; connecting from an lvalue is how you accidentally submit the same op twice. <b>Bridge to the next slide:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
+</div>
+
+<!-- OP STATE NESTING DIAGRAM -->
+<div class="slide" id="s28n">
+  <div class="aline b"></div>
+  <h2>What "in the caller's frame" actually means</h2>
+  <p><span class="ic">connect()</span> builds one object. Each adaptor's operation state <em>contains</em> its child's — so the whole pipeline is a single nested value with a size known at compile time.</p>
+  <div class="row mt" style="gap:1.3em;">
+    <div class="col" style="flex:0 0 32%;">
+<pre style="font-size:.87em;"><code>stdexec::<span class="fn">sync_wait</span>(
+    <span class="fn">async_read</span>(sched, fd, buf, len)
+  | stdexec::<span class="fn">then</span>([](<span class="kw">char</span>* p, std::size_t n) {
+        <span class="kw">return</span> std::string{<span class="st">"hello "</span>}
+             + std::string{p, n};
+    }));</code></pre>
+      <div class="box g" style="margin-top:.5em;">
+        <p>Two senders, <strong>one object</strong>, <strong>zero allocations</strong>. Its size is the sum of the boxes on the right, fixed at compile time.</p>
+      </div>
+      <div class="box rd mt">
+        <p>This is why the op state is immovable: the outer state holds the inner one <em>by value</em>. Move it and every stashed pointer — including the one the kernel is holding — dangles.</p>
+      </div>
+    </div>
+    <div class="col">
+      <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;" role="img" aria-label="Nested operation states: sync_wait's state contains then's, which contains your read_op">
+        <defs>
+          <marker id="arrd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--dim);"/>
+          </marker>
+        </defs>
+
+        <text x="20" y="14" style="font-family:var(--fm);font-size:12px;letter-spacing:.12em;fill:var(--muted);">CALLER'S STACK FRAME</text>
+
+        <rect x="20" y="24" width="520" height="256" rx="9" style="fill:rgba(77,166,255,.05);stroke:var(--blue);stroke-width:1.2;"/>
+        <text x="40" y="50" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">sync_wait op state</text>
+        <text x="40" y="70" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">run_loop &#183; result storage</text>
+
+        <rect x="54" y="84" width="452" height="180" rx="8" style="fill:rgba(0,223,162,.05);stroke:var(--accent);stroke-width:1.1;"/>
+        <text x="74" y="110" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">then op state</text>
+        <text x="74" y="130" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">the lambda, stored by value</text>
+
+        <rect x="88" y="144" width="384" height="104" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1.3;"/>
+        <text x="108" y="170" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">read_op &#8212; yours</text>
+        <text x="108" y="190" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">fd_ &#183; buf_ &#183; len_ &#183; rcvr_</text>
+        <text x="108" y="209" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">stop_ callback &#8212; lives here, not on the heap</text>
+        <text x="108" y="234" style="font-family:var(--fm);font-size:12.5px;fill:var(--warn);">the SQE&#8217;s user_data points at this box</text>
+
+        <line x1="576" y1="46" x2="576" y2="240" style="stroke:var(--dim);stroke-width:1.3;marker-end:url(#arrd);"/>
+        <text x="592" y="120" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">connect()</text>
+        <text x="592" y="137" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">nests inward</text>
+
+        <line x1="672" y1="240" x2="672" y2="46" style="stroke:var(--accent);stroke-width:1.3;marker-end:url(#arrd);opacity:.75;"/>
+        <text x="588" y="180" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">set_value(p,n)</text>
+        <text x="588" y="196" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">back out</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes"><b>The innermost box is the code from two slides ago.</b> That is the point of using async_read here rather than a toy: they have read read_op's start() and on_complete(), and now they can see where it lives. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the three-channels slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>Ninety seconds</b> — the diagram does the work.</div>
 </div>
 
 <!-- WRAPPING CAVEATS (split) -->
