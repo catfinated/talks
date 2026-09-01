@@ -647,50 +647,6 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   <div class="notes"><b>On P4014, if anyone asks:</b> Falco's beginner-facing treatment of the sender sub-language. He also authors the coroutine-first papers — worth knowing, though a pedagogical walkthrough is a different thing from advocacy. <b>On P4014, if you recommend it out loud, recommend it with the caveat.</b> It is the most complete tutorial that exists — thirty algorithms, each with a worked example and a plain-C++ equivalent, and it is CC0 so you can lift from it for the cheatsheet. But it is not neutral pedagogy: the register turns ironic in places, §14.1 sets a recursive backtracker against a ten-line plain equivalent, and the conclusion points readers at Corosio, the author's own coroutine-native library. Send people to it for the algorithm coverage, and say plainly that the author is making a case. <b>Two things worth borrowing:</b> §2.4 maps the algorithms to their theory (just = monadic return, let_value = bind, then = fmap, split = contraction, async scopes = region-based lifetimes), and §13 is a sensor-fusion → collision-detection → actuator-braking example — an AV stack, which lands unusually well with this audience coming from you. <b>Point at the cheatsheet and move on</b> — it's the reason this slide can be five rows instead of twenty. Say the repo name once; it's on the references slide too, and the deck is being shared. <b>These five are exactly what the demo uses — thirty seconds, don't read the table aloud.</b> when_all and upon_error were cut from this list on purpose; both appear in real code later, and the cheatsheet in the repo has the complete set. <b>Mention verbally, not row-by-row:</b> upon_stopped(sndr, fn) — handle cancellation explicitly mid-pipeline (already shown in code on the three-channels slide). bulk — parallel for over indices 0..n-1; final C++26 bulk takes an execution policy (P3481) and adds bulk_chunked / bulk_unchunked; older stdexec examples show bulk(sndr, n, fn). <b>Speak to five only:</b> just, schedule, then, let_value, sync_wait — the demo uses exactly these. The rest are "on the slide for your reference."</div>
 </div>
 
-<!-- DEMO SLIDE -->
-<div class="slide" id="s15">
-  <div class="aline b"></div>
-  <h2>Live demo</h2>
-  <div class="row mt" style="gap:1.4em;">
-    <div class="col-60">
-      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.5em;">compiler-explorer.com · library: stdexec · example: hello_world.cpp</p>
-<pre><code><span class="cm">// stdexec/examples/hello_world.cpp — first half only</span>
-<span class="cm">// A minimal but complete sender pipeline:</span>
-<span class="cm">//   · static_thread_pool scheduler</span>
-<span class="cm">//   · schedule() to kick off on the pool</span>
-<span class="cm">//   · then() to transform the result</span>
-<span class="cm">//   · sync_wait() to drive execution</span>
-<span class="cm">//   · structured binding to unpack the tuple</span>
-
-<span class="cm">// Things to try after it compiles:</span>
-<span class="cm">//   1. Change the thread count in static_thread_pool(N)</span>
-<span class="cm">//   2. Chain a second then() step</span>
-<span class="cm">//   3. Introduce an error with just_error() and handle</span>
-<span class="cm">//      it with upon_error()</span>
-<span class="cm">//   4. Replace sync_wait with when_all() over two</span>
-<span class="cm">//      parallel branches</span>
-<span class="cm">//   5. Add a second static_thread_pool and use</span>
-<span class="cm">//      continues_on() to hand the value across —</span>
-<span class="cm">//      the same move your io_uring scheduler makes</span></code></pre>
-    </div>
-    <div class="col">
-      <div class="box bl">
-        <p>The example is already loaded in the browser. We're not writing from scratch — just walking through what's there and running it.</p>
-      </div>
-      <div class="box g mt">
-        <p>Notice: the scheduler is constructed once and passed in. Swap <span class="ic">static_thread_pool</span> for any other scheduler and the pipeline logic is unchanged — that's the whole point.</p>
-      </div>
-      <div class="box gr mt">
-        <p>Full examples directory:<br><span style="font-family:var(--fm);font-size:.95em;">github.com/NVIDIA/stdexec/<br>tree/main/examples</span></p>
-      </div>
-      <div class="box rd mt">
-        <p>If Godbolt is unresponsive on the night — skip ahead, the concepts are already established.</p>
-      </div>
-    </div>
-  </div>
-  <div class="notes"><b>Load only the first half into Godbolt — up to and including the first sync_wait.</b> The rest of hello_world.cpp uses get_scheduler(), the run_loop scheduler, a let_value/starts_on block and a when_all over environment queries, all of which lean on the receiver environment — which this talk does not define until the operation-state slide, twelve slides from here. Trimming the buffer removes the problem rather than requiring you to scroll past it, and it makes the "things to try" list describe exactly the file on screen. <b>If someone has seen the full example upstream and asks:</b> the tail queries the environment that sync_wait provides, and environments come up later in the talk. <b>Try #5 is the one tied to the thesis</b> — handing a value between two schedulers is the move your io_uring ring makes; do that one if there is only time for one. <b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-loaded example → if compiles are slow, narrate the expected output → if Godbolt is down entirely, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
-</div>
-
 <!-- PATTERNS: FAN-OUT + SCHEDULER HAND-OFF (merged) -->
 <div class="slide" id="s16">
   <div class="aline"></div>
@@ -775,6 +731,52 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     </div>
   </div>
   <div class="notes"><b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. <b>Both scope types, if asked:</b> counting_scope = simple_counting_scope + request_stop. Same state machine, same token machinery, and — the part that matters two slides from now — <em>identical</em> destructors: terminate unless the scope is joined, unused, or unused-and-closed. <b>If asked how faithful stdexec is here:</b> exec::async_scope predates P3149 and the shapes differ — on_empty() vs join(), scope-as-argument vs token. Porting is mechanical but it is not sed. <b>The point to land:</b> spawn is where structured concurrency meets reality — you genuinely need unbounded fan-out sometimes, and this is the version that still lets you prove everything finished.</div>
+</div>
+
+<!-- DEMO SLIDE -->
+<div class="slide" id="s15">
+  <div class="aline b"></div>
+  <h2>Live demo</h2>
+  <div class="row mt" style="gap:1.4em;">
+    <div class="col-60">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.5em;">stdexec · adapted from <span class="ic">examples/hello_world.cpp</span></p>
+<pre><code><span class="cm">// stdexec/examples/hello_world.cpp — first half only</span>
+<span class="cm">// A minimal but complete sender pipeline:</span>
+<span class="cm">//   · static_thread_pool scheduler</span>
+<span class="cm">//   · schedule() to kick off on the pool</span>
+<span class="cm">//   · then() to transform the result</span>
+<span class="cm">//   · sync_wait() to drive execution</span>
+<span class="cm">//   · structured binding to unpack the tuple</span>
+
+<span class="cm">// Things to try after it compiles:</span>
+<span class="cm">//   1. Change the thread count in static_thread_pool(N)</span>
+<span class="cm">//   2. Chain a second then() step</span>
+<span class="cm">//   3. Introduce an error with just_error() and handle</span>
+<span class="cm">//      it with upon_error()</span>
+<span class="cm">//   4. Replace sync_wait with when_all() over two</span>
+<span class="cm">//      parallel branches</span>
+<span class="cm">//   5. Add a second static_thread_pool and use</span>
+<span class="cm">//      continues_on() to hand the value across —</span>
+<span class="cm">//      the same move your io_uring scheduler makes</span>
+<span class="cm">//   6. spawn() five tasks into an async_scope,</span>
+<span class="cm">//      carry on, then join with on_empty()</span></code></pre>
+    </div>
+    <div class="col">
+      <div class="box bl">
+        <p>Everything here is pre-built and ready to run. We're not writing from scratch — just walking through what's there and running it.</p>
+      </div>
+      <div class="box g mt">
+        <p>Notice: the scheduler is constructed once and passed in. Swap <span class="ic">static_thread_pool</span> for any other scheduler and the pipeline logic is unchanged — that's the whole point.</p>
+      </div>
+      <div class="box gr mt">
+        <p>Full examples directory:<br><span style="font-family:var(--fm);font-size:.95em;">github.com/NVIDIA/stdexec/<br>tree/main/examples</span></p>
+      </div>
+      <div class="box rd mt">
+        <p>If anything misbehaves — skip ahead. The concepts are already established; the demo confirms them, it doesn't carry them.</p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>Decide at setup whether to run locally or on Compiler Explorer</b> — whichever projects better in the room; the slide names neither, so both work. Using CE? share the URL verbally or in chat so people can follow along. Running locally? the seven pre-built binaries are in the talks repo. <b>Either way, load only the first half — up to and including the first sync_wait.</b> <b>The demo now closes the section deliberately:</b> toolkit, two patterns, structured concurrency, then all of it running. Every algorithm in the "things to try" list has been introduced by the time you get here — that was not true when this slide sat earlier. The rest of hello_world.cpp uses get_scheduler(), the run_loop scheduler, a let_value/starts_on block and a when_all over environment queries, all of which lean on the receiver environment — which this talk does not define until the operation-state slide, twelve slides from here. Trimming the buffer removes the problem rather than requiring you to scroll past it, and it makes the "things to try" list describe exactly the file on screen. <b>If someone has seen the full example upstream and asks:</b> the tail queries the environment that sync_wait provides, and environments come up later in the talk. <b>Priority: base, then #5, then whatever time allows.</b> Handing a value between two schedulers is the move your io_uring ring makes — do that one if there is only time for one. Seven examples will not fit eight minutes and are not meant to; the point of having them all built is that whichever question comes up, you can run the answer. <b>#6 is the best output of the seven</b> — "carrying on, 0 done" prints before any task finishes, then the join reports 5, and task 0 lands last because of the staggered sleeps. Spawn-and-continue-but-still-provable, in seven lines of output. <b>Hard timebox: 8 minutes.</b> Fallback ladder: run the pre-built binary → if anything misbehaves, narrate the expected output (it is in the demo README) → if the machine or the site is uncooperative, skip ahead; the concepts are already established. Don't live-edit beyond the listed "things to try."</div>
 </div>
 
 <!-- S17 SECTION: ECOSYSTEM -->

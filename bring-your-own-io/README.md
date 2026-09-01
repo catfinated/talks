@@ -30,7 +30,7 @@ cancellation and cleanup can live in destructors.
 | [`sender-algorithms-cheatsheet.md`](sender-algorithms-cheatsheet.md) | Every sender algorithm with signatures, gotchas, and stdexec/Beman availability. |
 | [`papers-cited.md`](papers-cited.md) | Every WG21 paper the talk cites, with its latest known revision and a `wg21.link` that stays current as papers are revised. Notes on the ones that are easy to get wrong. |
 | [`timing-plan.md`](timing-plan.md) | Section budgets and checkpoints for delivering it in a 60-minute slot. |
-| [`live-demo.md`](live-demo.md) | The Compiler Explorer segment: what to load, five variations with expected output, and the fallback ladder for when the network isn't cooperating. |
+| [`demo/`](demo/) | The live demo code — seven standalone programs, one per variation, with a CMake build that pins stdexec. `demo/README.md` has the expected output for each and the fallback ladder. |
 
 ### Viewing the slides
 
