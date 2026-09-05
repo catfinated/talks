@@ -1084,7 +1084,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       </div>
     </div>
     <div class="col">
-      <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;" role="img" aria-label="Nested operation states: sync_wait's state contains then's, which contains your read_op">
+      <svg viewBox="0 0 700 322" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;" role="img" aria-label="Nested operation states: sync_wait's state contains then's, which contains your read_op; each holds a receiver, its own state, and its child">
         <defs>
           <marker id="arrd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--dim);"/>
@@ -1093,31 +1093,32 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
 
         <text x="20" y="14" style="font-family:var(--fm);font-size:12px;letter-spacing:.12em;fill:var(--muted);">CALLER'S STACK FRAME</text>
 
-        <rect x="20" y="24" width="520" height="256" rx="9" style="fill:rgba(77,166,255,.05);stroke:var(--blue);stroke-width:1.2;"/>
+        <rect x="20" y="24" width="520" height="278" rx="9" style="fill:rgba(77,166,255,.05);stroke:var(--blue);stroke-width:1.2;"/>
         <text x="40" y="50" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">sync_wait op state</text>
-        <text x="40" y="70" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">run_loop &#183; result storage</text>
+        <text x="40" y="70" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">receiver &#8594; result storage &#183; run_loop</text>
 
-        <rect x="54" y="84" width="452" height="180" rx="8" style="fill:rgba(0,223,162,.05);stroke:var(--accent);stroke-width:1.1;"/>
+        <rect x="54" y="84" width="452" height="202" rx="8" style="fill:rgba(0,223,162,.05);stroke:var(--accent);stroke-width:1.1;"/>
         <text x="74" y="110" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">then op state</text>
-        <text x="74" y="130" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">the lambda, stored by value</text>
+        <text x="74" y="130" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">sync_wait&#8217;s receiver &#183; the lambda, by value</text>
 
-        <rect x="88" y="144" width="384" height="104" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1.3;"/>
-        <text x="108" y="170" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">read_op &#8212; yours</text>
-        <text x="108" y="190" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">fd_ &#183; buf_ &#183; len_ &#183; rcvr_</text>
-        <text x="108" y="209" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">stop_ callback &#8212; lives here, not on the heap</text>
+        <rect x="88" y="146" width="384" height="124" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1.3;"/>
+        <text x="108" y="172" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">read_op &#8212; yours</text>
+        <text x="108" y="192" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">rcvr_ &#8212; then&#8217;s receiver, pointing back out</text>
+        <text x="108" y="211" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">fd_ &#183; buf_ &#183; len_ &#183; stop_ callback</text>
         <text x="108" y="234" style="font-family:var(--fm);font-size:12.5px;fill:var(--warn);">the SQE&#8217;s user_data points at this box</text>
+        <text x="108" y="256" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">no child &#8212; the recursion stops here</text>
 
-        <line x1="576" y1="46" x2="576" y2="240" style="stroke:var(--dim);stroke-width:1.3;marker-end:url(#arrd);"/>
-        <text x="592" y="120" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">connect()</text>
-        <text x="592" y="137" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">nests inward</text>
+        <line x1="576" y1="46" x2="576" y2="262" style="stroke:var(--dim);stroke-width:1.3;marker-end:url(#arrd);"/>
+        <text x="592" y="128" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">connect()</text>
+        <text x="592" y="145" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">nests inward</text>
 
-        <line x1="672" y1="240" x2="672" y2="46" style="stroke:var(--accent);stroke-width:1.3;marker-end:url(#arrd);opacity:.75;"/>
-        <text x="588" y="180" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">set_value(p,n)</text>
-        <text x="588" y="196" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">back out</text>
+        <line x1="672" y1="262" x2="672" y2="46" style="stroke:var(--accent);stroke-width:1.3;marker-end:url(#arrd);opacity:.75;"/>
+        <text x="588" y="188" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">set_value(p,n)</text>
+        <text x="588" y="204" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">back out</text>
       </svg>
     </div>
   </div>
-  <div class="notes"><b>The innermost box is the code from two slides ago.</b> That is the point of using async_read here rather than a toy: they have read read_op's start() and on_complete(), and now they can see where it lives. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the three-channels slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>Ninety seconds</b> — the diagram does the work.</div>
+  <div class="notes"><b>The innermost box is the code from two slides ago.</b> That is the point of using async_read here rather than a toy: they have read read_op's start() and on_complete(), and now they can see where it lives. <b>The recursive rule, if you state one thing:</b> every operation state holds the receiver it will complete, whatever its own algorithm needs, and its child's operation state. That rule generates the entire picture. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. <b>Note whose receiver is where:</b> read_op's rcvr_ is NOT sync_wait's receiver — it is one then manufactured, pointing back at then's op state. Completions climb that chain outward. In stdexec these inner receivers are lightweight wrappers over a pointer to the enclosing op state, not fat objects, so the nesting costs less than the boxes suggest. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the three-channels slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>Ninety seconds</b> — the diagram does the work.</div>
 </div>
 
 <!-- WRAPPING CAVEATS (split) -->
