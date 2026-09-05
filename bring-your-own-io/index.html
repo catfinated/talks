@@ -307,10 +307,10 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
     <div class="col">
       <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5em;">What I heard back</p>
       <ul class="alist" style="font-size:.95em;">
-        <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"It's too hard to use."</span><span class="ad" style="flex:0 0 40%;">Largely conceded — WG21's long-serving convener says the same.</span></li>
-        <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"I don't see how this is better than what we already have."</span><span class="ad" style="flex:0 0 40%;">Depends on your workload. Own one async domain and it may not be.</span></li>
+                <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"I don't see how this is better than what we already have."</span><span class="ad" style="flex:0 0 40%;">Depends on your workload. Own one async domain and it may not be.</span></li>
         <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"The pipes are just syntactic sugar around callbacks — <span class="ic">then</span> is morally the callback you'd have passed to <span class="ic">async_read</span> anyway."</span><span class="ad" style="flex:0 0 40%;">Half right — and the half that's wrong is the whole point.</span></li>
         <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"Cancellation only happens at program termination, so who cares. Errors get handled locally or terminate the process. And finalization can go in destructors."</span><span class="ad" style="flex:0 0 40%;">Possibly  correct for simple synchronous programs, but not async ones.</span></li>
+        <li><span class="an" style="min-width:0;flex:1;font-style:italic;color:var(--text);">"It's too hard to use."</span><span class="ad" style="flex:0 0 40%;">Largely conceded — WG21's long-serving convener says the same.</span></li>
       </ul>
     </div>
   </div>
@@ -367,7 +367,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   <h2>Why <span class="ic">std::future</span> isn't the model — and what is</h2>
   <div class="row mt" style="gap:1.6em;">
     <div class="col">
-      <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">What's broken</p>
+      <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">What we already have</p>
       <ul class="plist">
         <li><span class="pi bad">✗</span><span><strong>No continuations.</strong> <span class="ic">.then()</span> was proposed in 2013 (N3721), shipped in the Concurrency TS in 2016, and never merged into the IS — chaining means blocking on <span class="ic">.get()</span> or spawning another thread.</span></li>
         <li><span class="pi bad">✗</span><span><strong>No cancellation, no readiness callback.</strong> You poll in a loop or you block.</span></li>
@@ -390,7 +390,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   <div class="box g mt">
     <p>Each ✗ maps to the ✓ beside it. One more requirement we'll meet in the model section: <strong>zero overhead on the default path</strong> — allocation opts in, never sneaks in.</p>
   </div>
-  <div class="notes"><b>Be precise if challenged on the error point</b> — promise&lt;expected&lt;T, error_code&gt;&gt; obviously works, so don't say futures are "incompatible" with error_code I/O. The claim is that there's exactly one built-in failure channel and it's an exception: either you throw system_error for routine errno values, or you push failure into the value channel and the type stops telling anyone that failure is possible. And .get() rethrows wherever you happened to join, not where the error occurred. <b>Further detail, if useful:</b> futures always heap-allocate shared state, even for trivial work. launch::deferred is laziness without value — runs on the retrieving thread, can't target a scheduler, can't compose. jthread fixes thread lifetime but is still a thread: no when_all, no error propagation out. The coroutine ecosystem's failure modes are different — next slide.</div>
+  <div class="notes"><b>This slide is the payoff for "I don't see how this is better than what we already have."</b> The two column headings ARE the objection and the answer — what we already have, against what a real model needs. Say that connection out loud; the room heard the objection four slides ago and will not make the link on its own. <b>Be precise if challenged on the error point</b> — promise&lt;expected&lt;T, error_code&gt;&gt; obviously works, so don't say futures are "incompatible" with error_code I/O. The claim is that there's exactly one built-in failure channel and it's an exception: either you throw system_error for routine errno values, or you push failure into the value channel and the type stops telling anyone that failure is possible. And .get() rethrows wherever you happened to join, not where the error occurred. <b>Further detail, if useful:</b> futures always heap-allocate shared state, even for trivial work. launch::deferred is laziness without value — runs on the retrieving thread, can't target a scheduler, can't compose. jthread fixes thread lifetime but is still a thread: no when_all, no error propagation out. The coroutine ecosystem's failure modes are different — next slide.</div>
 </div>
 
 <!-- S7 WHAT ABOUT COROUTINES -->
@@ -532,7 +532,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
 <div class="slide" id="s12b">
   <div class="aline b"></div>
   <h2>"Isn't <span class="ic">then</span> just the callback?"</h2>
-  <p>The first objection I promised to come back to. Same operation, both ways.</p>
+  <p>The second objection I promised to come back to. Same operation, both ways.</p>
   <div class="row mt" style="gap:1.2em;">
     <div class="col">
       <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warn);margin-bottom:.35em;">The callback you'd have written</p>
@@ -583,7 +583,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
 <div class="slide" id="s7c">
   <div class="aline b"></div>
   <h2>"Just do it in a destructor"</h2>
-  <p>And the second objection — take it at face value and write the program it implies.</p>
+  <p>And the third — take it at face value and write the program it implies.</p>
   <div class="row mt" style="gap:1.2em;">
     <div class="col-55">
 <pre style="font-size:.92em;"><code><span class="fn">~BufferWriter</span>() {
@@ -1224,6 +1224,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
 <div class="slide" id="s31">
   <div class="aline"></div>
   <h2>The convener's own warning is this talk's thesis</h2>
+  <p>And the last objection — the one I conceded at the start. Here is who else concedes it.</p>
   <div class="bq mt">
     std::execution is <em>"currently harder to adopt than most C++ features."</em>
   </div>
@@ -1237,7 +1238,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="box rd mt">
     <p>What he doesn't address: for non-GPU, non-thread-pool workloads the adapter you're expected to write is <em>the entire I/O layer</em>. That's the gap to plan around — not a reason to ignore P2300, a reason to be clear-eyed about the timeline.</p>
   </div>
-  <div class="notes"><b>Don't oversell the endorsement — the value here is corroboration, not authority.</b> He also calls std::execution "C++'s async model" and credits it with data-race-freedom-by-construction properties; mention that only if someone asks whether the committee is enthusiastic. <b>Get the title right:</b> Herb Sutter was WG21's <em>convener</em> (the formal ISO term), not "chair", and he stepped down at the end of 2025 — Guy Davidson has been convener since 1 January, with Nina Ranns and Jeff Garland as vice-conveners. Sutter is convener emeritus and is still chair and CEO of the Standard C++ Foundation, which is a different role, so "the chair" is ambiguous as well as wrong. <b>Sourcing, if challenged:</b> the production-use line is his — he writes that his company has already been using it; the Citadel attribution is from his own author bio, not from the trip report. Don't attribute anything else to him — in particular he does NOT say the gaps will close in the C++29 cycle. <b>The beat that lands:</b> read the quote, pause, then say "he's telling you to write the wrapper. So let's talk about writing the wrapper."</div>
+  <div class="notes"><b>This closes the loop opened on slide 3.</b> The four objections are answered in list order — better-than-what-we-have on the std::future slide, syntactic sugar and destructors at the end of §02, and this one last. Say so; a room that heard four objections in the first three minutes will notice if only three get answered. <b>Don't oversell the endorsement — the value here is corroboration, not authority.</b> He also calls std::execution "C++'s async model" and credits it with data-race-freedom-by-construction properties; mention that only if someone asks whether the committee is enthusiastic. <b>Get the title right:</b> Herb Sutter was WG21's <em>convener</em> (the formal ISO term), not "chair", and he stepped down at the end of 2025 — Guy Davidson has been convener since 1 January, with Nina Ranns and Jeff Garland as vice-conveners. Sutter is convener emeritus and is still chair and CEO of the Standard C++ Foundation, which is a different role, so "the chair" is ambiguous as well as wrong. <b>Sourcing, if challenged:</b> the production-use line is his — he writes that his company has already been using it; the Citadel attribution is from his own author bio, not from the trip report. Don't attribute anything else to him — in particular he does NOT say the gaps will close in the C++29 cycle. <b>The beat that lands:</b> read the quote, pause, then say "he's telling you to write the wrapper. So let's talk about writing the wrapper."</div>
 </div>
 
 <!-- S30 RESOURCES -->
@@ -1250,11 +1251,12 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     <li><span class="pi good">▸</span><span><strong>What:</strong> senders are lazy, composable descriptions of work; the scheduler is swappable — your io_uring ring can be one.</span></li>
     <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 2–4 years) — and P2300 deliberately excludes I/O.</span></li>
     <li><span class="pi good">▸</span><span><strong>The bridge:</strong> wrap your existing async I/O layer as senders today; swap in standard I/O when P2762 lands.</span></li>
-    <li><span class="pi good">▸</span><span><strong>Not just sugar:</strong> a callback is a function you give away; a sender is a value you keep — which is why the consumer, not the algorithm, decides how work runs.</span></li>
-        <li><span class="pi good">▸</span><span><strong>Not just destructors:</strong> the language forbids async construction and destruction outright, so cleanup that does I/O has to live somewhere else — and async RAII is being built in the sender domain.</span></li>
-        <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
+    <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
   </ul>
-  <div class="notes"><b>Dropped nuance, deploy if useful:</b> structured concurrency makes the safe path the default — child work completes before the parent scope exits. Standard names are continues_on / starts_on (stdexec keeps transfer / on as aliases). stdexec is experimental with ongoing API churn (a Dec 2025 PR dropped its non-conforming static connect members); Beman tracks spec fidelity for eventual stdlib upstreaming.</div>
+  <div class="box g mt" style="margin-bottom:0;">
+    <p><strong>And the objections, in one breath:</strong> yes, it is harder to adopt than most C++ features. But it is a better model than what we already have, it composes with coroutines rather than competing with them, and it is not sugar over callbacks: a callback is a function you give away, a sender is a value you keep. And async construction and destruction, which the <em>language</em> forbids outright, are being worked on here.</p>
+  </div>
+  <div class="notes"><b>The callout is the payoff for slide 3 — read it as one sentence, not five bullets.</b> It walks the four objections in the order the deck answered them, ending on the one you conceded. <b>Say "the language forbids it", not "senders can't do it"</b> — a constructor and a destructor may not be coroutines, which is why async RAII is a proposal (P3955, P2849) rather than a feature. Do not upgrade "being worked on" into "coming in C++29". <b>Dropped nuance, deploy if useful:</b> structured concurrency makes the safe path the default — child work completes before the parent scope exits. Standard names are continues_on / starts_on (stdexec keeps transfer / on as aliases). stdexec is experimental with ongoing API churn (a Dec 2025 PR dropped its non-conforming static connect members); Beman tracks spec fidelity for eventual stdlib upstreaming.</div>
 </div>
 
 <!-- S32 Q&A -->
