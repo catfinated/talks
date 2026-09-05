@@ -681,7 +681,7 @@ async_recv(io_sched, socket, buf)      <span class="cm">// on your ring</span>
   })
 
 | stdexec::<span class="fn">continues_on</span>(io_sched)      <span class="cm">// back to ring</span>
-| stdexec::<span class="fn">let_value</span>([](Result r) {     <span class="cm">// fn returns a SENDER</span>
+| stdexec::<span class="fn">let_value</span>([](Result&amp; r) {    <span class="cm">// fn returns a SENDER</span>
       <span class="kw">return</span> <span class="fn">async_write</span>(io_sched, file, r);
   });</code></pre>
       <div class="box bl" style="margin-top:.3em;">
@@ -689,7 +689,7 @@ async_recv(io_sched, socket, buf)      <span class="cm">// on your ring</span>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Plant the graph here — the adoption slide calls back to it.</b> Say "this shape is a graph" out loud over the when_all code; twenty slides later the graph-or-chain question lands on something they have already seen instead of an abstraction. <b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix B</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
+  <div class="notes"><b>Plant the graph here — the adoption slide calls back to it.</b> Say "this shape is a graph" out loud over the when_all code; twenty slides later the graph-or-chain question lands on something they have already seen instead of an abstraction. <b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix C</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
 </div>
 
 <!-- ASYNC_SCOPE (split from structured concurrency) -->
@@ -1018,7 +1018,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <h2>The operation state — where the real work lives</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col-60">
-<pre style="font-size:.85em;"><code><span class="cm">// using namespace stdexec; — elided below for width</span>
+<pre style="font-size:.80em;"><code><span class="cm">// using namespace stdexec; — elided below for width</span>
 <span class="kw">template</span> &lt;stdexec::receiver R&gt;
 <span class="kw">struct</span> <span class="fn">read_op</span> {
     <span class="kw">using</span> operation_state_concept = operation_state_t;
@@ -1045,7 +1045,8 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     }
 
     <span class="kw">int</span> fd_; <span class="kw">char</span>* buf_; std::size_t len_; R rcvr_;
-    std::optional&lt;<span class="cm">/* R's stop-callback type */</span>&gt; stop_;
+    <span class="kw">using</span> stop_cb_t = stop_token_of_t&lt;env_of_t&lt;R&gt;&gt;::<span class="kw">template</span> callback_type&lt;on_stop&gt;;
+    std::optional&lt;stop_cb_t&gt; stop_;
 };</code></pre>
     </div>
     <div class="col">
@@ -1060,7 +1061,11 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       </div>
     </div>
   </div>
-  <div class="notes"><b>Slow down here.</b> The pipeline syntax is familiar to this room; the seam is the part that's worth their time. Walk it in three beats: pinned storage (that's the zero-overhead claim, made concrete), stop-callback ordering (the use-after-free), three-way completion (the difference between real and decorative cancellation). <b>If asked "where's the constructor?":</b> the deleted move ctor makes read_op a non-aggregate, so brace-init on the previous slide needs a real constructor — elided here for space. Say "the ctor is the obvious one" and move on; don't pretend the slide compiles as printed. <b>If asked about the stop_ declaration:</b> yes, it's ugly — you need the receiver's own stop-token type, not std::stop_callback, because in-place stop sources are the common case. Real code hides it behind an alias. <b>More on the environment, if asked:</b> read_env pulls a query out of it, write_env overlays entries onto it for a child sender, and unstoppable is write_env replacing the stop token with one that never fires. It is a reader-monad-style context — the mechanism behind spawn finding its allocator, affine finding its scheduler, and stop reaching your wrapper, all without a parameter anywhere. <b>If asked what guarantees exactly-once completion:</b> the sender/receiver protocol itself, not structured concurrency — start() runs at most once, and the operation must invoke exactly one of set_value / set_error / set_stopped, exactly once. That is the primitive; structured concurrency is built ON it, because you cannot write a correct join over N children if a child might complete twice or never. Don't let anyone reverse that dependency. <b>And it's a contract you uphold, not one the compiler enforces:</b> nothing stops this code calling set_value and then set_stopped. Where it bites in io_uring is the cancellation race — a stop request arrives while the CQE for a successful read is already in flight. Complete on both paths and you have broken the protocol. That is why stop_.reset() comes first and then exactly one branch runs; the ordering is load-bearing, not incidental. <b>If asked why connect is &amp;&amp;-qualified:</b> these are single-shot senders; connecting from an lvalue is how you accidentally submit the same op twice. <b>Bridge to the next slide:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
+  <div class="notes"><b>Slow down here — the pipeline syntax is familiar to this room; the seam is what's worth their time.</b> Three beats: pinned storage (the zero-overhead claim made concrete), stop-callback ordering, three-way completion.
+<br><br><b>Why reset() comes first — and it is NOT about double completion.</b> The kernel gives one CQE per SQE; you cannot be completed twice. Two real hazards. <b>(1)</b> A stop-callback destructor blocks until a concurrently-running callback returns. Resetting first is your only synchronisation with an on_stop that may be executing on another thread right now — the thread that called request_stop. <b>(2)</b> set_value propagates outward and the whole nested op state is often destroyed inside that call: sync_wait returns, the parent completes, a loop re-emplaces the state. After it returns, <em>self may not exist</em>. So touch nothing afterwards. <b>The rule, in one line: completing is the last thing your operation state does — not the last interesting thing, the last thing.</b> Finish all your business first (unregister, move the result out), then complete, then return. <em>Assume</em> destroyed rather than "is destroyed": whether it dies inside the call depends on the consumer — sync_wait tears it down, a scope destroys a spawned op, repeat_until re-emplaces it — and being generic over R means you cannot know which one you are connected to.
+<br><br><b>The stop_cb_t line is the one people cannot guess.</b> You need the receiver's own stop-token type, reached through its environment — not std::stop_callback, because in-place stop sources are the common case and hard-coding std::stop_callback reintroduces the shared-state allocation. Idiom is straight from stdexec; the <span class="ic">template</span> keyword is required because R is dependent.
+<br><br><b>If asked:</b> <b>·&nbsp;where's the constructor?</b> the deleted move ctor makes read_op a non-aggregate, so the previous slide's brace-init needs a real one, elided for space. Don't pretend it compiles as printed. <b>·&nbsp;the environment</b> — read_env pulls a query out, write_env overlays entries for a child, unstoppable is write_env with a token that never fires; it's how spawn finds its allocator and affine its scheduler, with no parameter anywhere. <b>·&nbsp;exactly-once completion</b> is guaranteed by the sender/receiver protocol, not by structured concurrency — structured concurrency is built ON it, since you can't join N children that might complete twice or never. Don't let anyone reverse that. <b>·&nbsp;why connect is &amp;&amp;-qualified</b> — single-shot senders; connecting from an lvalue is how you submit the same op twice.
+<br><br><b>Bridge:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
 </div>
 
 <!-- OP STATE NESTING DIAGRAM -->
@@ -1371,9 +1376,54 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="notes"><b>Paper status, confirmed with the author:</b> P3955 now has an R1 carrying wording — SG1 saw R0 at Brno, liked it, and asked to see it again with wording. That is real forward motion; say "in front of SG1 with wording", not "coming in C++29". P4320 has an R1 as of 2026-08-22, a wording bug fix only. <b>Naming, verified against a recent checkout:</b> repeat_effect_until is deprecated — &lt;exec/repeat_effect_until.hpp&gt; warns and forwards to &lt;exec/repeat_until.hpp&gt;, and repeat_effect_t / repeat_effect_until_t are [[deprecated]] aliases for repeat_t / repeat_until_t. Current spellings: exec::repeat, exec::repeat_until, exec::repeat_n. <b>The naming trap, worth stating plainly:</b> std::execution::sequence (P4320) runs senders one after another — sequential composition. Sequence SENDERS are the stream abstraction, they are very experimental, Kirk Shoop is actively working on them and Dietmar Kühl reportedly plans to. Two different things with confusingly similar names; do not let the room conflate them. <b>The honest verdict, if asked outright:</b> the lifetime and composition story is ready; the stream story is not, and there's no socket to accept from in the first place — which is the thesis of the whole talk. Today you'd use Asio through asioexec for real accept/recv/send senders and coroutines for the per-connection loops. <b>Lead with the terminology correction</b> — most people asking this question have conflated multi-shot with multi-value, and clearing that up answers half the question before you get to the rest. <b>Don't oversell counting_scope:</b> it solves connection lifetime, not streaming. Two different gaps.</div>
 </div>
 
+<div class="slide appx" id="ax5">
+  <div class="aline b"></div>
+  <div class="appxtag">Appendix B · reference for Q&amp;A — not presented live</div>
+  <h2>"Can I build the graph at runtime, from a config file?"</h2>
+  <p>Yes — and the shape of the answer is the same as every other dynamic-shape question. It works; you pay for it at each dynamic edge.</p>
+  <div class="row mt" style="gap:1.2em;">
+    <div class="col-55">
+<pre style="font-size:.85em;"><code><span class="cm">// One erased vocabulary type for every node kind</span>
+<span class="kw">using</span> node = exec::any_sender_of&lt;
+    set_value_t(Frame),
+    set_error_t(std::error_code),
+    set_stopped_t()&gt;;
+
+<span class="cm">// kind -&gt; factory, populated at startup</span>
+std::map&lt;std::string,
+         std::function&lt;node(Params <span class="kw">const</span>&amp;)&gt;&gt; registry;
+
+node <span class="fn">build</span>(YamlNode <span class="kw">const</span>&amp; cfg) {
+    node s = registry.<span class="fn">at</span>(cfg.kind)(cfg.params);
+    <span class="kw">for</span> (<span class="kw">auto</span> <span class="kw">const</span>&amp; child : cfg.children)
+        s = std::move(s) | <span class="fn">then</span>(<span class="fn">adapt</span>(child));  <span class="cm">// re-erased</span>
+    <span class="kw">return</span> s;
+}</code></pre>
+    </div>
+    <div class="col">
+      <div class="box rd" style="margin-top:0;">
+        <p><strong>What each dynamic edge costs.</strong> An allocation — the op state's size is no longer known — and no inlining across the seam. Every node kind must share <em>one</em> completion signature set.</p>
+      </div>
+      <div class="box rd mt">
+        <p><strong>The compile-time contract stops helping.</strong> Signatures were checked while the graph lived in the type system; a YAML-driven graph moves those errors to runtime.</p>
+      </div>
+      <div class="box bl mt">
+        <p><strong>Runtime-N fan-out needs a different tool.</strong> <span class="ic">when_all</span> is variadic — compile-time arity — and stdexec has no <span class="ic">when_all</span> over a vector. Spawn each branch into a <span class="ic">counting_scope</span> and join, or collect <span class="ic">spawn_future</span> results. Also: erased senders aren't copyable, so <span class="ic">repeat_until</span> rejects them — erase a <em>factory</em> instead.</p>
+      </div>
+      <div class="box g mt">
+        <p><strong>The alternative: codegen.</strong> Emit the pipeline as C++ from the config at build time and everything stays monomorphized.</p>
+      </div>
+    </div>
+  </div>
+  <div class="box gr mt" style="margin-bottom:0;">
+    <p><strong>The fair comparison isn't against static senders — it's against what you'd pay anyway.</strong> A config-driven graph in a callback or virtual-dispatch design costs an indirect call and an allocation per node too. Senders aren't worse here; they just aren't better, because you've opted out of the thing that makes them fast.</p>
+  </div>
+  <div class="notes"><b>Lead with the concession, not the mechanism.</b> "Yes, and here's the honest cost" plays much better than walking the code first — the questioner usually already suspects there's a catch. <b>The line that matters:</b> you've opted out of monomorphization, which is where the performance came from; that is a property of the requirement, not of senders. <b>If they push on the type-system loss:</b> that one is real and worth conceding fully — compile-time completion-signature checking is a selling point of the model, and a runtime-assembled graph throws it away. Codegen is the answer that keeps both, and it is worth mentioning even though it is more build machinery. <b>Verified:</b> stdexec has no when_all over a runtime-sized range; when_all is variadic. counting_scope + spawn + join is the practical runtime-N fan-out.</div>
+</div>
+
 <div class="slide appx" id="ax3">
   <div class="aline"></div>
-  <div class="appxtag">Appendix B · reference for Q&amp;A — not presented live</div>
+  <div class="appxtag">Appendix C · reference for Q&amp;A — not presented live</div>
   <h2><span class="ic">then</span> vs <span class="ic">let_value</span></h2>
   <p class="mt">The whole rule: <span class="ic">then</span>'s callable returns a <strong>value</strong>; <span class="ic">let_value</span>'s returns a <strong>sender</strong>. Reach for <span class="ic">let_value</span> whenever the next step is itself asynchronous.</p>
   <div class="row mt" style="gap:1.2em;">
@@ -1389,7 +1439,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     </div>
     <div class="col">
       <p class="sm" style="color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">let_value — chain in async work</p>
-<pre><code><span class="fn">just</span>(path) | <span class="fn">let_value</span>([&amp;](string p) {
+<pre><code><span class="fn">just</span>(path) | <span class="fn">let_value</span>([&amp;](string&amp; p) {
     <span class="kw">return</span> <span class="fn">async_read</span>(sched, p);
     <span class="cm">// ↑ a sender ✓</span>
 })
@@ -1404,12 +1454,12 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="box rd mt">
     <p><strong>The common mistake:</strong> using <span class="ic">then</span> with a callable that returns a sender. It compiles — and gives you a value completion carrying an unstarted sender that nobody ever connects. The work silently never runs.</p>
   </div>
-  <div class="notes"><b>Pull this up if someone asks for the distinction in code.</b> The failure mode in the red box is the one worth saying out loud — it's the quiet bug, not a compile error, and everyone hits it once. <b>If pushed further:</b> let_value keeps the predecessor's values alive for the duration of the returned sender, which is why the lambda can capture and reference them; then's result is moved downstream immediately.</div>
+  <div class="notes"><b>Pull this up if someone asks for the distinction in code.</b> The failure mode in the red box is the one worth saying out loud — it's the quiet bug, not a compile error, and everyone hits it once. <b>Why the parameter is an lvalue reference:</b> let_value stores the predecessor's values in the operation state and keeps them alive for the duration of the returned sender — so the callable is invoked with lvalues. Taking by value copies for no reason, and fails outright for move-only types. <span class="ic">then</span> is different: its result is moved downstream immediately, so by-value there is fine.</div>
 </div>
 
 <div class="slide appx" id="ax4">
   <div class="aline"></div>
-  <div class="appxtag">Appendix C · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
+  <div class="appxtag">Appendix D · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col">
       <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The old way — danger</p>
@@ -1443,7 +1493,7 @@ stdexec::<span class="fn">sync_wait</span>(
 <!-- APPENDIX: COMPARISON TABLE -->
 <div class="slide appx" id="s24">
   <div class="aline"></div>
-  <div class="appxtag">Appendix D · reference for Q&amp;A — not presented live</div><h2>Ecosystem at a glance</h2>
+  <div class="appxtag">Appendix E · reference for Q&amp;A — not presented live</div><h2>Ecosystem at a glance</h2>
   <p style="font-size:.95em;color:var(--muted);">Reference for Q&amp;A — not presented live.</p>
   <table class="ct mt">
     <thead>
