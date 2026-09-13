@@ -759,14 +759,14 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   <div class="aline"></div>
   <h2>The road to P2300</h2>
   <ul class="tl mt">
-    <li><span class="ty">2005–07</span><span><strong>Async I/O starts it all</strong> — Asio appears (2005); Kohlhoff's networking proposals enter the committee (N2175, 2007). The Networking TS grows from here — and its need for an executor model triggers everything below.</span></li>
-    <li><span class="ty">2011</span><span><strong>C++11</strong> — <span class="ic">std::thread</span>, <span class="ic">std::future</span>, <span class="ic">std::async</span>. Useful primitives. No composable model. The complaints start immediately.</span></li>
+    <li><span class="ty">2005–07</span><span><strong>Async I/O starts it all</strong> — Asio appears (2005); Kohlhoff's networking proposals enter the committee (N2175, 2007). The Networking TS grows from here — and its need for an executor model kicks off much of what follows.</span></li>
+    <li><span class="ty">2011</span><span><strong>C++11</strong> — <span class="ic">std::thread</span>, <span class="ic">std::future</span>, <span class="ic">std::async</span>. Useful primitives. No composable model.</span></li>
     <li><span class="ty">2012–21</span><span><strong>The executor wars</strong> — years of competing proposals; P0443 unified executors runs until senders replace it. The Networking TS stalls waiting for an executor model that never lands.</span></li>
     <li><span class="ty">2018–19</span><span><strong>Libunifex</strong> developed at Facebook, open-sourced 2019. Eric Niebler and colleagues build a production sender/receiver system — the field-experience foundation for P2300.</span></li>
     <li><span class="ty">2019–20</span><span><strong>io_uring</strong> lands in kernel 5.1. <strong>C++20 coroutines</strong> land as language features with no standard library support.</span></li>
     <li><span class="ty">2021–23</span><span><strong>P2300 R0</strong> — Niebler, Lelbach, Baker et al. submit the sender/receiver proposal; NVIDIA funds stdexec as the reference implementation. Over the next two years direction settles on senders, the Networking TS is not pursued, and sender-based networking restarts as P2762 (2023).</span></li>
     <li><span class="ty">Jun 2024</span><span><strong>P2300R10 adopted</strong> at WG21 St. Louis plenary — but narrowly: roughly a third of the room voted against, on grounds of complexity and teachability.</span></li>
-    <li><span class="ty">Mar 2026</span><span><strong>C++26 technical work completed</strong> March 28 in London (Croydon). DIS ballot / ISO publication pending. Compiler stdlib implementations: no public progress visible as of August 2026.</span></li>
+    <li><span class="ty">Mar 2026</span><span><strong>C++26 technical work completed</strong> March 28 in London (Croydon). DIS ballot / ISO publication pending.</span></li>
   </ul>
   <div class="box bl mt" style="margin-bottom:0;">
     <p><strong>All along, underneath:</strong> every shop builds its own async framework from whatever primitives exist — or on Boost. That has been continuous since before C++11, it is still going on, and it is precisely why none of our systems compose.</p>
@@ -794,7 +794,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
     </div>
   </div>
   <div class="box rd mt">
-    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. Likely arrival: 2–4 years based on precedent, but no vendor has published a timeline. <strong>If you know otherwise, please say so!</strong></p>
+    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. Likely arrival: 1–3 years based on precedent, but no vendor has published a timeline. <strong>If you know otherwise, please say so!</strong></p>
   </div>
   <div class="box bl mt">
     <p><strong>And C++26 execution is bigger than P2300:</strong> the standard also adopted <span class="ic">counting_scope</span> / <span class="ic">spawn</span> (P3149), a standard <span class="ic">parallel_scheduler</span> system context (P2079), a coroutine task type <span class="ic">std::execution::task</span> (P3552), and a policy-taking <span class="ic">bulk</span> (P3481). None of that has shipped in any stdlib either — but "the standard has no scheduler or task type" is no longer true on paper.</p>
@@ -1207,7 +1207,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
     <p><strong>Sharper test than compute vs I/O — is your async work a graph, or a chain?</strong> Fan-out, joins, work crossing a ring and a pool and maybe a GPU: that's a graph, and the algebra earns its complexity. Read a frame, parse it, write a response: that's a chain, and a coroutine expresses it with far less machinery. Most I/O-heavy systems are some of both — the seam is where you decide.</p>
   </div>
   <div class="box gr mt">
-    <p><strong>Universal:</strong> Learn and experiment with stdexec on Godbolt now. Plan production adoption when libstdc++ or libc++ ships P2300 (likely 2–4 years). The concepts won't change even if the headers do.</p>
+    <p><strong>Universal:</strong> Learn and experiment with stdexec on Godbolt now. Plan production adoption when libstdc++ or libc++ ships P2300 (likely 1–3 years). The concepts won't change even if the headers do.</p>
   </div>
   <div class="notes"><b>Graph/chain is Falco's framing, not a neutral test</b> — P4172R0, companion to P4003. Say so; it's generous and it's accurate. <b>Do NOT claim graphs are sender-only.</b> Capy ships when_all, when_any, executors, strands and thread pools, propagates executor affinity through every co_await, and CERN's traccc runs GPU reconstruction pipelines on it. <b>What stays distinct:</b> a sender pipeline is a value whose type encodes the work graph — that is what lets a domain rewrite it before connect (nvexec substituting its own bulk) and what puts the op state in the caller's frame instead of a coroutine frame.
 <br><br><b>If SG14 comes up — the hardest question here, and it comes from this room's own study group.</b> P4029R0 (Wong, SG14 chair, Feb 2026): SG14 advise Networking should not be built on P2300, the allocation patterns being incompatible with low-latency requirements; they recommend P4003 "Direct Style" I/O instead. <b>Answer in three moves.</b> <b>(1)</b> Concede: §4 sets the bar at sub-microsecond predictability and zero hot-path allocation, and senders don't meet that for dynamic-shape work — the appendix slide already says so. <b>(2)</b> Separate layers: their advice is about what the standard's networking <em>interface</em> should specify, not whether a firm can build messaging on senders. <b>(3)</b> Existence proof: Citadel runs std::execution in production for an asset class and their messaging backbone — possible because they ran their own in-house implementation for years. That is this talk's recommendation, already done at scale.
@@ -1243,7 +1243,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   <ul class="plist mt2" style="font-size:1.13em;">
     <li><span class="pi good">▸</span><span><strong>Why:</strong> every pre-P2300 async codebase is correct but isolated — the standard gave us primitives, never a model.</span></li>
     <li><span class="pi good">▸</span><span><strong>What:</strong> senders are lazy, composable descriptions of work; the scheduler is swappable — your io_uring ring can be one.</span></li>
-    <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 2–4 years) — and P2300 deliberately excludes I/O.</span></li>
+    <li><span class="pi good">▸</span><span><strong>The gap:</strong> C++26 is done, but no stdlib ships it (likely 1–3 years) — and P2300 deliberately excludes I/O.</span></li>
     <li><span class="pi good">▸</span><span><strong>The bridge:</strong> wrap your existing async I/O layer as senders today; swap in standard I/O when P2762 lands.</span></li>
     <li><span class="pi good">▸</span><span><strong>Verdict:</strong> learn now, plan carefully. Compute-heavy: adopt. I/O-heavy: adapt, don't rewrite.</span></li>
   </ul>
@@ -1353,7 +1353,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
       </div>
       <div class="box bl mt">
         <p><strong>Streams need a different abstraction: sequence senders.</strong> One emits many items via <span class="ic">set_next</span> before a final completion. stdexec has them in <span class="ic">exec/sequence/</span> — <span class="ic">iterate</span>, <span class="ic">transform_each</span>, <span class="ic">ignore_all_values</span>, <span class="ic">merge_each</span>.</p>
-        <p style="margin-top:.4em;"><strong>Not in C++26. No paper. Nothing in Beman.</strong> Kirk Shoop is actively working on them; Dietmar Kühl reportedly has plans too.</p>
+        <p style="margin-top:.4em;"><strong>Not in C++26. No paper. Nothing in Beman.</strong> I'm told they are actively being worked on.</p>
         <p style="margin-top:.4em;color:var(--warn);font-size:.95em;"><strong>Don't confuse these with <span class="ic">std::execution::sequence</span></strong> (Leahy's P4320, based on <span class="ic">exec::sequence</span>) — that runs senders one after another. Sequential composition, not streaming. The naming is unhelpful.</p>
       </div>
       <div class="box g mt">

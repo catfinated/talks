@@ -57,8 +57,8 @@ lives, because the demo can be deferred.
 
 - **The demo is the relief valve.** It closes section 02 and nothing downstream depends on
   it. If you reach slide 16 past 28:00, skip it and offer it at the end if questions run short.
-- **Slide 26 gets three minutes** — more than any other non-demo slide, deliberately. It's the
-  material nobody else can present. If you're at 42:00 when you reach it, take the full three.
+- **Slide 26 gets three minutes** — more than any other non-demo slide, deliberately. If you're
+  at 42:00 when you reach it, take the full three.
 - **Dividers are 20 seconds.** Breath, not content.
 - **Slides 14 and 15 are the reason for the talk.** They answer two of the four objections from
   slide 3. If section 02 runs long, compress slide 9, not these.
