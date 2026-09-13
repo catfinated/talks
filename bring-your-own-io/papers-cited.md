@@ -23,6 +23,7 @@ was cut from R2 onward; only `write_env` and `unstoppable` were adopted. `finall
 | Paper | What it is | Status | Link |
 |---|---|---|---|
 | P2762 | Sender/receiver interface for networking (Kühl) | C++29 target | https://wg21.link/P2762 |
+| P3482 | "Design for C++ networking based on IETF TAPS" (Rodgers, Kühl, 2024) — the API *shape*: describe the connection you need, not the socket. SG4's Tokyo 2024 direction. Cited by both camps | R1 | https://wg21.link/P3482 |
 | P3955 | "It's Scopes All the Way Down" — async RAII, async construction/destruction (Leahy) | **R1 has wording.** SG1 saw R0 at Brno, liked it, asked for wording | https://wg21.link/P3955 |
 | P4320 | `std::execution::sequence` — serial composition of senders (Leahy) | R1, 2026-08-22 (wording bug fix) | https://wg21.link/P4320 |
 | P2849 | `async_object` — async constructor and destructor concept (Shoop) | Predecessor to P3955 | https://wg21.link/P2849 |
@@ -31,10 +32,18 @@ was cut from R2 onward; only `write_env` and `unstoppable` were adopted. `finall
 
 | Paper | What it is | Status | Link |
 |---|---|---|---|
-| P4003 | "A Minimal Coroutine Execution Model" (Falco, Gill, Gerbino) | R3, May 2026 | https://wg21.link/P4003 |
+| P4100 | "Coroutine-Native I/O for C++29 (The Network Endeavor)" (Falco, Gerbino, Vandeberg, Gill, Nejati) — **Intent: Inform.** Umbrella paper for the whole series; named on the ecosystem slide | R1, 2026-05-01 (pre-Brno mailing) | https://wg21.link/P4100 |
+| P4003 | "A Minimal Coroutine Execution Model" (Falco, Gerbino, Gill) — **Intent: Ask.** The IoAwaitable protocol: executor affinity, stop-token propagation, frame-allocator delivery | R3, 2026-05-01 | https://wg21.link/P4003 |
 | P4007 | "Open Issues in `std::execution::task`" (Falco, Gill) — **informational**, "asks for nothing" | R3, 2026-05-01 | https://wg21.link/P4007 |
 | P4014 | "The Sender Sub-Language For Beginners" (Falco, Gill) — all 30 C++26 algorithms with plain-C++ equivalents. **CC0 public domain.** Informational | R2, 2026-05-01 | https://wg21.link/P4014 |
 | P4041 | "Is `std::execution` a Universal Async Model?" (Falco) | R0, ~May 2026 | https://wg21.link/P4041 |
+
+**The incompatibility is deliberate, and worth knowing precisely.** `IoAwaitable` requires a
+*two-argument* `await_suspend(h, io_env const*)`, injected by the caller's `await_transform`.
+`std::execution::task` doesn't inject it, so you cannot `co_await` an `IoAwaitable` from a
+`task`. P4003 states this is intentional — both sides of every suspension point are statically
+verified, and awaiting across model boundaries should fail to compile. So "complementary" holds
+between subsystems but not within a single coroutine.
 
 **Framing note.** Only P4003 is a proposal; P4007 is an informational classification of open
 issues in the C++26 `task` type. Falco's stated position is that coroutine-native I/O and
@@ -94,18 +103,12 @@ Composition" (Gill, Falco), P3950R0 "`return_value` & `return_void` Are Not Mutu
 |---|---|---|
 | P4172 | Falco, companion to P4003 (2026). Argues senders suit DAG-shaped work while byte-oriented I/O is chain-shaped — the source of the graph/chain test on the adoption slide | https://wg21.link/P4172 |
 | P4029 | Wong, "The SG14 Priority List for C++29/32" (Feb 2026). SG14 advises networking should **not** be built on P2300 — allocation patterns incompatible with low-latency requirements — and recommends P4003 "Direct Style" I/O as the C++29 networking model instead. Answered in the adoption slide's notes | https://wg21.link/P4029 |
-| P3482 | Rodgers & Kühl, "Design for C++ networking based on IETF TAPS" (2024). Modifies P2762's API to describe connections by property so the implementation picks the transport — the concrete design behind the "it won't look like sockets" point on the beman net slide, and what P4003 positions IoAwaitable beneath | https://wg21.link/P3482 |
-
-**Note on P3482.** `wg21.link/P3482` resolves to `papers/2025/p3482r1.html`, but that
-document's own title block still reads "P3482R0", dated 2024-10-14. The R1 exists; the
-text wasn't restamped. Cite it as R1 and don't be thrown by the header.
 
 ## Not cited but relevant
 
 | Paper | Why it matters | Link |
 |---|---|---|
 | P3300 | Lelbach, "C++ Asynchronous Parallel Algorithms" — §6.1 is the source of the "dynamic asynchrony" concern P4320 cites against `let_value` | https://wg21.link/P3300 |
-| P4100 | Falco, "Coroutine-Native I/O for C++29 (The Network Endeavor)" — umbrella paper for the whole coroutine-first series | https://wg21.link/P4100 |
 
 **Capy / Corosio, if the graph-vs-chain line comes up.** Capy (cppalliance/capy) is the library
 P4003 is drawn from: coroutine task type, byte streams, type-erased streams, and concurrency
@@ -122,6 +125,6 @@ for years. Original: herbsutter.com, 23 April 2025, "Living in the future: Using
 
 ## Where each appears in the deck
 
-- **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3552, P3955, P4003, P4007, P4014,
-  P4320, P2079, N2175, N3721, P0443
-- **Speaker notes only:** P1662, P3175, P2444, P2464, P3482, P4029, P4041, P4172
+- **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3482, P3552, P3955, P4003, P4007,
+  P4014, P4100, P4320, P2079, N2175, N3721, P0443
+- **Speaker notes only:** P1662, P3175, P2444, P2464, P4029, P4041, P4172
