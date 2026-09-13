@@ -332,7 +332,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   <div class="row mt">
     <div class="col-55">
       <p>Four years ago I built an async I/O scheduler with a common interface backed by two implementations: io_uring in production, and a thread pool fallback for environments where io_uring isn't available. It has cancellation via stop tokens.</p>
-      <p class="mt">This was <strong>standard practice</strong> — every shop with serious async needs built some version of it. And every one of those systems, mine included, hits the same structural ceiling:</p>
+      <p class="mt">This was <strong>standard practice</strong> — every shop with serious async needs built some version of it. And every one of those systems hits the same structural ceiling:</p>
       <ul class="plist mt">
         <li><span class="pi bad">✗</span><span><strong>No two of them compose.</strong> Work pipelines are ad-hoc plumbing; integrating another team's async domain means writing a custom bridge — every time.</span></li>
         <li><span class="pi bad">✗</span><span><strong>None of them share a vocabulary.</strong> My interface is mine, Asio's is Asio's — no generic algorithm can span them.</span></li>
@@ -348,7 +348,7 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
         <li>Team A uses Boost.Asio with callbacks</li>
         <li>Team B uses hand-rolled thread pool + futures</li>
         <li>Team C wrote a coroutine framework</li>
-        <li>You wrote an io_uring scheduler</li>
+        <li>Team D wrote an io_uring scheduler</li>
         <li>None of these compose with each other</li>
         <li>Each has its own error propagation story</li>
         <li>Each has its own cancellation story — or doesn't</li>
@@ -607,7 +607,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
         <p><strong>C++26 already hit this wall.</strong> <span class="ic">counting_scope</span>'s cleanup — <span class="ic">join()</span> — is async, so its <em>synchronous</em> destructor calls <span class="ic">terminate()</span> if you forgot. A standard type whose correctness depends on remembering an idiom: the C-style problem RAII was invented to kill.</p>
       </div>
       <div class="box bl mt">
-        <p><strong>So async RAII is being built in the sender domain.</strong> Shoop's <span class="ic">P2849</span>, now Leahy's <span class="ic">P3955</span> (Jan 2026) — implemented on stdexec, with an io_uring example that closes sockets via <span class="ic">IORING_OP_CLOSE</span>. On your platform even <em>close</em> is async.</p>
+        <p><strong>So async RAII is being built in the sender domain.</strong> Shoop's <span class="ic">P2849</span>, now Leahy's <span class="ic">P3955</span> (Jan 2026) — implemented on stdexec, with an io_uring example that closes sockets via <span class="ic">IORING_OP_CLOSE</span>. On Linux even <em>close</em> is async.</p>
       </div>
       <div class="box bl mt">
         <p>The claim was that none of this matters. But <strong>every codebase that believes it</strong> ends up with a hand-rolled shutdown sequence, a comment explaining the ordering, and a bug nobody can reproduce.</p>
@@ -802,7 +802,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
     </div>
   </div>
   <div class="box rd mt">
-    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. Likely arrival: 2–4 years based on precedent, but no vendor has published a timeline. <strong>If you know otherwise, say so — I check this before every talk and it is the claim most likely to age.</strong></p>
+    <p><span class="ic">#include &lt;execution&gt;</span> today gets you C++17 parallel policies only — not P2300. Likely arrival: 2–4 years based on precedent, but no vendor has published a timeline. <strong>If you know otherwise, please say so!</strong></p>
   </div>
   <div class="box bl mt">
     <p><strong>And C++26 execution is bigger than P2300:</strong> the standard also adopted <span class="ic">counting_scope</span> / <span class="ic">spawn</span> (P3149), a standard <span class="ic">parallel_scheduler</span> system context (P2079), a coroutine task type <span class="ic">std::execution::task</span> (P3552), and a policy-taking <span class="ic">bulk</span> (P3481). None of that has shipped in any stdlib either — but "the standard has no scheduler or task type" is no longer true on paper.</p>
@@ -1321,7 +1321,8 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
         <li><span class="ic">github.com/NVIDIA/stdexec</span> — use this for experimentation and evaluation now</li>
         <li><span class="ic">github.com/bemanproject/execution</span> — watch for stdlib direction</li>
         <li><span class="ic">github.com/bemanproject/net</span> — P2762 sender networking, very early</li>
-        <li><span class="ic">github.com/Caturra000/uring_exec</span> — if you need io_uring I/O ops today</li>
+        <li><span class="ic">github.com/maikel/senders-io</span> — stdexec+io_uring networking and file i/o (outdated)</li>
+        <li><span class="ic">github.com/Caturra000/uring_exec</span> — stdexec+io_uring network lib (archived)</li>
         <li><span class="ic">github.com/catfinated/fiberexec</span> — my research runtime: io_uring + fibers + senders</li>
         <li><a href="https://github.com/catfinated/talks/blob/main/bring-your-own-io/sender-algorithms-cheatsheet.md"><span class="ic">catfinated/talks</span></a> — these slides, plus a <strong>sender algorithm cheatsheet</strong> alongside them. Some material adapted from P4014R2 (Falco &amp; Gill), CC0 1.0.</li>
         <li><span class="ic">intel.github.io/cpp-baremetal-senders-and-receivers</span> — embedded use case</li>

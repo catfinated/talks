@@ -14,7 +14,7 @@ out when they missed C++20, then C++23. An io_uring scheduler came during that
 gap, designed without reference to senders.
 
 Leahy's *std::execution in Asio Codebases* (CppCon 2025) pulled me back in. This
-talk is what I found holding that infrastructure up against P2300 — what the
+talk is about what P2300 means if you already own an async I/O layer — what the
 model gives you, what the ecosystem actually ships, and why the standard async
 model arrived without any async I/O in it.
 
