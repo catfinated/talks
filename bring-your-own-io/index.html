@@ -588,7 +588,7 @@ async_recv(io_sched, socket, buf)      <span class="cm">// on your ring</span>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Plant the graph here — the adoption slide calls back to it.</b> Say "this shape is a graph" out loud over the when_all code; twenty slides later the graph-or-chain question lands on something they have already seen instead of an abstraction. <b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix C</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
+  <div class="notes"><b>Plant the graph here — the adoption slide calls back to it.</b> Say "this shape is a graph" out loud over the when_all code; twenty slides later the graph-or-chain question lands on something they have already seen instead of an abstraction. <b>Say the then/let_value distinction, don't slide it:</b> then's callable returns a value, let_value's returns a sender — that's the whole rule, and the async_write step on the right is the live example. Full side-by-side comparison is <b>Appendix D</b> if anyone wants it. <b>Renames:</b> continues_on was transfer, on became starts_on, and a new round-trip on was added (P3175, folded into P2300R10); stdexec keeps the old spellings as aliases. <b>Why starts_on on the left but not the right:</b> async_recv(io_sched, …) takes its scheduler, so the sender is context-bound by construction and places itself; async_read(fd) is context-free, so it gets placed with starts_on. Two idioms: context-carrying senders place themselves, context-free work gets placed. Caveat: self-placing means the factory must tolerate start() from any thread — marshal to the ring, exactly like fiberexec's cancel queue. <b>If probed on the last step:</b> let_value means the pipeline's completion IS the write's completion — sync_wait genuinely waits for the write to finish. <b>If probed on the (A a, B b, C c) signature:</b> each when_all branch returns exactly one value; a branch returning void or multiple values changes the downstream signature — check completion signatures when you hit surprising compile errors. <b>Say, don't show:</b> this is essentially impossible to do cleanly with std::future, hand-rolled callbacks, or most coroutine frameworks. Once sender-based async_recv / async_write exist this compiles as written; today you'd wrap your own io_uring layer to produce them. GPU caveat: you'd still manage host-device transfer; nvexec has facilities.</div>
 </div>
 
 <!-- ASYNC_SCOPE (split from structured concurrency) -->
@@ -1062,64 +1062,6 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
 <br><br><b>Bridge:</b> "that -ECANCELED branch is one arrow in a longer round trip — here's the whole thing."</div>
 </div>
 
-<!-- OP STATE NESTING DIAGRAM -->
-<div class="slide" id="s28n">
-  <div class="aline b"></div>
-  <h2>What "in the caller's frame" actually means</h2>
-  <p><span class="ic">connect()</span> builds one object. Each adaptor's operation state <em>contains</em> its child's — so the whole pipeline is a single nested value with a size known at compile time.</p>
-  <div class="row mt" style="gap:1.3em;">
-    <div class="col" style="flex:0 0 32%;">
-<pre style="font-size:.87em;"><code>stdexec::<span class="fn">sync_wait</span>(
-    <span class="fn">async_read</span>(sched, fd, buf, len)
-  | stdexec::<span class="fn">then</span>([](<span class="kw">char</span>* p, std::size_t n) {
-        <span class="kw">return</span> std::string{<span class="st">"hello "</span>}
-             + std::string{p, n};
-    }));</code></pre>
-      <div class="box g" style="margin-top:.5em;">
-        <p>Two senders, <strong>one object</strong>, <strong>zero allocations</strong>. Its size is the sum of the boxes on the right, fixed at compile time.</p>
-      </div>
-      <div class="box rd mt">
-        <p>This is why the op state is immovable: the outer state holds the inner one <em>by value</em>. Move it and every stashed pointer — including the one the kernel is holding — dangles.</p>
-      </div>
-    </div>
-    <div class="col">
-      <svg viewBox="0 0 700 322" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;" role="img" aria-label="Nested operation states: sync_wait's state contains then's, which contains your read_op; each holds a receiver, its own state, and its child">
-        <defs>
-          <marker id="arrd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--dim);"/>
-          </marker>
-        </defs>
-
-        <text x="20" y="14" style="font-family:var(--fm);font-size:12px;letter-spacing:.12em;fill:var(--muted);">CALLER'S STACK FRAME</text>
-
-        <rect x="20" y="24" width="520" height="278" rx="9" style="fill:rgba(77,166,255,.05);stroke:var(--blue);stroke-width:1.2;"/>
-        <text x="40" y="50" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">sync_wait op state</text>
-        <text x="40" y="70" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">receiver &#8594; result storage &#183; run_loop</text>
-
-        <rect x="54" y="84" width="452" height="202" rx="8" style="fill:rgba(0,223,162,.05);stroke:var(--accent);stroke-width:1.1;"/>
-        <text x="74" y="110" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">then op state</text>
-        <text x="74" y="130" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">sync_wait&#8217;s receiver &#183; the lambda, by value</text>
-
-        <rect x="88" y="146" width="384" height="124" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1.3;"/>
-        <text x="108" y="172" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">read_op &#8212; yours</text>
-        <text x="108" y="192" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">rcvr_ &#8212; then&#8217;s receiver, pointing back out</text>
-        <text x="108" y="211" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">fd_ &#183; buf_ &#183; len_ &#183; stop_ callback</text>
-        <text x="108" y="234" style="font-family:var(--fm);font-size:12.5px;fill:var(--warn);">the SQE&#8217;s user_data points at this box</text>
-        <text x="108" y="256" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">no child &#8212; the recursion stops here</text>
-
-        <line x1="576" y1="46" x2="576" y2="262" style="stroke:var(--dim);stroke-width:1.3;marker-end:url(#arrd);"/>
-        <text x="592" y="128" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">connect()</text>
-        <text x="592" y="145" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">nests inward</text>
-
-        <line x1="672" y1="262" x2="672" y2="46" style="stroke:var(--accent);stroke-width:1.3;marker-end:url(#arrd);opacity:.75;"/>
-        <text x="588" y="188" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">set_value(p,n)</text>
-        <text x="588" y="204" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">back out</text>
-      </svg>
-    </div>
-  </div>
-  <div class="notes"><b>The innermost box is the code from two slides ago.</b> That is the point of using async_read here rather than a toy: they have read read_op's start() and on_complete(), and now they can see where it lives. <b>The recursive rule, if you state one thing:</b> every operation state holds the receiver it will complete, whatever its own algorithm needs, and its child's operation state. That rule generates the entire picture. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. <b>Note whose receiver is where:</b> read_op's rcvr_ is NOT sync_wait's receiver — it is one then manufactured, pointing back at then's op state. Completions climb that chain outward. In stdexec these inner receivers are lightweight wrappers over a pointer to the enclosing op state, not fat objects, so the nesting costs less than the boxes suggest. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the three-channels slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>Ninety seconds</b> — the diagram does the work.</div>
-</div>
-
 <!-- WRAPPING CAVEATS (split) -->
 <div class="slide" id="s28b">
   <div class="aline r"></div>
@@ -1420,9 +1362,68 @@ node <span class="fn">build</span>(YamlNode <span class="kw">const</span>&amp; c
   <div class="notes"><b>Lead with the concession, not the mechanism.</b> "Yes, and here's the honest cost" plays much better than walking the code first — the questioner usually already suspects there's a catch. <b>The line that matters:</b> you've opted out of monomorphization, which is where the performance came from; that is a property of the requirement, not of senders. <b>If they push on the type-system loss:</b> that one is real and worth conceding fully — compile-time completion-signature checking is a selling point of the model, and a runtime-assembled graph throws it away. Codegen is the answer that keeps both, and it is worth mentioning even though it is more build machinery. <b>Verified:</b> stdexec has no when_all over a runtime-sized range; when_all is variadic. counting_scope + spawn + join is the practical runtime-N fan-out.</div>
 </div>
 
+<!-- OP STATE NESTING DIAGRAM -->
+<div class="slide appx" id="s28n">
+  <div class="aline b"></div>
+  <div class="appxtag">Appendix C · reference for Q&amp;A — not presented live</div>
+  <h2>What "in the caller's frame" actually means</h2>
+  <p><span class="ic">connect()</span> builds one object. Each adaptor's operation state <em>contains</em> its child's — so the whole pipeline is a single nested value with a size known at compile time.</p>
+  <div class="row mt" style="gap:1.3em;">
+    <div class="col" style="flex:0 0 32%;">
+<pre style="font-size:.87em;"><code>stdexec::<span class="fn">sync_wait</span>(
+    <span class="fn">async_read</span>(sched, fd, buf, len)
+  | stdexec::<span class="fn">then</span>([](<span class="kw">char</span>* p, std::size_t n) {
+        <span class="kw">return</span> std::string{<span class="st">"hello "</span>}
+             + std::string{p, n};
+    }));</code></pre>
+      <div class="box g" style="margin-top:.5em;">
+        <p>Two senders, <strong>one object</strong>, <strong>zero allocations</strong>. Its size is the sum of the boxes on the right, fixed at compile time.</p>
+      </div>
+      <div class="box rd mt">
+        <p>This is why the op state is immovable: the outer state holds the inner one <em>by value</em>. Move it and every stashed pointer — including the one the kernel is holding — dangles.</p>
+      </div>
+    </div>
+    <div class="col">
+      <svg viewBox="0 0 700 322" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;" role="img" aria-label="Nested operation states: sync_wait's state contains then's, which contains your read_op; each holds a receiver, its own state, and its child">
+        <defs>
+          <marker id="arrd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--dim);"/>
+          </marker>
+        </defs>
+
+        <text x="20" y="14" style="font-family:var(--fm);font-size:12px;letter-spacing:.12em;fill:var(--muted);">CALLER'S STACK FRAME</text>
+
+        <rect x="20" y="24" width="520" height="278" rx="9" style="fill:rgba(77,166,255,.05);stroke:var(--blue);stroke-width:1.2;"/>
+        <text x="40" y="50" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">sync_wait op state</text>
+        <text x="40" y="70" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">receiver &#8594; result storage &#183; run_loop</text>
+
+        <rect x="54" y="84" width="452" height="202" rx="8" style="fill:rgba(0,223,162,.05);stroke:var(--accent);stroke-width:1.1;"/>
+        <text x="74" y="110" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">then op state</text>
+        <text x="74" y="130" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">sync_wait&#8217;s receiver &#183; the lambda, by value</text>
+
+        <rect x="88" y="146" width="384" height="124" rx="8" style="fill:rgba(255,107,74,.07);stroke:var(--warn);stroke-width:1.3;"/>
+        <text x="108" y="172" style="font-family:var(--fm);font-size:15px;font-weight:600;fill:var(--text);">read_op &#8212; yours</text>
+        <text x="108" y="192" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">rcvr_ &#8212; then&#8217;s receiver, pointing back out</text>
+        <text x="108" y="211" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">fd_ &#183; buf_ &#183; len_ &#183; stop_ callback</text>
+        <text x="108" y="234" style="font-family:var(--fm);font-size:12.5px;fill:var(--warn);">the SQE&#8217;s user_data points at this box</text>
+        <text x="108" y="256" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">no child &#8212; the recursion stops here</text>
+
+        <line x1="576" y1="46" x2="576" y2="262" style="stroke:var(--dim);stroke-width:1.3;marker-end:url(#arrd);"/>
+        <text x="592" y="128" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">connect()</text>
+        <text x="592" y="145" style="font-family:var(--fm);font-size:12.5px;fill:var(--dim);">nests inward</text>
+
+        <line x1="672" y1="262" x2="672" y2="46" style="stroke:var(--accent);stroke-width:1.3;marker-end:url(#arrd);opacity:.75;"/>
+        <text x="588" y="188" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">set_value(p,n)</text>
+        <text x="588" y="204" style="font-family:var(--fm);font-size:12px;fill:var(--accent);">back out</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes"><b>Appendix slide — pull it up if someone asks what the operation state actually looks like, or doubts the zero-allocation claim.</b> The innermost box is read_op from the wrapping section, which is why it uses async_read rather than a toy: they have already seen start() and on_complete(), and this shows where it lives. <b>The recursive rule, if you state one thing:</b> every operation state holds the receiver it will complete, whatever its own algorithm needs, and its child's operation state. That rule generates the entire picture. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. <b>Note whose receiver is where:</b> read_op's rcvr_ is NOT sync_wait's receiver — it is one then manufactured, pointing back at then's op state. Completions climb that chain outward. In stdexec these inner receivers are lightweight wrappers over a pointer to the enclosing op state, not fat objects, so the nesting costs less than the boxes suggest. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the three-channels slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>It turns the <span class="ic">= delete</span> into a picture</b> — that is the fastest way to answer "how is there no allocation?"</div>
+</div>
+
 <div class="slide appx" id="ax3">
   <div class="aline"></div>
-  <div class="appxtag">Appendix C · reference for Q&amp;A — not presented live</div>
+  <div class="appxtag">Appendix D · reference for Q&amp;A — not presented live</div>
   <h2><span class="ic">then</span> vs <span class="ic">let_value</span></h2>
   <p class="mt">The whole rule: <span class="ic">then</span>'s callable returns a <strong>value</strong>; <span class="ic">let_value</span>'s returns a <strong>sender</strong>. Reach for <span class="ic">let_value</span> whenever the next step is itself asynchronous.</p>
   <div class="row mt" style="gap:1.2em;">
@@ -1458,7 +1459,7 @@ node <span class="fn">build</span>(YamlNode <span class="kw">const</span>&amp; c
 
 <div class="slide appx" id="ax4">
   <div class="aline"></div>
-  <div class="appxtag">Appendix D · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
+  <div class="appxtag">Appendix E · reference for Q&amp;A — not presented live</div><h2>Structured concurrency — safety by construction</h2>
   <div class="row mt" style="gap:1.4em;">
     <div class="col">
       <p class="r-text sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35em;">The old way — danger</p>
@@ -1492,7 +1493,7 @@ stdexec::<span class="fn">sync_wait</span>(
 <!-- APPENDIX: COMPARISON TABLE -->
 <div class="slide appx" id="s24">
   <div class="aline"></div>
-  <div class="appxtag">Appendix E · reference for Q&amp;A — not presented live</div><h2>Ecosystem at a glance</h2>
+  <div class="appxtag">Appendix F · reference for Q&amp;A — not presented live</div><h2>Ecosystem at a glance</h2>
   <p style="font-size:.95em;color:var(--muted);">Reference for Q&amp;A — not presented live.</p>
   <table class="ct mt">
     <thead>
