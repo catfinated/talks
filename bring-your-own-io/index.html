@@ -777,7 +777,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
 <!-- S18 STDLIB STATUS -->
 <div class="slide" id="s21">
   <div class="aline r"></div>
-  <h2>The standard library situation <span class="tag tr">checked 25 Aug 2026</span></h2>
+  <h2>The standard library situation <span class="tag tr">checked 13 Sep 2026</span></h2>
   <p>C++26 is finalized. No shipping standard library exposes <span class="ic">std::execution</span>. Each claim below names the artifact it comes from — check them yourself, they move.</p>
   <div class="row mt" style="gap:1em;">
     <div class="col">
@@ -974,7 +974,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
 
 <span class="cm">// Wrap it as a sender:</span>
 <span class="kw">struct</span> <span class="fn">read_sender</span> {
-    <span class="kw">using</span> sender_concept = stdexec::sender_t;
+    <span class="kw">using</span> sender_concept = stdexec::sender_tag;
     <span class="kw">using</span> completion_signatures = stdexec::completion_signatures&lt;
         stdexec::set_value_t(<span class="kw">char</span>*, std::size_t),
         stdexec::set_error_t(std::error_code),
@@ -1015,7 +1015,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
 <pre style="font-size:.80em;"><code><span class="cm">// using namespace stdexec; — elided below for width</span>
 <span class="kw">template</span> &lt;stdexec::receiver R&gt;
 <span class="kw">struct</span> <span class="fn">read_op</span> {
-    <span class="kw">using</span> operation_state_concept = operation_state_t;
+    <span class="kw">using</span> operation_state_concept = operation_state_tag;
     <span class="fn">read_op</span>(read_op&amp;&amp;) = <span class="kw">delete</span>;      <span class="cm">// pinned: built in place</span>
 
     <span class="kw">void</span> <span class="fn">start</span>() &amp; <span class="kw">noexcept</span> {
@@ -1125,7 +1125,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   <div class="aline r"></div>
   <h2>Before you wrap: two things to watch out for</h2>
   <div class="box rd mt">
-        <p><strong>Watch out:</strong> older stdexec examples and early P2300 talks use <span class="ic">tag_invoke</span> for customization — <span class="ic">friend auto tag_invoke(connect_t, ...)</span> etc. That mechanism was replaced in P2300R10, the final adopted revision. The C++26 standard uses plain member functions: <span class="ic">connect()</span>, <span class="ic">start()</span>, <span class="ic">set_value()</span>, and <span class="ic">using sender_concept = sender_t</span>. The code on the previous two slides reflects the correct final style.</p>
+        <p><strong>Watch out:</strong> older stdexec examples and early P2300 talks use <span class="ic">tag_invoke</span> for customization — <span class="ic">friend auto tag_invoke(connect_t, ...)</span> etc. That mechanism was replaced in P2300R10, the final adopted revision. The C++26 standard uses plain member functions: <span class="ic">connect()</span>, <span class="ic">start()</span>, <span class="ic">set_value()</span>, and <span class="ic">using sender_concept = sender_tag</span> — renamed from <span class="ic">sender_t</span> at Croydon (P4154R0), along with <span class="ic">receiver_tag</span>, <span class="ic">scheduler_tag</span> and <span class="ic">operation_state_tag</span>. stdexec keeps the old spellings as aliases.</p>
       </div>
   <div class="box bl mt">
     <p><strong>Cancellation:</strong> wire the receiver's stop token into your layer's own cancellation so <span class="ic">set_stopped()</span> is real, not decorative — it's where hand-rolled wrappers are most likely to cut corners. Here is the flow from <span class="ic">fiberexec</span>, a personal research runtime where I did this integration end to end — fibers inside, senders outside:</p>
@@ -1349,7 +1349,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   <div class="row mt" style="gap:1.2em;">
     <div class="col-55">
       <div class="box rd" style="margin-top:0;">
-        <p><strong>First, a terminology trap.</strong> <em>Single-shot</em> vs <em>multi-shot</em> is about how many times a sender can be <span class="ic">connect</span>ed — not how many values it delivers. <span class="ic">just(42)</span> is multi-shot because it's copyable; a coroutine task is single-shot; <span class="ic">split</span> converts one to the other. <strong>Every sender completes exactly once either way.</strong> Multi-shot is not "recv until the peer closes."</p>
+        <p><strong>First, a terminology trap.</strong> <em>Single-shot</em> vs <em>multi-shot</em> is about how many times a sender can be <span class="ic">connect</span>ed — not how many values it delivers. <span class="ic">just(42)</span> is multi-shot because it's copyable; a coroutine task is single-shot; <span class="ic">exec::split</span> converts one to the other — it was removed from C++26 by P3682 and survives only as a stdexec extension. <strong>Every sender completes exactly once either way.</strong> Multi-shot is not "recv until the peer closes."</p>
       </div>
       <div class="box bl mt">
         <p><strong>Streams need a different abstraction: sequence senders.</strong> One emits many items via <span class="ic">set_next</span> before a final completion. stdexec has them in <span class="ic">exec/sequence/</span> — <span class="ic">iterate</span>, <span class="ic">transform_each</span>, <span class="ic">ignore_all_values</span>, <span class="ic">merge_each</span>.</p>

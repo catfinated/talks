@@ -13,6 +13,8 @@ links stay current as papers are revised. Where a specific revision is known, it
 | P3552 | `std::execution::task` coroutine type | R3 | https://wg21.link/P3552 |
 | P3481 | `bulk` issues — `bulk_chunked`, `bulk_unchunked`, execution policy | — | https://wg21.link/P3481 |
 | P3284 | `write_env` and `unstoppable` sender adaptors | R4 | https://wg21.link/P3284 |
+| P3682 | **Removes** `std::execution::split` (Leahy) | R0, Sofia 2025-06 | https://wg21.link/P3682 |
+| P4154 | "Renaming various execution things" — `sender_t`→`sender_tag`, `receiver_t`→`receiver_tag`, `scheduler_t`→`scheduler_tag`, `operation_state_t`→`operation_state_tag` | R0, Croydon 2026-03 | https://wg21.link/P4154 |
 
 **Note on P3284:** R0 and R1 were titled "`finally`, `write_env`, and `unstoppable`". `finally`
 was cut from R2 onward; only `write_env` and `unstoppable` were adopted. `finally` survives as
@@ -125,6 +127,6 @@ for years. Original: herbsutter.com, 23 April 2025, "Living in the future: Using
 
 ## Where each appears in the deck
 
-- **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3482, P3552, P3955, P4003, P4007,
-  P4014, P4100, P4320, P2079, N2175, N3721, P0443
+- **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3482, P3552, P3682, P3955, P4003,
+  P4007, P4014, P4100, P4154, P4320, P2079, N2175, N3721, P0443
 - **Speaker notes only:** P1662, P3175, P2444, P2464, P4029, P4041, P4172

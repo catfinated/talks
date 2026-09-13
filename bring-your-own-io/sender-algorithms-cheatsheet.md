@@ -1,6 +1,6 @@
 # std::execution — Sender Algorithm Cheat Sheet (C++26)
 
-Verified August 2026 against the C++26 draft clauses ([exec.*]), `NVIDIA/stdexec`
+Verified 13 September 2026 against the C++26 draft clauses ([exec.*]), `NVIDIA/stdexec`
 (main), and `bemanproject/execution` (main).
 
 **Namespaces:** standard entities live in `std::execution` (except `sync_wait`,
@@ -40,8 +40,7 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 | `into_variant(sndr)` | Collapse multiple value signatures into one `variant<tuple<...>...>` value | ✓ | ✓ |
 | `stopped_as_optional(sndr)` | Stopped → value channel as empty `optional` | ✓ | ✓ |
 | `stopped_as_error(sndr, e)` | Stopped → error channel with your error | ✓ | ✓ |
-| `split(sndr)` | Single-shot → multi-shot: many consumers, work runs once | (✓)¹ | ✓ |
-| `bulk(sndr, pol, shape, f)` | Parallel loop over `[0, shape)` under an execution policy | (✓)² | ✓ |
+| `bulk(sndr, pol, shape, f)` | Parallel loop over `[0, shape)` under an execution policy | (✓)¹ | ✓ |
 | `bulk_chunked` / `bulk_unchunked` | `bulk` variants with explicit chunking control (P3481) | — | ✓ |
 | `write_env(sndr, env)` | Run child with additional environment entries | ✓ | ✓ |
 | `unstoppable(sndr)` | Hide stop requests from the child — a cancellation firewall | ✓ | ✓ |
@@ -91,9 +90,11 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 | `on` (old meaning) | `starts_on` | `on` now names the P3175 round-trip adaptor |
 | `read` | `read_env` | |
 | `tag_invoke` customization | member functions | changed in P2300R10, the adopted revision |
+| `sender_t` / `receiver_t` / `scheduler_t` / `operation_state_t` | `sender_tag` / `receiver_tag` / `scheduler_tag` / `operation_state_tag` | renamed by P4154R0, Croydon 2026-03. stdexec keeps the `_t` spellings as backwards-compatibility aliases |
 | `ensure_started` | *removed* | use `counting_scope` + `spawn_future`; survives as `exec::ensure_started` |
 | `start_detached` | *removed* | use `spawn`; survives as `exec::start_detached` |
 | `execute` | *removed* | |
+| `split` | *removed* | P3682R0, adopted at Sofia 2025-06. Survives as `exec::split` in stdexec |
 | `bulk(sndr, shape, f)` | `bulk(sndr, pol, shape, f)` | execution policy added by P3481 |
 
 ## Notable stdexec-only extensions (`exec::`, no standard equivalent)
@@ -103,7 +104,7 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 | `async_scope` | Pre-standard ancestor of `counting_scope` (the deck's examples use it) |
 | `when_any(sndrs...)` | First completion wins; the rest are cancelled |
 | `repeat` / `repeat_until` / `repeat_n` | Looping combinators. `repeat_effect` / `repeat_effect_until` are deprecated aliases; `<exec/repeat_effect_until.hpp>` warns and forwards to `<exec/repeat_until.hpp>`. Needs the child sender to be copyable **or** lvalue-connectable — type-erased senders are neither, so erase a sender *factory* instead |
-| `finally(sndr, cleanup)` | Unconditional async cleanup (async RAII)³ |
+| `finally(sndr, cleanup)` | Unconditional async cleanup (async RAII)² |
 | `any_sender_of<Sigs...>` | Type-erased sender (this is an allocation point) |
 | `sequence(sndrs...)` | Run senders one after another — serial composition, the basis of P4320. **Not** a stream abstraction |
 | `sequence_senders` | The actual stream abstraction: `set_next`, plus `iterate` / `transform_each` / `ignore_all_values` / `merge_each` / `any_sequence_of` under `exec/sequence/`. Very experimental; open stop-propagation issues through type-erased sequences. No standards paper |
@@ -118,11 +119,9 @@ which is in `std::this_thread`). stdexec puts standard-track entities in
 
 **Footnotes**
 
-1. stdexec currently ships `split` as an `exec::` extension rather than in
-   `stdexec::`; Beman implements the standard `[exec.split]` version.
-2. stdexec's `bulk` still has the pre-P3481 shape (no policy parameter, no
+1. stdexec's `bulk` still has the pre-P3481 shape (no policy parameter, no
    chunked variants).
-3. `finally` appears in stdexec's standard-track namespace but is **not** in
+2. `finally` appears in stdexec's standard-track namespace but is **not** in
    C++26. It was proposed alongside `write_env` and `unstoppable` in P3284R0/R1,
    then cut: from R2 the paper is titled for the other two only, and R4 — the
    adopted revision — carries just `write_env` and `unstoppable`.
