@@ -913,7 +913,7 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
       <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">What actually exists for sender-based I/O:</p>
       <ul style="font-size:.87em;">
         <li><strong>Asio + Leahy's stdexec adaptation</strong> — the only viable production path today. Real async file I/O (<span class="ic">stream_file</span>, <span class="ic">random_access_file</span>) and network I/O exposed as senders (CppCon 2025). Needs Asio; io_uring on Linux (<span class="ic">BOOST_ASIO_HAS_IO_URING</span>), IOCP on Windows.</li>
-        <li class="mt"><strong>uring_exec</strong> — thin wrapper over every <span class="ic">io_uring_prep_*</span> op. Has read, write, accept, send, recv. Linux only. Research-grade.</li>
+        <li class="mt"><strong>uring_exec</strong> — thin wrapper over every <span class="ic">io_uring_prep_*</span> op. Has read, write, accept, send, recv. Linux only. <strong>Effectively archived since 2025</strong> — build fixes only.</li>
         <li class="mt"><strong>maikel/senders-io</strong> — more designed file + network senders. Stale, old stdexec API. <em>This is where stdexec sends you:</em> <a href="https://github.com/NVIDIA/stdexec/issues/1062">issue #1062</a> asked how to read files with the io_uring context in 2023; the maintainer's entire answer was a link to a header in this repo.</li>
         <li class="mt"><strong>Beman net (P2762)</strong> — the sender-based standards-track approach. Very early. C++29 target.</li>
         <li class="mt"><strong>Intel bare-metal senders</strong> — P2300 subset for embedded/interrupt-driven I/O. No OS required.</li>
@@ -1323,25 +1323,26 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
         <li><span class="ic">github.com/bemanproject/net</span> — P2762 sender networking, very early</li>
         <li><span class="ic">github.com/maikel/senders-io</span> — stdexec+io_uring networking and file i/o (outdated)</li>
         <li><span class="ic">github.com/Caturra000/uring_exec</span> — stdexec+io_uring network lib (archived)</li>
+        <li><span class="ic">intel.github.io/cpp-baremetal-senders-and-receivers</span> — embedded use case</li>
         <li><span class="ic">github.com/catfinated/fiberexec</span> — my research runtime: io_uring + fibers + senders</li>
         <li><a href="https://github.com/catfinated/talks/blob/main/bring-your-own-io/sender-algorithms-cheatsheet.md"><span class="ic">catfinated/talks</span></a> — these slides, plus a <strong>sender algorithm cheatsheet</strong> alongside them. Some material adapted from P4014R2 (Falco &amp; Gill), CC0 1.0.</li>
-        <li><span class="ic">intel.github.io/cpp-baremetal-senders-and-receivers</span> — embedded use case</li>
       </ul>
     </div>
     <div class="col">
-      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">Watch for I/O progress specifically</p>
-<ul style="font-size:.88em;">
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.3em;">Will standard async I/O arrive?</p>
+      <ul style="font-size:.76em;">
         <li><strong>P2762</strong> — sender networking proposal, C++29 target. Track its revisions.</li>
-        <li><strong>P4003</strong> — Falco/Gill/Gerbino, "A Minimal Coroutine Execution Model". R3, May 2026.<br><strong>P4007</strong> — Falco/Gill, "Open Issues in <span class="ic">std::execution::task</span>". Informational, R3.</li>
-        <li><strong>P3955</strong> — Leahy, "It's Scopes All the Way Down": async RAII for senders, including async construction and destruction. Continues Shoop's P2849. <strong>R1 has wording</strong> — SG1 saw R0 at Brno, liked it, and asked to see it again with wording.</li>
-        <li><strong>P4320</strong> — Leahy, <span class="ic">std::execution::sequence</span>: runs senders one after another (sequential composition — <em>not</em> streams). R1, August 2026.</li>
-        <li><a href="https://en.cppreference.com/cpp/compiler_support/26"><strong>cppreference C++26 compiler support</strong></a> — the "Execution control library" row shows libstdc++, libc++ and MSVC STL side by side. Watch for a version number to appear in any column.</li>
-        <li>Beman net project commit activity — leading indicator of stdlib direction</li>
-        <li>WG21 mailing list for any file I/O sender proposals in the C++29 cycle</li>
+        <li><strong>P4003</strong> — the Network Endeavor's execution model. The coroutine-first bet.</li>
+        <li>Beman net commit activity — leading indicator of stdlib direction</li>
+        <li>WG21 mailings for any file I/O sender proposals in the C++29 cycle</li>
       </ul>
-      <div class="box g mt">
-        <p>Start on Godbolt: add stdexec as a library → try the minimal <span class="ic">just</span>/<span class="ic">then</span>/<span class="ic">sync_wait</span> example → work up to the thread pool examples in the stdexec repo.</p>
-      </div>
+      <p style="font-size:.92em;font-weight:700;color:var(--text);margin:.55em 0 .3em;">Where the model goes next — and whether it ships</p>
+      <ul style="font-size:.76em;">
+        <li><strong>P3955</strong> — Leahy, async RAII for senders: async construction and destruction. <strong>R1 has wording</strong>; SG1 saw R0 at Brno and asked to see it again with wording.</li>
+        <li><strong>P4320</strong> — Leahy, <span class="ic">std::execution::sequence</span>: senders run one after another (<em>not</em> streams). R1, August 2026.</li>
+        <li><strong>P4007</strong> — Falco/Gill, open issues in <span class="ic">std::execution::task</span>. Informational; §3 lists what shipping forecloses.</li>
+        <li><a href="https://en.cppreference.com/cpp/compiler_support/26"><strong>cppreference C++26 support</strong></a> — the "Execution control library" row. Watch for a version number to appear in any column.</li>
+      </ul>
     </div>
   </div>
   <p style="font-size:.8em;color:var(--dim);font-style:italic;margin-top:.6em;">Research and slides prepared with AI assistance. Claims are checked against primary sources — papers, standard wording, and vendor status pages — which are cited throughout.</p>
