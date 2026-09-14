@@ -494,7 +494,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       <p><strong>set_stopped()</strong><br>Cancellation. Structured and explicit — not an exception, not an error code.</p>
     </div>
   </div>
-<pre class="mt" style="font-size:.94em;"><code><span class="cm">// Errors propagate automatically — no try/catch at every step</span>
+<pre class="mt"><code><span class="cm">// Errors propagate automatically — no try/catch at every step</span>
 <span class="kw">auto</span> work =
     <span class="fn">async_read</span>(sched, fd, buf)         <span class="cm">// might set_error()</span>
     | stdexec::<span class="fn">then</span>([](Buffer b) {
@@ -510,13 +510,13 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       });</code></pre>
   <div class="row mt" style="gap:1em;flex:0 0 auto;">
     <div class="box rd col" style="margin:0;">
-      <p><strong>Why <span class="ic">auto err</span>:</strong> <span class="ic">then</span> adds <span class="ic">set_error_t(exception_ptr)</span> unless the callable is <span class="ic">noexcept</span> — a handler taking only <span class="ic">error_code</span> won't compile.</p>
+      <p><strong>Why <span class="ic">auto err</span>:</strong> <span class="ic">then</span> adds <span class="ic">set_error_t(exception_ptr)</span> unless the callable is <span class="ic">noexcept</span> — so the handler must take both.</p>
     </div>
     <div class="box g col" style="margin:0;">
-      <p>One uniform completion story — no more per-library mix of exceptions, error codes, and silent failures.</p>
+      <p><strong>Uniform propagation over the same channel — for <em>every</em> error type.</strong> Which types can arrive is in the completion signatures.</p>
     </div>
   </div>
-  <div class="notes"><b>Say, don't show:</b> the multi-value capability is why sync_wait always returns optional&lt;tuple&lt;...&gt;&gt; even for one value — the optional is empty on cancellation, the tuple carries all values. when_all uses this to deliver one result per branch in a single completion. <b>Why upon_stopped returns a value here:</b> a void handler would give the sender two distinct set_value signatures — set_value(T) from the happy path and set_value() from the stopped path. That's legal, but sync_wait wants a single value completion signature, so the obvious-looking void version fails to compile at the consumer. Mention only if someone asks; it's a good "you've clearly written this" beat.</div>
+  <div class="notes"><b>Say, don't show:</b> the multi-value capability is why sync_wait always returns optional&lt;tuple&lt;...&gt;&gt; even for one value — the optional is empty on cancellation, the tuple carries all values. when_all uses this to deliver one result per branch in a single completion. <b>The two bottom boxes are making one point, not two.</b> "Uniform" is about the <em>mechanism</em> — same channel, same algorithms, same propagation — not about the error type. The auto err box is the proof: a pipeline can carry error_code and exception_ptr at once. That is not a hole in the story; it is the story. std::future gives you one uniform type by flattening everything to exception_ptr, and loses information doing it. Senders keep the types and put them in the completion signatures where the compiler can see them. <b>Say it that way round if anyone spots the tension</b> — uniform plumbing, typed contents. <b>Why upon_stopped returns a value here:</b> a void handler would give the sender two distinct set_value signatures — set_value(T) from the happy path and set_value() from the stopped path. That's legal, but sync_wait wants a single value completion signature, so the obvious-looking void version fails to compile at the consumer. Mention only if someone asks; it's a good "you've clearly written this" beat.</div>
 </div>
 
 <!-- S12 ALGORITHM TOOLKIT -->
