@@ -331,34 +331,26 @@ hr.d { border:none; border-top:1px solid var(--border); margin:.65em 0; flex-shr
   <h2>The problem, concretely</h2>
   <div class="row mt">
     <div class="col-55">
-      <p>Four years ago I built an async I/O scheduler with a common interface backed by two implementations: io_uring in production, and a thread pool fallback for environments where io_uring isn't available. It has cancellation via stop tokens.</p>
-      <p class="mt">This was <strong>standard practice</strong> — every shop with serious async needs built some version of it. And every one of those systems hits the same structural ceiling:</p>
-      <ul class="plist mt">
-        <li><span class="pi bad">✗</span><span><strong>No two of them compose.</strong> Work pipelines are ad-hoc plumbing; integrating another team's async domain means writing a custom bridge — every time.</span></li>
-        <li><span class="pi bad">✗</span><span><strong>None of them share a vocabulary.</strong> My interface is mine, Asio's is Asio's — no generic algorithm can span them.</span></li>
-        <li><span class="pi bad">✗</span><span><strong>Each one invents error and cancellation propagation.</strong> Exceptions here, error_codes there, silent drops somewhere else.</span></li>
-      </ul>
-      <div class="box g mt">
-        <p>These aren't design mistakes — they're the ceiling <strong>any</strong> single-team library hits, because composing across teams needs a vocabulary everyone shares, and only a standard can provide one. P2300 takes the instinct we all had — separate computation from execution context — and makes it universal.</p>
+      <div class="box gr" style="margin-top:0;">
+        <p>Team A uses <strong>Boost.Asio</strong> for IPC. Team B uses <strong>threads and futures</strong> for CPU and GPU work. Team C uses <strong>threads and io_uring</strong> for file I/O.</p>
+        <p style="margin-top:.55em;">You are asked to build the thing that uses all three: pull data off the network, process it, write the results to storage. <em>Good luck.</em></p>
       </div>
+      <ul class="plist mt">
+        <li><span class="pi bad">✗</span><span><strong>No two of them compose.</strong> Every pipeline across a boundary is a hand-written bridge — and a new one each time.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>None of them share a vocabulary.</strong> Each interface is its own; no generic algorithm can span them.</span></li>
+        <li><span class="pi bad">✗</span><span><strong>Each invents error and cancellation propagation.</strong> Exceptions here, <span class="ic">error_code</span> there, silent drops somewhere else.</span></li>
+      </ul>
     </div>
     <div class="col">
-      <p style="font-size:.92em;font-weight:700;color:var(--text);margin-bottom:.4em;">The prior art — what every large C++ shop built:</p>
-      <ul style="font-size:.92em;">
-        <li>Team A uses Boost.Asio with callbacks</li>
-        <li>Team B uses hand-rolled thread pool + futures</li>
-        <li>Team C wrote a coroutine framework</li>
-        <li>Team D wrote an io_uring scheduler</li>
-        <li>None of these compose with each other</li>
-        <li>Each has its own error propagation story</li>
-        <li>Each has its own cancellation story — or doesn't</li>
-      </ul>
-      <div class="box bl mt2">
-        <p><strong>P2300's pitch:</strong> a vocabulary layer that all of these can speak. Work from any source composable with any other source, using generic algorithms.</p>
+      <div class="box g" style="margin-top:0;">
+        <p>These aren't design mistakes — they're the ceiling <strong>any</strong> single-team library hits. Composing across teams needs a vocabulary everyone shares, and only a standard can provide one.</p>
+      </div>
+      <div class="box bl mt">
+        <p><strong>P2300's pitch:</strong> a vocabulary layer all three can speak. Work from any source composable with any other, through generic algorithms. It takes the instinct every one of those teams had — separate the computation from the execution context — and makes it universal.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>Delivery:</b> the ✗s are coordination failures, not engineering failures — no amount of skill fixes them from inside one team, because they require everyone else to agree on a vocabulary. Land that sentence before advancing; it's the whole reason the fix is a standard and not a better in-house library. Your system stays on stage as the exemplar of standard practice, not the patient.</div>
+  <div class="notes"><b>Delivery:</b> the ✗s are coordination failures, not engineering failures — no amount of skill fixes them from inside one team, because they require everyone else to agree on a vocabulary. Land that sentence before advancing; it's the whole reason the fix is a standard and not a better in-house library. <b>Make it personal in the telling, not on the slide.</b> You have built one of these three — say which as an aside, once. About Me already established it, so repeating it on screen was the duplication this slide used to have. <b>"Good luck" should land dry.</b> It is the only joke on the slide and it earns the three bullets that follow.</div>
 </div>
 
 <!-- FUTURE VS NEEDS (merged) -->
