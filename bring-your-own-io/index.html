@@ -434,11 +434,14 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <p class="sdesc">Scheduler · Sender · Receiver, the algorithms built on them, and what people say when you show them the result.</p>
 </div>
 
-<!-- MODEL: VOCABULARY + LAZINESS (merged) -->
+<!-- MODEL: THE THREE ABSTRACTIONS AND THE THREE CHANNELS -->
 <div class="slide" id="s10">
   <div class="aline"></div>
-  <h2>Three abstractions — and why senders are lazy</h2>
-  <div class="row mt" style="gap:.9em;flex:0 0 auto;">
+  <h2>The model — three abstractions, three completions</h2>
+  <p>No code yet. These are the only concepts the rest of the talk rests on.</p>
+
+  <p class="sm mt" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:.25em;">The three abstractions</p>
+  <div class="row" style="gap:.9em;flex:0 0 auto;">
     <div class="box gr col" style="margin:0;">
       <p><strong>📍 Scheduler</strong> — a handle to an execution context. <em>Where does work run?</em> <strong>Your io_uring ring becomes one.</strong></p>
     </div>
@@ -446,84 +449,34 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
       <p><strong>📦 Sender</strong> — a lazy description of async work. <strong>You spend ~95% of your time here.</strong></p>
     </div>
     <div class="box gr col" style="margin:0;">
-      <p><strong>📬 Receiver</strong> — a generalized callback (value / error / stopped). <strong>You almost never write one — but you'll call into one the moment you wrap your own I/O.</strong></p>
+      <p><strong>📬 Receiver</strong> — a generalized callback. <strong>You almost never write one — but you'll call into one the moment you wrap your own I/O.</strong></p>
     </div>
   </div>
-  <div class="row mt" style="gap:1.2em;">
-    <div class="col-60">
-<pre style="font-size:.95em;"><code><span class="cm">// Nothing runs yet. This is just a description.</span>
-<span class="kw">auto</span> work =
-    stdexec::<span class="fn">schedule</span>(sched)           <span class="cm">// start on scheduler</span>
-    | stdexec::<span class="fn">then</span>([] { <span class="kw">return</span> <span class="fn">compute_something</span>(); })
-    | stdexec::<span class="fn">then</span>([](<span class="kw">auto</span> r) { <span class="kw">return</span> <span class="fn">transform</span>(r); });
 
-<span class="cm">// Work STARTS here. Calling thread blocks until done.</span>
-<span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(work).value();</code></pre>
-<pre style="font-size:.95em;"><code><span class="cm">// Make it a function of its scheduler...</span>
-<span class="kw">auto</span> <span class="fn">pipeline</span>(<span class="kw">auto</span> sched) {
-    <span class="kw">return</span> stdexec::<span class="fn">schedule</span>(sched) | <span class="cm">/* ...same steps... */</span>;
-}
-
-<span class="cm">// ...and the same logic runs anywhere:</span>
-<span class="kw">auto</span> cpu_work  = <span class="fn">pipeline</span>(thread_pool_sched);
-<span class="kw">auto</span> gpu_work  = <span class="fn">pipeline</span>(cuda_stream_sched);
-<span class="kw">auto</span> ring_work = <span class="fn">pipeline</span>(io_uring_sched);  <span class="cm">// your scheduler!</span></code></pre>
-    </div>
-    <div class="col">
-      <p>Pipeline built left-to-right with <span class="ic">|</span>. Each step returns a new sender — nothing executes until a consumer connects and starts it.</p>
-      <div class="box bl mt">
-        <p><strong>Senders are values.</strong> Store them, pass them to functions, modify them before running. That is what composability actually means.</p>
-      </div>
-    </div>
-  </div>
-  <div class="notes"><b>If asked "so when WOULD I write a receiver?":</b> separate consuming one from defining one. Wrapping I/O — the rest of this talk — means writing a sender and an operation state; connect hands you a receiver and you call set_value / set_error / set_stopped on it. You never define the type. You define a receiver type only when you write a sender ALGORITHM (then, or a custom adaptor), a custom consumer (your own sync_wait, spawning into your own scope), or type erasure like any_sender_of. If you're writing an adaptor you're extending the framework rather than using it — different talk. <b>On the second block:</b> pipeline() is a function returning a sender — that is the point. Because a sender is a value, the whole graph can be produced by a function parameterised on its scheduler, and the three call sites differ only in which scheduler they pass. <b>Two minutes, not six.</b> Read the three boxes in one breath — this room can define scheduler and receiver without help; the only lines that earn time are "your ring becomes a scheduler" and "you almost never write a receiver." <b>Then land the hook:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring and the computation logic is unchanged. That's the whole promise of the talk in one line.</div>
-</div>
-
-<!-- S10 THREE CHANNELS -->
-<div class="slide" id="s12">
-  <div class="aline"></div>
-  <h2>Three ways work completes — all uniform</h2>
-  <div class="row mt" style="gap:1em;flex:0 0 auto;">
+  <p class="sm mt" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);margin-bottom:.25em;">The three ways work completes — every operation ends on exactly one</p>
+  <div class="row" style="gap:.9em;flex:0 0 auto;">
     <div class="box g col" style="margin:0;">
-      <p><strong>set_value(args...)</strong><br>Success. Zero <em>or more</em> values forwarded downstream — a single completion can carry several independent results, which <span class="ic">std::future</span> cannot express at all.</p>
+      <p><strong>set_value(args...)</strong><br>Success. Zero <em>or more</em> values — a single completion can carry several independent results, which <span class="ic">std::future</span> cannot express at all.</p>
     </div>
     <div class="box rd col" style="margin:0;">
-      <p><strong>set_error(err)</strong><br>Failure. <span class="ic">exception_ptr</span>, <span class="ic">error_code</span>, or any type. Propagates automatically through the chain.</p>
+      <p><strong>set_error(err)</strong><br>Failure. <span class="ic">exception_ptr</span>, <span class="ic">error_code</span>, or any type. Uniform propagation over the same channel, whatever the type.</p>
     </div>
     <div class="box gr col" style="margin:0;">
       <p><strong>set_stopped()</strong><br>Cancellation. Structured and explicit — not an exception, not an error code.</p>
     </div>
   </div>
-<pre class="mt"><code><span class="cm">// Errors propagate automatically — no try/catch at every step</span>
-<span class="kw">auto</span> work =
-    <span class="fn">async_read</span>(sched, fd, buf)         <span class="cm">// might set_error()</span>
-    | stdexec::<span class="fn">then</span>([](Buffer b) {
-          <span class="kw">return</span> <span class="fn">parse</span>(b);               <span class="cm">// only runs if no error</span>
-      })
-    | stdexec::<span class="fn">upon_error</span>([](<span class="kw">auto</span> err) {   <span class="cm">// error_code AND exception_ptr</span>
-          <span class="fn">log_error</span>(err);
-          <span class="kw">return</span> <span class="fn">fallback_value</span>();        <span class="cm">// recover and continue</span>
-      })
-    | stdexec::<span class="fn">upon_stopped</span>([] {
-          <span class="fn">cleanup</span>();
-          <span class="kw">return</span> <span class="fn">fallback_value</span>();        <span class="cm">// same type as the value path</span>
-      });</code></pre>
-  <div class="row mt" style="gap:1em;flex:0 0 auto;">
-    <div class="box rd col" style="margin:0;">
-      <p><strong>Why <span class="ic">auto err</span>:</strong> <span class="ic">then</span> adds <span class="ic">set_error_t(exception_ptr)</span> unless the callable is <span class="ic">noexcept</span> — so the handler must take both.</p>
-    </div>
-    <div class="box g col" style="margin:0;">
-      <p><strong>Uniform propagation over the same channel — for <em>every</em> error type.</strong> Which types can arrive is in the completion signatures.</p>
-    </div>
+
+  <div class="box bl mt" style="margin-bottom:0;">
+    <p><strong>And the property everything else follows from: senders are lazy values.</strong> Building a pipeline runs nothing — each step returns a new sender. Work starts only when a consumer connects and starts it. So a pipeline can be stored, returned from a function, passed to an algorithm, or handed to a scheduler its author never heard of.</p>
   </div>
-  <div class="notes"><b>Say, don't show:</b> the multi-value capability is why sync_wait always returns optional&lt;tuple&lt;...&gt;&gt; even for one value — the optional is empty on cancellation, the tuple carries all values. when_all uses this to deliver one result per branch in a single completion. <b>The two bottom boxes are making one point, not two.</b> "Uniform" is about the <em>mechanism</em> — same channel, same algorithms, same propagation — not about the error type. The auto err box is the proof: a pipeline can carry error_code and exception_ptr at once. That is not a hole in the story; it is the story. std::future gives you one uniform type by flattening everything to exception_ptr, and loses information doing it. Senders keep the types and put them in the completion signatures where the compiler can see them. <b>Say it that way round if anyone spots the tension</b> — uniform plumbing, typed contents. <b>Why upon_stopped returns a value here:</b> a void handler would give the sender two distinct set_value signatures — set_value(T) from the happy path and set_value() from the stopped path. That's legal, but sync_wait wants a single value completion signature, so the obvious-looking void version fails to compile at the consumer. Mention only if someone asks; it's a good "you've clearly written this" beat.</div>
+  <div class="notes"><b>If asked "so when WOULD I write a receiver?":</b> separate consuming one from defining one. Wrapping I/O — the rest of this talk — means writing a sender and an operation state; connect hands you a receiver and you call set_value / set_error / set_stopped on it. You never define the type. You define a receiver type only when you write a sender ALGORITHM (then, or a custom adaptor), a custom consumer (your own sync_wait, spawning into your own scope), or type erasure like any_sender_of. If you're writing an adaptor you're extending the framework rather than using it — different talk. <b>On the second block:</b> pipeline() is a function returning a sender — that is the point. Because a sender is a value, the whole graph can be produced by a function parameterised on its scheduler, and the three call sites differ only in which scheduler they pass. <b>Two minutes, not six.</b> Read the three boxes in one breath — this room can define scheduler and receiver without help; the only lines that earn time are "your ring becomes a scheduler" and "you almost never write a receiver." <b>Then land the hook:</b> if your scheduler is an io_uring ring, pipeline(ring_sched) routes all that work through your ring and the computation logic is unchanged. That's the whole promise of the talk in one line. <b>No code on this slide is deliberate</b> — the vocabulary comes next, and the code after that. Everything here is a concept they need before a single algorithm name makes sense. <b>The three completion channels pay off immediately:</b> the next slide has one adaptor per channel.</div>
 </div>
 
 <!-- S12 ALGORITHM TOOLKIT -->
 <div class="slide" id="s14">
   <div class="aline"></div>
   <h2>The vocabulary to learn first</h2>
-  <p>Thirty algorithms in C++26. These five, in three kinds, get you through almost everything.</p>
+  <p>Thirty algorithms in C++26. These seven get you through almost everything — and three are just "read one of the completion channels."</p>
 
   <p class="sm mt" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:.2em;">Factories — make a sender out of something that isn't one</p>
   <ul class="alist">
@@ -533,13 +486,15 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
 
   <p class="sm mt" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);margin-bottom:.2em;">Adaptors — take one or more senders, return a new sender</p>
   <ul class="alist">
-    <li><span class="an">then(sndr, fn)</span><span class="ad">Transform the values. <span class="ic">fn</span> returns a <em>value</em>, which becomes the new value downstream.</span></li>
-    <li><span class="an">let_value(sndr, fn)</span><span class="ad">Same shape, but <span class="ic">fn</span> returns a <em>sender</em> — for chaining a step that is itself async.</span></li>
+    <li><span class="an">then(sndr, fn)</span><span class="ad">Reads the <strong>value</strong> channel. <span class="ic">fn</span> returns a value, which becomes the new value downstream.</span></li>
+    <li><span class="an">upon_error(sndr, fn)</span><span class="ad">Reads the <strong>error</strong> channel. Turns an error back into a value — recovery.</span></li>
+    <li><span class="an">upon_stopped(sndr, fn)</span><span class="ad">Reads the <strong>stopped</strong> channel. Turns cancellation into a value.</span></li>
+    <li><span class="an">let_value(sndr, fn)</span><span class="ad">Like <span class="ic">then</span>, but <span class="ic">fn</span> returns a <em>sender</em> — chaining a step that is itself async. <span class="ic">let_error</span> / <span class="ic">let_stopped</span> complete the grid.</span></li>
   </ul>
 
   <p class="sm mt" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);margin-bottom:.2em;">Consumers — connect and start it. Nothing runs until one of these</p>
   <ul class="alist">
-    <li><span class="an">sync_wait(sndr)</span><span class="ad">Blocks until the sender completes. Returns <span class="ic">optional&lt;tuple&lt;values...&gt;&gt;</span> — empty on stopped, errors rethrow. Lives in <span class="ic">std::this_thread</span>; stdexec spells it <span class="ic">stdexec::sync_wait</span>.</span></li>
+    <li><span class="an">sync_wait(sndr)</span><span class="ad">Blocks until it completes. Returns <span class="ic">optional&lt;tuple&lt;values...&gt;&gt;</span> — empty on stopped, errors rethrow. Lives in <span class="ic">std::this_thread</span>.</span></li>
   </ul>
 
   <div class="box bl mt">
@@ -547,7 +502,110 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     <a href="https://github.com/catfinated/talks/blob/main/bring-your-own-io/sender-algorithms-cheatsheet.md"><span style="font-family:var(--fm);font-size:.95em;">github.com/catfinated/talks</span></a> <span style="color:var(--muted);">→ bring-your-own-io/sender-algorithms-cheatsheet.md</span></p>
     <p style="margin-top:.4em;">Longer treatment: <strong>P4014</strong>, "The Sender Sub-Language For Beginners" — all thirty algorithms with plain-C++ equivalents. <span style="font-family:var(--fm);font-size:.92em;color:var(--muted);">wg21.link/P4014</span></p>
   </div>
-  <div class="notes"><b>This is the slide that earns the word "vocabulary" from the section divider</b> — slide 9 was the abstractions, this is the words. Say the connection; it is one sentence and it makes the section title mean something. <b>The three kinds are the takeaway, not the five names.</b> Factory / adaptor / consumer is the shape of the whole library — thirty algorithms, three jobs. Say it once and the cheatsheet becomes readable without you. <b>The consumer line reinforces laziness</b> — nothing runs until one of these — which is the claim from the vocabulary slide, made concrete by a name they can look up. <b>On P4014, if anyone asks:</b> Falco's beginner-facing treatment of the sender sub-language. He also authors the coroutine-first papers — worth knowing, though a pedagogical walkthrough is a different thing from advocacy. <b>On P4014, if you recommend it out loud, recommend it with the caveat.</b> It is the most complete tutorial that exists — thirty algorithms, each with a worked example and a plain-C++ equivalent, and it is CC0 so you can lift from it for the cheatsheet. But it is not neutral pedagogy: the register turns ironic in places, §14.1 sets a recursive backtracker against a ten-line plain equivalent, and the conclusion points readers at Corosio, the author's own coroutine-native library. Send people to it for the algorithm coverage, and say plainly that the author is making a case. <b>Two things worth borrowing:</b> §2.4 maps the algorithms to their theory (just = monadic return, let_value = bind, then = fmap, split = contraction, async scopes = region-based lifetimes), and §13 is a sensor-fusion → collision-detection → actuator-braking example — an AV stack, which lands unusually well with this audience coming from you. <b>Point at the cheatsheet and move on</b> — it's the reason this slide can be five rows instead of twenty. Say the repo name once; it's on the references slide too, and the deck is being shared. <b>These five are exactly what the demo uses — thirty seconds, don't read the table aloud.</b> when_all and upon_error were cut from this list on purpose; both appear in real code later, and the cheatsheet in the repo has the complete set. <b>Mention verbally, not row-by-row:</b> upon_stopped(sndr, fn) — handle cancellation explicitly mid-pipeline (already shown in code on the three-channels slide). bulk — parallel for over indices 0..n-1; final C++26 bulk takes an execution policy (P3481) and adds bulk_chunked / bulk_unchunked; older stdexec examples show bulk(sndr, n, fn). <b>Speak to five only:</b> just, schedule, then, let_value, sync_wait — the demo uses exactly these. The rest are "on the slide for your reference."</div>
+  <div class="notes"><b>then / upon_error / upon_stopped are one adaptor per channel</b> — say that and the previous slide pays off. let_value is the same idea with a sender return, and let_error / let_stopped complete the grid. <b>This is the slide that earns the word "vocabulary" from the section divider</b> — slide 9 was the abstractions, this is the words. Say the connection; it is one sentence and it makes the section title mean something. <b>The three kinds are the takeaway, not the seven names.</b> Factory / adaptor / consumer is the shape of the whole library — thirty algorithms, three jobs. Say it once and the cheatsheet becomes readable without you. <b>The consumer line reinforces laziness</b> — nothing runs until one of these — which is the claim from the vocabulary slide, made concrete by a name they can look up. <b>On P4014, if anyone asks:</b> Falco's beginner-facing treatment of the sender sub-language. He also authors the coroutine-first papers — worth knowing, though a pedagogical walkthrough is a different thing from advocacy. <b>On P4014, if you recommend it out loud, recommend it with the caveat.</b> It is the most complete tutorial that exists — thirty algorithms, each with a worked example and a plain-C++ equivalent, and it is CC0 so you can lift from it for the cheatsheet. But it is not neutral pedagogy: the register turns ironic in places, §14.1 sets a recursive backtracker against a ten-line plain equivalent, and the conclusion points readers at Corosio, the author's own coroutine-native library. Send people to it for the algorithm coverage, and say plainly that the author is making a case. <b>Two things worth borrowing:</b> §2.4 maps the algorithms to their theory (just = monadic return, let_value = bind, then = fmap, split = contraction, async scopes = region-based lifetimes), and §13 is a sensor-fusion → collision-detection → actuator-braking example — an AV stack, which lands unusually well with this audience coming from you. <b>Point at the cheatsheet and move on</b> — it's the reason this slide can be five rows instead of twenty. Say the repo name once; it's on the references slide too, and the deck is being shared. <b>These five are exactly what the demo uses — thirty seconds, don't read the table aloud.</b> when_all and upon_error were cut from this list on purpose; both appear in real code later, and the cheatsheet in the repo has the complete set. <b>Mention verbally, not row-by-row:</b> upon_stopped(sndr, fn) — handle cancellation explicitly mid-pipeline (already shown in code on the "Putting it together"). bulk — parallel for over indices 0..n-1; final C++26 bulk takes an execution policy (P3481) and adds bulk_chunked / bulk_unchunked; older stdexec examples show bulk(sndr, n, fn). <b>Speak to five only:</b> just, schedule, then, let_value, sync_wait — the demo uses exactly these. The rest are "on the slide for your reference."</div>
+</div>
+
+<!-- FIRST CODE: PUTTING IT TOGETHER -->
+<div class="slide" id="s14b">
+  <div class="aline"></div>
+  <h2>Putting it together</h2>
+  <p>Every algorithm here is one you just met.</p>
+  <div class="row mt" style="gap:1.2em;">
+    <div class="col">
+<pre style="font-size:.88em;"><code><span class="cm">// Nothing runs yet — this is just a description.</span>
+<span class="kw">auto</span> work = stdexec::<span class="fn">schedule</span>(sched)
+    | stdexec::<span class="fn">then</span>([] { <span class="kw">return</span> <span class="fn">compute</span>(); })
+    | stdexec::<span class="fn">then</span>([](<span class="kw">auto</span> r) { <span class="kw">return</span> <span class="fn">transform</span>(r); });
+
+<span class="cm">// Work STARTS here. This thread blocks until done.</span>
+<span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(work).value();</code></pre>
+      <div class="box g" style="margin-top:.45em;">
+        <p><strong>One factory, two adaptors, one consumer.</strong> The pipe builds left to right; each step returns a new sender; <span class="ic">sync_wait</span> is the only line that does anything.</p>
+      </div>
+<pre style="font-size:.88em;margin-top:.6em;"><code><span class="cm">// A sender is a value — so make it a function of its scheduler</span>
+<span class="kw">auto</span> <span class="fn">pipeline</span>(<span class="kw">auto</span> sched) {
+    <span class="kw">return</span> stdexec::<span class="fn">schedule</span>(sched) | <span class="cm">/* ...same steps... */</span>;
+}
+
+<span class="kw">auto</span> cpu_work  = <span class="fn">pipeline</span>(thread_pool_sched);
+<span class="kw">auto</span> gpu_work  = <span class="fn">pipeline</span>(cuda_stream_sched);
+<span class="kw">auto</span> ring_work = <span class="fn">pipeline</span>(io_uring_sched);  <span class="cm">// yours!</span></code></pre>
+    </div>
+    <div class="col">
+<pre style="font-size:.88em;"><code><span class="cm">// One adaptor per completion channel.</span>
+<span class="kw">auto</span> work =
+    <span class="fn">async_read</span>(sched, fd, buf)      <span class="cm">// might set_error()</span>
+    | stdexec::<span class="fn">then</span>([](Buffer b) {
+          <span class="kw">return</span> <span class="fn">parse</span>(b);            <span class="cm">// value channel</span>
+      })
+    | stdexec::<span class="fn">upon_error</span>([](<span class="kw">auto</span> err) {
+          <span class="fn">log_error</span>(err);              <span class="cm">// error channel</span>
+          <span class="kw">return</span> <span class="fn">fallback_value</span>();
+      })
+    | stdexec::<span class="fn">upon_stopped</span>([] {
+          <span class="fn">cleanup</span>();                   <span class="cm">// stopped channel</span>
+          <span class="kw">return</span> <span class="fn">fallback_value</span>();
+      });</code></pre>
+      <div class="box rd" style="margin-top:.45em;">
+        <p><strong>Why <span class="ic">auto err</span>:</strong> <span class="ic">then</span> adds <span class="ic">set_error_t(exception_ptr)</span> unless the callable is <span class="ic">noexcept</span> — the handler has to take both.</p>
+      </div>
+      <div class="box bl mt">
+        <p><strong>No <span class="ic">try</span>/<span class="ic">catch</span> at every step.</strong> An error skips the rest of the value path and arrives at the first handler that reads that channel. Recovery puts it back on the value channel — which is why both handlers return the same type.</p>
+      </div>
+    </div>
+  </div>
+  <div class="notes"><b>This is the first code in the talk, and everything in it was named one slide ago.</b> Walk the left column top to bottom: build, nothing happens, sync_wait, now it happens. Then the pipeline() block — a sender is a value, so the whole graph can be a function of its scheduler, and the three call sites differ only in which scheduler they pass. That last line is the hook for the entire talk: swap in your io_uring ring and the computation is unchanged. <b>The right column is the three channels, live</b> — one adaptor each, in the same order they were introduced. <b>Say why both handlers return the same type:</b> recovery moves a completion back onto the value channel, so the types have to agree or sync_wait has two value signatures and rejects the pipeline. <b>If someone asks about upon_stopped returning void:</b> that gives the sender two distinct set_value signatures — legal, but sync_wait wants one. Good "you have clearly written this" beat if the room is engaged. <b>Tie it forward:</b> demo 00 is the left column, 02 adds a then, 03 is the error path.</div>
+</div>
+
+<!-- REBUTTAL: SYNTACTIC SUGAR -->
+<div class="slide" id="s12b">
+  <div class="aline b"></div>
+  <h2>"Isn't <span class="ic">then</span> just the callback?"</h2>
+  <p>The second objection I promised to come back to. Same operation, both ways.</p>
+  <div class="row mt" style="gap:1.2em;">
+    <div class="col">
+      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warn);margin-bottom:.35em;">The callback you'd have written</p>
+<pre style="font-size:.86em;"><code><span class="kw">struct</span> ctx { <span class="kw">char</span>* buf; };   <span class="cm">// heap; free it yourself</span>
+
+<span class="kw">void</span> <span class="fn">on_read</span>(<span class="kw">int</span> result, <span class="kw">void</span>* p) {
+    <span class="kw">auto</span>* c = <span class="kw">static_cast</span>&lt;ctx*&gt;(p);
+    <span class="kw">if</span> (result &lt; <span class="num">0</span>) { <span class="cm">/* on whose thread?</span>
+                          <span class="cm">   report to whom? */</span> }
+    <span class="kw">else</span> <span class="fn">process</span>(c-&gt;buf, result);
+    <span class="kw">delete</span> c;
+}
+
+<span class="fn">async_read</span>(fd, buf, n, &amp;on_read, <span class="kw">new</span> ctx{buf});
+<span class="cm">// nothing here to name, store, or compose</span></code></pre>
+    </div>
+    <div class="col">
+      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:.35em;">The sender</p>
+<pre style="font-size:.86em;"><code><span class="kw">auto</span> work = <span class="fn">async_read</span>(fd, buf, n)
+          | stdexec::<span class="fn">then</span>(process);
+
+<span class="cm">// ...and `work` is a value:</span>
+stdexec::<span class="fn">sync_wait</span>(std::move(work));   <span class="cm">// run here</span>
+scope.<span class="fn">spawn</span>(std::move(work));          <span class="cm">// or there</span>
+<span class="kw">co_await</span> std::move(work);              <span class="cm">// inside a task</span>
+stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm">// or fan out</span>
+                   <span class="fn">other_work</span>());</code></pre>
+      <div class="box g" style="margin-top:.4em;">
+        <p><strong>The consumer decides how it runs — not the algorithm.</strong> Same pipeline, four different executions, none of which <span class="ic">async_read</span> had to know about. <span class="ic">spawn</span> and <span class="ic">when_all</span> are coming up — that you don't know them yet is rather the point.</p>
+      </div>
+    </div>
+  </div>
+  <div class="row mt" style="gap:1em;flex:0 0 auto;">
+    <div class="box rd col" style="margin:0;">
+      <p><strong>Where does the stop token go?</strong> There's one parameter left and it's <span class="ic">void*</span>. Same question for "which context does <span class="ic">process</span> run on?" and "who owns <span class="ic">buf</span> until completion?"</p>
+    </div>
+    <div class="box bl col" style="margin:0;">
+      <p><strong>A callback is a function you give away.</strong> You hand it to <span class="ic">async_read</span> at the call site and it's gone. <strong>A sender is a value you keep.</strong></p>
+    </div>
+  </div>
+  <div class="box gr mt" style="margin-bottom:0;">
+    <p><strong>The concession, and it's real:</strong> for one step, no errors, no cancellation, no fan-out — they <em>are</em> equivalent, and the callback version is less code. The value shows up at the second step, and at every seam between two libraries.</p>
+  </div>
+  <div class="notes"><b>This slide sits here because the previous one ends with async_read | then(parse)</b> — the exact code the objection is about. Point back at it. <b>Concede the true half first, in exactly these words:</b> "he's right that process gets invoked much like a callback, and right that this compiles down to something callback-shaped." Then turn it — the difference isn't the step, it's what you're holding. <b>If asked whether co_await needs as_awaitable:</b> inside a task it does not — the promise's await_transform calls as_awaitable for you, which is why the comment says "inside a task". In a coroutine whose promise does not handle senders you would call stdexec::as_awaitable explicitly, or build the promise on with_awaitable_senders. <b>Walk the right column top to bottom slowly.</b> Four consumers, one pipeline, and async_read knew about none of them. That's the entire argument and it's visual — let it land before you say anything else. <b>The void* line usually gets the laugh</b> and it's the most concrete point on the slide: every capability the model adds needs somewhere to live, and the callback signature has exactly one slot left. <b>Read the concession box like you mean it</b> — for a single step the objection is correct, and saying so is what earns you the rest. <b>If someone pushes on error handling:</b> point back at the previous slide. result &lt; 0 on the library's thread has nowhere to go; set_error travels the chain to a consumer that chose to be there.</div>
 </div>
 
 <!-- PATTERNS: FAN-OUT + SCHEDULER HAND-OFF (merged) -->
@@ -636,57 +694,6 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="notes"><b>If jthread comes up:</b> std::jthread fixes the lifetime problem — genuinely useful — but it's still a thread: can't run on a scheduler, can't compose with when_all, can't propagate errors out. A jthread is a hammer; a sender scope is a grammar. <b>If asked why a token rather than the scope:</b> P3149 defines nest / spawn / spawn_future against the scope_token concept — copyable, with try_associate, disassociate and wrap — precisely so the set of scope policies stays open to user code and future standards. counting_scope is one policy, not the only possible one. <b>Say "hold that thought" and mean it</b> — the terminate box pays off two slides later on the destructor slide, and the callback is what turns a piece of trivia into the argument. <b>Both scope types, if asked:</b> counting_scope = simple_counting_scope + request_stop. Same state machine, same token machinery, identical destructors. <b>If asked how faithful stdexec is here:</b> exec::async_scope predates P3149 and the shapes differ — on_empty() vs join(), scope-as-argument vs token. Porting is mechanical but it is not sed. <b>The point to land:</b> spawn is where structured concurrency meets reality — you genuinely need unbounded fan-out sometimes, and this is the version that still lets you prove everything finished.</div>
 </div>
 
-<!-- REBUTTAL: SYNTACTIC SUGAR -->
-<div class="slide" id="s12b">
-  <div class="aline b"></div>
-  <h2>"Isn't <span class="ic">then</span> just the callback?"</h2>
-  <p>The second objection I promised to come back to. Same operation, both ways.</p>
-  <div class="row mt" style="gap:1.2em;">
-    <div class="col">
-      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warn);margin-bottom:.35em;">The callback you'd have written</p>
-<pre style="font-size:.86em;"><code><span class="kw">struct</span> ctx { <span class="kw">char</span>* buf; };   <span class="cm">// heap; free it yourself</span>
-
-<span class="kw">void</span> <span class="fn">on_read</span>(<span class="kw">int</span> result, <span class="kw">void</span>* p) {
-    <span class="kw">auto</span>* c = <span class="kw">static_cast</span>&lt;ctx*&gt;(p);
-    <span class="kw">if</span> (result &lt; <span class="num">0</span>) { <span class="cm">/* on whose thread?</span>
-                          <span class="cm">   report to whom? */</span> }
-    <span class="kw">else</span> <span class="fn">process</span>(c-&gt;buf, result);
-    <span class="kw">delete</span> c;
-}
-
-<span class="fn">async_read</span>(fd, buf, n, &amp;on_read, <span class="kw">new</span> ctx{buf});
-<span class="cm">// nothing here to name, store, or compose</span></code></pre>
-    </div>
-    <div class="col">
-      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:.35em;">The sender</p>
-<pre style="font-size:.86em;"><code><span class="kw">auto</span> work = <span class="fn">async_read</span>(fd, buf, n)
-          | stdexec::<span class="fn">then</span>(process);
-
-<span class="cm">// ...and `work` is a value:</span>
-stdexec::<span class="fn">sync_wait</span>(std::move(work));   <span class="cm">// run here</span>
-scope.<span class="fn">spawn</span>(std::move(work));          <span class="cm">// or there</span>
-<span class="kw">co_await</span> std::move(work);              <span class="cm">// inside a task</span>
-stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm">// or fan out</span>
-                   <span class="fn">other_work</span>());</code></pre>
-      <div class="box g" style="margin-top:.4em;">
-        <p><strong>The consumer decides how it runs — not the algorithm.</strong> Same pipeline, four different executions, none of which <span class="ic">async_read</span> had to know about.</p>
-      </div>
-    </div>
-  </div>
-  <div class="row mt" style="gap:1em;flex:0 0 auto;">
-    <div class="box rd col" style="margin:0;">
-      <p><strong>Where does the stop token go?</strong> There's one parameter left and it's <span class="ic">void*</span>. Same question for "which context does <span class="ic">process</span> run on?" and "who owns <span class="ic">buf</span> until completion?"</p>
-    </div>
-    <div class="box bl col" style="margin:0;">
-      <p><strong>A callback is a function you give away.</strong> You hand it to <span class="ic">async_read</span> at the call site and it's gone. <strong>A sender is a value you keep.</strong></p>
-    </div>
-  </div>
-  <div class="box gr mt" style="margin-bottom:0;">
-    <p><strong>The concession, and it's real:</strong> for one step, no errors, no cancellation, no fan-out — they <em>are</em> equivalent, and the callback version is less code. The value shows up at the second step, and at every seam between two libraries.</p>
-  </div>
-  <div class="notes"><b>Concede the true half first, in exactly these words:</b> "he's right that process gets invoked much like a callback, and right that this compiles down to something callback-shaped." Then turn it — the difference isn't the step, it's what you're holding. <b>If asked whether co_await needs as_awaitable:</b> inside a task it does not — the promise's await_transform calls as_awaitable for you, which is why the comment says "inside a task". In a coroutine whose promise does not handle senders you would call stdexec::as_awaitable explicitly, or build the promise on with_awaitable_senders. <b>Walk the right column top to bottom slowly.</b> Four consumers, one pipeline, and async_read knew about none of them. That's the entire argument and it's visual — let it land before you say anything else. <b>The void* line usually gets the laugh</b> and it's the most concrete point on the slide: every capability the model adds needs somewhere to live, and the callback signature has exactly one slot left. <b>Read the concession box like you mean it</b> — for a single step the objection is correct, and saying so is what earns you the rest. <b>If someone pushes on error handling:</b> point back at the previous slide. result &lt; 0 on the library's thread has nowhere to go; set_error travels the chain to a consumer that chose to be there.</div>
-</div>
-
 <!-- REBUTTAL: ASYNC CLEANUP -->
 <div class="slide" id="s7c">
   <div class="aline b"></div>
@@ -723,7 +730,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
       </div>
     </div>
   </div>
-  <div class="notes"><b>Aim at the claim, not the person.</b> This answers the destructor objection only — the sugar one was answered on the previous slide; say so if anyone conflates them. <b>The line to land:</b> "a destructor cannot tell you why it's running, and in an async system it cannot even see cancellation — so it has to guess whether flushing is right." <b>Point back to the three-channels slide:</b> value, error and stopped collapse into a single unparameterised call here. That echo is the argument — name the slide, it is several back now, not the previous one. <b>Say the concession, and mean it</b> (it isn't on the slide): "if your process only ever exits by abort(), every error is genuinely fatal, and nothing needs flushing, then they're right and you don't need any of this." If it sounds grudging you lose everyone who came in agreeing with the objection — and they're who you're here for. <b>The generous framing:</b> wanting cleanup in a destructor <em>is</em> wanting async RAII. The instinct is right and the committee agreed — P1662 tried to add it to the language in 2019 and failed. So the objection isn't an argument against senders; it's a request for something senders provide.
+  <div class="notes"><b>Aim at the claim, not the person.</b> This answers the destructor objection only — the sugar one was answered a few slides back, right after the first code; say so if anyone conflates them. <b>The line to land:</b> "a destructor cannot tell you why it's running, and in an async system it cannot even see cancellation — so it has to guess whether flushing is right." <b>Point back to the model slide:</b> value, error and stopped collapse into a single unparameterised call here. That echo is the argument — name the slide, it is several back now, not the previous one. <b>Say the concession, and mean it</b> (it isn't on the slide): "if your process only ever exits by abort(), every error is genuinely fatal, and nothing needs flushing, then they're right and you don't need any of this." If it sounds grudging you lose everyone who came in agreeing with the objection — and they're who you're here for. <b>The generous framing:</b> wanting cleanup in a destructor <em>is</em> wanting async RAII. The instinct is right and the committee agreed — P1662 tried to add it to the language in 2019 and failed. So the objection isn't an argument against senders; it's a request for something senders provide.
 <br><br><b>If challenged:</b> <b>·&nbsp;uncaught_exceptions()</b> — that's the scope_fail / scope_success mechanism; it only detects exception unwinding, and set_stopped isn't an exception, so it reads zero on the cancellation path and the destructor concludes success. <b>·&nbsp;stdexec's io_uring context</b> — verified against the source: io_uring_context.hpp exposes schedule, schedule_at, schedule_after and stop handling, and no read/write/accept/connect operations. Leahy did not confirm this either way, but the header does. <b>·&nbsp;the serial point</b> — reverse order of construction, sequentially, covering class members and statics too, not just lexical blocks. Fire-and-forget from the destructor escapes the blocking but abandons the guarantee. <b>·&nbsp;scope types</b> — simple_counting_scope terminates under the same rule; don't switch names mid-talk. <b>·&nbsp;destruction order</b> is lexical, not dependency, so the ring the flush needs may already be gone. <b>·&nbsp;cancellation that isn't process exit</b> — sensor timeouts, mode transitions, watchdog restarts, simulations that stop early. Don't lead with domain specifics; half the room isn't in your domain.
 <br><br><b>P3955R0 (Leahy, Jan 2026)</b> — enter-scope senders yielding exit-scope senders; within / enter_scopes / nest_scopes / lifetime. Continues Shoop's P2849. Implemented on stdexec, unpublished. He presents "Implementing Async RAII" at CppCon 2026 — worth pointing the room at. Its async-mutex example makes acquire() return an enter-scope sender, letting you take three mutexes in parallel. <b>Status: R0, awaiting SG1/LEWG — say "proposed", never "coming in C++29".</b></div>
 </div>
@@ -1422,7 +1429,7 @@ node <span class="fn">build</span>(YamlNode <span class="kw">const</span>&amp; c
       </svg>
     </div>
   </div>
-  <div class="notes"><b>Appendix slide — pull it up if someone asks what the operation state actually looks like, or doubts the zero-allocation claim.</b> The innermost box is read_op from the wrapping section, which is why it uses async_read rather than a toy: they have already seen start() and on_complete(), and this shows where it lives. <b>The recursive rule, if you state one thing:</b> every operation state holds the receiver it will complete, whatever its own algorithm needs, and its child's operation state. That rule generates the entire picture. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. <b>Note whose receiver is where:</b> read_op's rcvr_ is NOT sync_wait's receiver — it is one then manufactured, pointing back at then's op state. Completions climb that chain outward. In stdexec these inner receivers are lightweight wrappers over a pointer to the enclosing op state, not fat objects, so the nesting costs less than the boxes suggest. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the three-channels slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>It turns the <span class="ic">= delete</span> into a picture</b> — that is the fastest way to answer "how is there no allocation?"</div>
+  <div class="notes"><b>Appendix slide — pull it up if someone asks what the operation state actually looks like, or doubts the zero-allocation claim.</b> The innermost box is read_op from the wrapping section, which is why it uses async_read rather than a toy: they have already seen start() and on_complete(), and this shows where it lives. <b>The recursive rule, if you state one thing:</b> every operation state holds the receiver it will complete, whatever its own algorithm needs, and its child's operation state. That rule generates the entire picture. <b>Walk it outside-in:</b> sync_wait's state holds then's, which holds yours — each by value, not by pointer. <b>Note whose receiver is where:</b> read_op's rcvr_ is NOT sync_wait's receiver — it is one then manufactured, pointing back at then's op state. Completions climb that chain outward. In stdexec these inner receivers are lightweight wrappers over a pointer to the enclosing op state, not fat objects, so the nesting costs less than the boxes suggest. sizeof the whole thing is the sum, known at compile time, sitting wherever the caller put it. <b>The line worth saying slowly:</b> the SQE's user_data points into the middle of this object, which is why moving it would be catastrophic and why the move constructor is deleted. The previous slide's rule becomes this slide's picture. <b>Say the two directions:</b> connect nests inward, completions propagate back out. That counter-flow is the shape of the whole model. <b>Note set_value carries two values</b> — buffer and length — which is the multi-value capability from the model slide, in real code. std::future cannot express it. <b>If asked what breaks the guarantee:</b> type erasure (size stops being known), spawn (the scope must own the state), coroutine frames. All three are the dynamic-shape cases from the appendix; this holds for the static shape. <b>It turns the <span class="ic">= delete</span> into a picture</b> — that is the fastest way to answer "how is there no allocation?"</div>
 </div>
 
 <div class="slide appx" id="ax3">

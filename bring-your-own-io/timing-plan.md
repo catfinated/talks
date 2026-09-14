@@ -6,7 +6,7 @@ NWCPP, 17 September 2026
 Demo held to its 8-minute hard timebox. If the slot differs, rescale the section budget
 first — the three-minute checkpoints fall out of it.
 
-Deck is **34 main slides** in four sections, plus a 5-slide appendix (`A` toggles).
+Deck is **33 main slides** in four sections, plus a 6-slide appendix (`A` toggles).
 
 ---
 
@@ -18,17 +18,27 @@ Deck is **34 main slides** in four sections, plus a 5-slide appendix (`A` toggle
 | 01 The Problem | 4–7 | 6.5 min | **slide 8 by 10:00** |
 | 02 The Model (incl. demo) | 8–16 | 21 min | **slide 17 by 31:00** |
 | 03 The Ecosystem | 17–21 | 5.5 min | **slide 22 by 36:00** |
-| 04 The Gap | 22–28 | 10 min | **slide 29 by 46:00** |
-| Close | 29–32 | 4 min | **Q&A by 50:00** |
+| 04 The Gap | 22–27 | 8.5 min | **slide 28 by 46:00** |
+| Close | 28–31 | 4 min | **Q&A by 50:00** |
 
 Four gates. Hit 31:00 entering the ecosystem section and everything downstream works.
 
-Section 02 is now the long one — nine slides and the demo. It is also where your slack
-lives, because the demo can be deferred.
+Section 02 is the long one — nine slides, of which one is a divider and one is the demo.
+**The arithmetic is tight:** an 8-minute demo starting at 23:00 closes exactly on the 31:00
+gate, which leaves ~12.5 minutes for the seven content slides — about 1.8 minutes each.
+That is achievable but has no slack in it, which is precisely why the demo is the first cut.
+Drop it and those seven slides get 20 minutes, which is comfortable.
+
+The two rebuttals (12 and 15) are the densest of the seven and the two you must not cut.
+Budget them ~2 minutes each and take the time out of 10 and 14, which are the most compressible.
 
 ---
 
-## Three-minute checkpoints
+## Checkpoints
+
+Three minutes apart, except through section 02, where every slide gets its own row — a
+three-minute grid there hides a squeeze. Each row is when you should be *arriving* at that
+slide, so the interval to the next row is that slide's budget.
 
 | Time | Should be on |
 |---|---|
@@ -36,20 +46,23 @@ lives, because the demo can be deferred.
 | 3:00 | 4 — §01 divider |
 | 6:00 | 6 — Why `std::future` isn't the model |
 | 9:00 | 7 — What about coroutines |
-| 12:00 | 9 — Three abstractions |
-| 15:00 | 10 — Three channels |
-| 18:00 | 12 — Two patterns |
-| 21:00 | 13 — Structured concurrency |
-| 24:00 | 15 — Just do it in a destructor |
-| 27:00 | 16 — Demo, ~2 min in |
-| 30:00 | 16 — Demo, ~5 min in |
+| 10:20 | 9 — The model (concepts) |
+| 12:00 | 10 — The vocabulary |
+| 13:30 | 11 — Putting it together |
+| 15:30 | 12 — Isn't then just the callback |
+| 17:30 | 13 — Two patterns |
+| 19:30 | 14 — Structured concurrency |
+| 21:00 | 15 — Just do it in a destructor |
+| 23:00 | **16 — Demo starts** |
+| 27:00 | 16 — Demo, ~4 min in |
+| 30:00 | 16 — Demo, ~7 min in |
 | 33:00 | 19 — Stdlib situation |
 | 36:00 | 22 — §04 divider |
 | 39:00 | 25 — The bridge |
 | 42:00 | 26 — Operation state |
-| 45:00 | 28 — Before you wrap |
-| 48:00 | 31 — Summary |
-| 50:00 | 32 — Questions |
+| 45:00 | 27 — Before you wrap |
+| 48:00 | 30 — Summary |
+| 50:00 | 31 — Questions |
 
 ---
 
@@ -60,11 +73,11 @@ lives, because the demo can be deferred.
 - **Slide 26 gets three minutes** — more than any other non-demo slide, deliberately. If you're
   at 42:00 when you reach it, take the full three.
 - **Dividers are 20 seconds.** Breath, not content.
-- **Slides 14 and 15 are the reason for the talk.** They answer two of the four objections from
-  slide 3. If section 02 runs long, compress slide 9, not these.
+- **Slides 12 and 15 are the reason for the talk.** They answer two of the four objections from
+  slide 3. If section 02 runs long, compress slides 9 and 10 — the concepts and the vocabulary — not these.
 - **Section 02 has no mid-section divider** — nine slides straight through. Watch for the room
-  flagging around slide 12 and use the two rebuttals to re-engage them; they're argumentative,
-  which reads as a change of pace.
+  flagging around slide 11, the first code, and use the rebuttals that follow it to re-engage
+  them; they're argumentative, which reads as a change of pace.
 
 ---
 
@@ -75,12 +88,14 @@ Cut in this order. Cut *content*, not pace — talking faster is how you lose a 
 1. **The demo (16)** — defer to the end. Biggest single block of time and fully optional.
 2. **Slide 18 (timeline)** — down to 60 seconds. Three rows and the band, skip the rest.
 3. **Slide 21 (Beman)** — 30 seconds: early, watch it, and the TAPS point.
-4. **Slide 29 (adoption by workload)** — fold into the summary.
+4. **Slide 28 (adoption by workload)** — fold into the summary.
 5. **Slide 24 (platform picture)** — headline only, skip the matrix.
 
 That's the demo plus about three minutes, without touching the argument.
 
-**Do not cut:** slides 14 and 15 (the two rebuttals) or slide 26.
+**Do not cut:** slides 12 and 15 (the two rebuttals), or slides 25 and 26 (the wrapping code).
+
+**Already cut:** the operation-state nesting diagram, now Appendix C.
 
 ---
 
