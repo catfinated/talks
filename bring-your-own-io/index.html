@@ -477,7 +477,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
 
   <p class="sm mt" style="font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:.2em;">Factories — make a sender out of something that isn't one</p>
   <ul class="alist">
-    <li><span class="an">just(vals...)</span><span class="ad">Completes immediately with the given values. The starting point when there's no scheduler involved.</span></li>
+    <li><span class="an">just(vals...)</span><span class="ad">Completes immediately with the given values. The starting point when there's no scheduler involved. <span class="ic">just_error</span> / <span class="ic">just_stopped</span> complete on the other two channels.</span></li>
     <li><span class="an">schedule(sched)</span><span class="ad">Completes on an execution context — the transition point. Everything piped after it runs there.</span></li>
   </ul>
 
@@ -509,49 +509,44 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <p>Every algorithm here is one you just met.</p>
   <div class="row mt" style="gap:1.2em;">
     <div class="col">
-<pre style="font-size:.88em;"><code><span class="cm">// Nothing runs yet — this is just a description.</span>
-<span class="kw">auto</span> work = stdexec::<span class="fn">schedule</span>(sched)
-    | stdexec::<span class="fn">then</span>([] { <span class="kw">return</span> <span class="fn">compute</span>(); })
-    | stdexec::<span class="fn">then</span>([](<span class="kw">auto</span> r) { <span class="kw">return</span> <span class="fn">transform</span>(r); });
+<pre><code><span class="cm">// Nothing runs yet — this is just a description.</span>
+<span class="kw">auto</span> work = stdexec::<span class="fn">just</span>(path)
+    | stdexec::<span class="fn">let_value</span>([](std::string&amp; p) {
+          <span class="cm">// fn returns a SENDER, so the next step</span>
+          <span class="cm">// can be async — and on another context</span>
+          <span class="kw">return</span> stdexec::<span class="fn">schedule</span>(io_sched)
+               | stdexec::<span class="fn">then</span>([&amp;p] { <span class="kw">return</span> <span class="fn">read</span>(p); });
+      })
+    | stdexec::<span class="fn">then</span>([](std::string s) { <span class="kw">return</span> <span class="fn">parse</span>(s); });
 
 <span class="cm">// Work STARTS here. This thread blocks until done.</span>
 <span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(std::move(work)).value();</code></pre>
       <div class="box g" style="margin-top:.45em;">
-        <p><strong>One factory, two adaptors, one consumer.</strong> The pipe builds left to right; each step returns a new sender; <span class="ic">sync_wait</span> is the only line that does anything.</p>
+        <p><strong>Two factories, two adaptors, one consumer.</strong> Each step returns a new sender and <span class="ic">sync_wait</span> is the only line that does anything. <span class="ic">let_value</span> keeps <span class="ic">p</span> alive for as long as the sender it returned — which is why the inner lambda can capture it.</p>
       </div>
-<pre style="font-size:.88em;margin-top:.6em;"><code><span class="cm">// A sender is a value — so make it a function of its scheduler</span>
-<span class="kw">auto</span> <span class="fn">pipeline</span>(<span class="kw">auto</span> sched) {
-    <span class="kw">return</span> stdexec::<span class="fn">schedule</span>(sched) | <span class="cm">/* ...same steps... */</span>;
-}
-
-<span class="kw">auto</span> cpu_work  = <span class="fn">pipeline</span>(thread_pool_sched);
-<span class="kw">auto</span> gpu_work  = <span class="fn">pipeline</span>(cuda_stream_sched);
-<span class="kw">auto</span> ring_work = <span class="fn">pipeline</span>(io_uring_sched);  <span class="cm">// yours!</span></code></pre>
-    </div>
+</div>
     <div class="col">
-<pre style="font-size:.88em;"><code><span class="cm">// One adaptor per completion channel.</span>
-<span class="kw">auto</span> work =
-    <span class="fn">async_read</span>(sched, fd, buf)      <span class="cm">// might set_error()</span>
-    | stdexec::<span class="fn">then</span>([](Buffer b) {
-          <span class="kw">return</span> <span class="fn">parse</span>(b);            <span class="cm">// value channel</span>
-      })
-    | stdexec::<span class="fn">upon_error</span>([](<span class="kw">auto</span> err) {
-          <span class="fn">log_error</span>(err);              <span class="cm">// error channel</span>
-          <span class="kw">return</span> <span class="fn">fallback_value</span>();
-      })
-    | stdexec::<span class="fn">upon_stopped</span>([] {
-          <span class="fn">cleanup</span>();                   <span class="cm">// stopped channel</span>
-          <span class="kw">return</span> <span class="fn">fallback_value</span>();
+<pre><code><span class="cm">// One factory and one adaptor per channel.</span>
+<span class="kw">auto</span> a = stdexec::<span class="fn">just</span>(std::string{<span class="st">"data"</span>})
+    | stdexec::<span class="fn">then</span>([](std::string s) {      <span class="cm">// value</span>
+          <span class="kw">return</span> <span class="fn">parse</span>(s);
+      });
+
+<span class="kw">auto</span> b = stdexec::<span class="fn">just_error</span>(std::error_code{})
+    | stdexec::<span class="fn">upon_error</span>([](<span class="kw">auto</span> err) {     <span class="cm">// error</span>
+          <span class="fn">log</span>(err); <span class="kw">return</span> <span class="fn">fallback</span>();
+      });
+
+<span class="kw">auto</span> c = stdexec::<span class="fn">just_stopped</span>()
+    | stdexec::<span class="fn">upon_stopped</span>([] {             <span class="cm">// stopped</span>
+          <span class="fn">cleanup</span>(); <span class="kw">return</span> <span class="fn">fallback</span>();
       });</code></pre>
-      <div class="box rd" style="margin-top:.45em;">
-        <p><strong>Why <span class="ic">auto err</span>:</strong> <span class="ic">then</span> adds <span class="ic">set_error_t(exception_ptr)</span> unless the callable is <span class="ic">noexcept</span> — the handler has to take both.</p>
-      </div>
       <div class="box bl mt">
-        <p><strong>No <span class="ic">try</span>/<span class="ic">catch</span> at every step.</strong> An error skips the rest of the value path and arrives at the first handler that reads that channel. Recovery puts it back on the value channel — which is why both handlers return the same type.</p>
+        <p><strong>Recovery moves a completion back onto the value channel</strong> — which is why <span class="ic">b</span> and <span class="ic">c</span> return the same type their value path would have. Chain them instead of separating them and an error skips the rest of the value path to reach its handler: no <span class="ic">try</span>/<span class="ic">catch</span> at every step.</p>
       </div>
     </div>
   </div>
-  <div class="notes"><b>This is the first code in the talk, and everything in it was named one slide ago.</b> Walk the left column top to bottom: build, nothing happens, sync_wait, now it happens. Then the pipeline() block — a sender is a value, so the whole graph can be a function of its scheduler, and the three call sites differ only in which scheduler they pass. That last line is the hook for the entire talk: swap in your io_uring ring and the computation is unchanged. <b>The right column is the three channels, live</b> — one adaptor each, in the same order they were introduced. <b>Say why both handlers return the same type:</b> recovery moves a completion back onto the value channel, so the types have to agree or sync_wait has two value signatures and rejects the pipeline. <b>If someone asks about upon_stopped returning void:</b> that gives the sender two distinct set_value signatures — legal, but sync_wait wants one. Good "you have clearly written this" beat if the room is engaged. <b>Tie it forward:</b> demo 00 is the left column, 02 adds a then, 03 is the error path.</div>
+  <div class="notes"><b>This is the first code in the talk, and everything in it was named one slide ago.</b> Walk the left column top to bottom: build, nothing happens, sync_wait, now it happens. <b>The let_value block is the one to slow down on</b> — its callable returns a <em>sender</em>, not a value, which is how the next step gets to be async and to run somewhere else. then cannot do that; the appendix has the side-by-side. <b>And the capture is the tell:</b> the inner lambda holds a reference to p because let_value keeps the predecessor's values alive for the life of the sender it returned. That is the lifetime rule that makes the algorithm usable, not a convenience. <b>schedule(io_sched) is the hook:</b> that is where your ring goes. <b>The right column is the three channels, live</b> — one adaptor each, in the same order they were introduced, on a source you can actually run. <b>Three pipelines, not one, so every handler is reachable</b> — a single chain from just() can never complete stopped, and an unreachable handler on screen is the kind of thing this room notices. <b>The symmetry is the teaching point:</b> a factory that produces each channel, an adaptor that consumes it. <b>If asked whether upon_error only catches error_code:</b> no — if parse can throw, then contributes set_error_t(exception_ptr) too, which is why the handler takes auto. That is the box below, and it is demo example 03. <b>Say why both handlers return the same type:</b> recovery moves a completion back onto the value channel, so the types have to agree or sync_wait has two value signatures and rejects the pipeline. <b>If someone asks about upon_stopped returning void:</b> that gives the sender two distinct set_value signatures — legal, but sync_wait wants one. Good "you have clearly written this" beat if the room is engaged. <b>Tie it forward:</b> demo 00 is the left column, 02 adds a then, 03 is the error path.</div>
 </div>
 
 <!-- REBUTTAL: SYNTACTIC SUGAR -->
