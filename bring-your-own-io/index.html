@@ -515,7 +515,7 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
     | stdexec::<span class="fn">then</span>([](<span class="kw">auto</span> r) { <span class="kw">return</span> <span class="fn">transform</span>(r); });
 
 <span class="cm">// Work STARTS here. This thread blocks until done.</span>
-<span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(work).value();</code></pre>
+<span class="kw">auto</span> [value] = stdexec::<span class="fn">sync_wait</span>(std::move(work)).value();</code></pre>
       <div class="box g" style="margin-top:.45em;">
         <p><strong>One factory, two adaptors, one consumer.</strong> The pipe builds left to right; each step returns a new sender; <span class="ic">sync_wait</span> is the only line that does anything.</p>
       </div>
@@ -561,17 +561,19 @@ exec::task&lt;<span class="kw">int</span>&gt; my_coroutine() {
   <p>The second objection I promised to come back to. Same operation, both ways.</p>
   <div class="row mt" style="gap:1.2em;">
     <div class="col">
-      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warn);margin-bottom:.35em;">The callback you'd have written</p>
-<pre style="font-size:.86em;"><code><span class="kw">struct</span> ctx { <span class="kw">char</span>* buf; };   <span class="cm">// heap; free it yourself</span>
+      <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warn);margin-bottom:.35em;">The callback</p>
+<pre style="font-size:.86em;"><code><span class="kw">struct</span> ctx { <span class="kw">char</span>* buf; };   <span class="cm">// stop token? promise?</span>
 
 <span class="kw">void</span> <span class="fn">on_read</span>(<span class="kw">int</span> result, <span class="kw">void</span>* p) {
     <span class="kw">auto</span>* c = <span class="kw">static_cast</span>&lt;ctx*&gt;(p);
     <span class="kw">if</span> (result &lt; <span class="num">0</span>) { <span class="cm">/* on whose thread?</span>
                           <span class="cm">   report to whom? */</span> }
     <span class="kw">else</span> <span class="fn">process</span>(c-&gt;buf, result);
-    <span class="kw">delete</span> c;
+    <span class="kw">delete</span> c;   <span class="cm">// guaranteed heap-allocated?</span>
 }
 
+<span class="cm">// void async_read(int fd, char* buf, size_t len,</span>
+<span class="cm">//   void(*cb)(int result, void* ctx), void* ctx);</span>
 <span class="fn">async_read</span>(fd, buf, n, &amp;on_read, <span class="kw">new</span> ctx{buf});
 <span class="cm">// nothing here to name, store, or compose</span></code></pre>
     </div>
