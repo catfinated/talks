@@ -94,7 +94,7 @@ Composition" (Gill, Falco), P3950R0 "`return_value` & `return_void` Are Not Mutu
 | N2175 | "Networking Library Proposal for TR2" (Kohlhoff, 2007) — the async I/O proposal whose need for an executor model started everything | https://wg21.link/N2175 |
 | N3378 | "A preliminary proposal for work executors" (Google, presented to SG1 May 2012) — where the executor wars actually start. Followed by an unnumbered Microsoft paper at Bellevue, then N3562 (joint Google/Microsoft), N3731, N3785 | https://wg21.link/N3378 |
 | N3721 | "Improvements to `std::future<T>`" — `.then()`, 2013 | https://wg21.link/N3721 |
-| N4471 | "Networking Library for C++" (2018) — the Networking TS draft that sat waiting for an executor model | https://wg21.link/N4471 |
+| N4771 | "Working Draft, C++ Extensions for Networking" (Wakely, 2018-10-08) — the eighth Networking TS working draft, revising N4734. The document that sat waiting for an executor model | https://wg21.link/N4771 |
 | P0443 | "A Unified Executors Proposal for C++" (2016) — the attempt to *unify* four years of competing designs, not the opening shot | https://wg21.link/P0443 |
 | P1055 | "A Modest Executor Proposal" (2018) — the competing design | https://wg21.link/P1055 |
 | P1194 | "The Compromise Executors Proposal" (2018) — the name tells the story | https://wg21.link/P1194 |
@@ -132,5 +132,5 @@ for years. Original: herbsutter.com, 23 April 2025, "Living in the future: Using
 ## Where each appears in the deck
 
 - **On slides:** P2300, P2762, P2849, P3149, P3284, P3481, P3482, P3552, P3682, P3955, P4003,
-  P4007, P4014, P4100, P4154, P4320, P2079, N2175, N4471, N3721, P0443, P1055, P1194
+  P4007, P4014, P4100, P4154, P4320, P2079, N2175, N4771, N3721, P0443, P1055, P1194
 - **Speaker notes only:** P1662, P3175, P2444, P2464, P4029, P4041, P4172
