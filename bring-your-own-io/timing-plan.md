@@ -59,9 +59,10 @@ slide, so the interval to the next row is that slide's budget.
 | 34:00 | 19 — Stdlib situation |
 | 37:00 | 22 — P2300 excludes I/O |
 | 39:00 | 24 — §04 divider |
-| 41:00 | 25 — The bridge |
-| 43:00 | 26 — Operation state |
-| 46:00 | 27 — Before you wrap |
+| 40:00 | 25 — Adoption is workload-dependent |
+| 42:00 | 26 — The bridge |
+| 44:00 | 27 — Operation state |
+| 47:00 | 28 — Before you wrap |
 | 48:00 | 30 — Summary |
 | 50:00 | 31 — Questions |
 
@@ -71,8 +72,8 @@ slide, so the interval to the next row is that slide's budget.
 
 - **The demo is the relief valve.** It closes section 02 and nothing downstream depends on
   it. If you reach slide 16 past 28:00, skip it and offer it at the end if questions run short.
-- **Slide 26 gets three minutes** — more than any other non-demo slide, deliberately. It's the
-  material nobody else can present. If you're at 43:00 when you reach it, take the full three.
+- **Slide 27 gets three minutes** — more than any other non-demo slide, deliberately. It's the
+  material nobody else can present. If you're at 44:00 when you reach it, take the full three.
 - **Dividers are 20 seconds.** Breath, not content.
 - **Slides 12 and 15 are the reason for the talk.** They answer two of the four objections from
   slide 3. If section 02 runs long, compress slides 10 and 14, not these.
@@ -91,12 +92,12 @@ Cut in this order. Cut *content*, not pace — talking faster is how you lose a 
 1. **The demo (16)** — defer to the end. Biggest single block of time and fully optional.
 2. **Slide 18 (timeline)** — down to 60 seconds. Three rows and the band, skip the rest.
 3. **Slide 21 (Beman)** — 30 seconds: early, watch it, and the TAPS point.
-4. **Slide 28 (adoption by workload)** — fold into the summary.
+4. **Slide 25 (adoption by workload)** — fold into the summary.
 5. **Slide 23 (platform picture)** — headline only, skip the matrix.
 
 That's the demo plus about three minutes, without touching the argument.
 
-**Do not cut:** slides 12 and 15 (the two rebuttals), or slides 25 and 26 (the wrapping code).
+**Do not cut:** slides 12 and 15 (the two rebuttals), or slides 26 and 27 (the wrapping code).
 
 **Already cut:** the operation-state nesting diagram, now Appendix C.
 
