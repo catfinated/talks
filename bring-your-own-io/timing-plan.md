@@ -4,9 +4,9 @@ NWCPP, 17 September 2026
 
 **Assumptions:** 60-minute slot. 50 minutes to reach the Questions slide, 10 minutes of Q&A.
 Demo held to its 8-minute hard timebox. If the slot differs, rescale the section budget
-first — the three-minute checkpoints fall out of it.
+first — the checkpoints fall out of it.
 
-Deck is **34 main slides** in five sections, plus a 6-slide appendix (`A` toggles).
+Deck is **33 main slides** in four sections, plus a 6-slide appendix (`A` toggles).
 
 ---
 
@@ -17,9 +17,8 @@ Deck is **34 main slides** in five sections, plus a 6-slide appendix (`A` toggle
 | Open | 1–3 | 3.5 min | — |
 | 01 The Problem | 4–7 | 6.5 min | **slide 8 by 10:00** |
 | 02 The Model (incl. demo) | 8–16 | 21 min | **slide 17 by 31:00** |
-| 03 The Ecosystem | 17–21 | 5.5 min | **slide 22 by 36:00** |
-| 04 The Gap | 22–27 | 8.5 min | **slide 28 by 46:00** |
-| 05 What Now | 28–31 | 4 min | **Q&A by 50:00** |
+| 03 The Ecosystem | 17–23 | 8 min | **slide 24 by 39:00** |
+| 04 The Bridge | 24–30 | 11 min | **Q&A by 50:00** |
 
 Four gates. Hit 31:00 entering the ecosystem section and everything downstream works.
 
@@ -56,14 +55,15 @@ slide, so the interval to the next row is that slide's budget.
 | 23:00 | **16 — Demo starts** |
 | 27:00 | 16 — Demo, ~4 min in |
 | 30:00 | 16 — Demo, ~7 min in |
-| 33:00 | 19 — Stdlib situation |
-| 36:00 | 22 — §04 divider |
-| 39:00 | 25 — The bridge |
-| 42:00 | 26 — Operation state |
-| 45:00 | 27 — Before you wrap |
-| 46:00 | 28 — §05 divider |
-| 48:00 | 31 — Summary |
-| 50:00 | 32 — Questions |
+| 31:00 | 17 — §03 divider |
+| 34:00 | 19 — Stdlib situation |
+| 37:00 | 22 — P2300 excludes I/O |
+| 39:00 | 24 — §04 divider |
+| 41:00 | 25 — The bridge |
+| 43:00 | 26 — Operation state |
+| 46:00 | 27 — Before you wrap |
+| 48:00 | 30 — Summary |
+| 50:00 | 31 — Questions |
 
 ---
 
@@ -71,14 +71,16 @@ slide, so the interval to the next row is that slide's budget.
 
 - **The demo is the relief valve.** It closes section 02 and nothing downstream depends on
   it. If you reach slide 16 past 28:00, skip it and offer it at the end if questions run short.
-- **Slide 26 gets three minutes** — more than any other non-demo slide, deliberately. If you're
-  at 42:00 when you reach it, take the full three.
+- **Slide 26 gets three minutes** — more than any other non-demo slide, deliberately. It's the
+  material nobody else can present. If you're at 43:00 when you reach it, take the full three.
 - **Dividers are 20 seconds.** Breath, not content.
 - **Slides 12 and 15 are the reason for the talk.** They answer two of the four objections from
-  slide 3. If section 02 runs long, compress slides 9 and 10 — the concepts and the vocabulary — not these.
+  slide 3. If section 02 runs long, compress slides 10 and 14, not these.
 - **Section 02 has no mid-section divider** — nine slides straight through. Watch for the room
   flagging around slide 11, the first code, and use the rebuttals that follow it to re-engage
   them; they're argumentative, which reads as a change of pace.
+- **Section 03 is the fast one.** Six content slides in 8 minutes. None of it needs dwelling on;
+  it's the survey that earns the recommendation in §04.
 
 ---
 
@@ -89,8 +91,8 @@ Cut in this order. Cut *content*, not pace — talking faster is how you lose a 
 1. **The demo (16)** — defer to the end. Biggest single block of time and fully optional.
 2. **Slide 18 (timeline)** — down to 60 seconds. Three rows and the band, skip the rest.
 3. **Slide 21 (Beman)** — 30 seconds: early, watch it, and the TAPS point.
-4. **Slide 29 (adoption by workload)** — fold into the summary.
-5. **Slide 24 (platform picture)** — headline only, skip the matrix.
+4. **Slide 28 (adoption by workload)** — fold into the summary.
+5. **Slide 23 (platform picture)** — headline only, skip the matrix.
 
 That's the demo plus about three minutes, without touching the argument.
 
