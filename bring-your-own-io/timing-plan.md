@@ -6,7 +6,7 @@ NWCPP, 17 September 2026
 Demo held to its 8-minute hard timebox. If the slot differs, rescale the section budget
 first — the three-minute checkpoints fall out of it.
 
-Deck is **33 main slides** in four sections, plus a 6-slide appendix (`A` toggles).
+Deck is **34 main slides** in five sections, plus a 6-slide appendix (`A` toggles).
 
 ---
 
@@ -19,7 +19,7 @@ Deck is **33 main slides** in four sections, plus a 6-slide appendix (`A` toggle
 | 02 The Model (incl. demo) | 8–16 | 21 min | **slide 17 by 31:00** |
 | 03 The Ecosystem | 17–21 | 5.5 min | **slide 22 by 36:00** |
 | 04 The Gap | 22–27 | 8.5 min | **slide 28 by 46:00** |
-| Close | 28–31 | 4 min | **Q&A by 50:00** |
+| 05 What Now | 28–31 | 4 min | **Q&A by 50:00** |
 
 Four gates. Hit 31:00 entering the ecosystem section and everything downstream works.
 
@@ -61,8 +61,9 @@ slide, so the interval to the next row is that slide's budget.
 | 39:00 | 25 — The bridge |
 | 42:00 | 26 — Operation state |
 | 45:00 | 27 — Before you wrap |
-| 48:00 | 30 — Summary |
-| 50:00 | 31 — Questions |
+| 46:00 | 28 — §05 divider |
+| 48:00 | 31 — Summary |
+| 50:00 | 32 — Questions |
 
 ---
 
@@ -88,7 +89,7 @@ Cut in this order. Cut *content*, not pace — talking faster is how you lose a 
 1. **The demo (16)** — defer to the end. Biggest single block of time and fully optional.
 2. **Slide 18 (timeline)** — down to 60 seconds. Three rows and the band, skip the rest.
 3. **Slide 21 (Beman)** — 30 seconds: early, watch it, and the TAPS point.
-4. **Slide 28 (adoption by workload)** — fold into the summary.
+4. **Slide 29 (adoption by workload)** — fold into the summary.
 5. **Slide 24 (platform picture)** — headline only, skip the matrix.
 
 That's the demo plus about three minutes, without touching the argument.

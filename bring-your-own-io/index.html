@@ -962,8 +962,8 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
         <li>Intel's bare-metal senders: a P2300 subset — interrupt-driven, no OS, no alloc</li>
         <li>Shows the model generalizes to metal; separate library, not stdexec-interoperable</li>
       </ul>
-      <div class="box gr mt">
-        <p>For raw socket users on any platform today: wrap your existing async layer to produce senders. The computation model is ready. The I/O layer is yours to bring.</p>
+      <div class="box g mt">
+        <p>If you already have your own I/O layer on your platforms of choice, then senders give you the model to plug into.</p>
       </div>
     </div>
   </div>
@@ -1118,6 +1118,15 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   </svg>
   <p style="font-size:.85em;color:var(--muted);margin-top:.45em;font-style:italic;">The unwind is fiber-internal — it's how a suspended fiber abandons its stack without checking a return code at every await point. It never crosses the seam; the sender world only ever sees <span class="ic">set_stopped()</span>.</p>
   <div class="notes"><b>If challenged on the completion_signatures typedef:</b> the nested <span class="ic">using completion_signatures = ...</span> is what stdexec accepts and what almost every example shows; the standard also specifies a member <span class="ic">get_completion_signatures(env)</span> form. Re-check which spelling the final wording blesses before the talk, and if unsure, say "that's the stdexec spelling" rather than "that's the standard spelling." <b>Introduce fiberexec in one sentence, then move on:</b> personal research runtime, research-grade and not production, held to the same standard applied to every other project mentioned tonight. Repo is on the references slide. <b>Narrate the U-shape:</b> the stop request crosses the seam twice — down into the kernel as ASYNC_CANCEL, back up as set_stopped. That round trip is what "cancellation is real" means. This is fiberexec's verified flow (run.hpp + fiber_context.cpp), not pseudocode. <b>Raise the cost question before the audience does:</b> yes, there's a throw inside the fiber — one unwind per cancelled operation, off the hot path. The alternative is threading an error check through every suspension point in the fiber, which is the thing fibers exist to avoid. <b>Why ③ says "queued":</b> the stop_callback runs on whatever thread called request_stop — not the ring's owner — and only the owning thread may touch the SQ ring. So request_cancel does a mutex-guarded queue push plus an eventfd write to wake the ring; the owning thread drains the queue into ASYNC_CANCEL SQEs on its next pass (ring-full handled: leftovers wait for the next wakeup). Bonus detail if probed: linked SQE chains cascade -ECANCELED; already-completed ops return -ENOENT and are discarded.</div>
+</div>
+
+<!-- SECTION: WHAT NOW -->
+<div class="slide sect" id="s29">
+  <div class="snum">05</div>
+  <div class="slabel">What Now</div>
+  <div class="stitle">Bring your own I/O.</div>
+  <p class="sdesc">The model is here and the I/O isn't. So what do you actually do about it? It depends.</p>
+  <div class="notes"><b>The title arriving as a section header.</b> You set it forty minutes ago and have not restated it; here it lands as an instruction rather than a joke. <b>Twenty seconds</b> — it is a breath before the recommendation, and the run from the §04 divider to here is the longest unbroken stretch in the deck.</div>
 </div>
 
 <!-- S27 ADOPTION BY WORKLOAD -->
