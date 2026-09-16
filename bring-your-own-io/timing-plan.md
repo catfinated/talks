@@ -3,10 +3,10 @@
 NWCPP, 17 September 2026
 
 **Assumptions:** 60-minute slot. 50 minutes to reach the Questions slide, 10 minutes of Q&A.
-Demo held to its 8-minute hard timebox. If the slot differs, rescale the section budget
-first — the checkpoints fall out of it.
 
-Deck is **33 main slides** in four sections, plus a 6-slide appendix (`A` toggles).
+Deck is **30 main slides** (plus two references slides behind Q&A) in four sections, with a
+6-slide appendix on the `A` key. **The live demo is cut** — the buildable project is in the repo
+and the references slide points at it.
 
 ---
 
@@ -16,90 +16,83 @@ Deck is **33 main slides** in four sections, plus a 6-slide appendix (`A` toggle
 |---|---|---|---|
 | Open | 1–3 | 3.5 min | — |
 | 01 The Problem | 4–7 | 6.5 min | **slide 8 by 10:00** |
-| 02 The Model (incl. demo) | 8–16 | 21 min | **slide 17 by 31:00** |
-| 03 The Ecosystem | 17–23 | 8 min | **slide 24 by 39:00** |
-| 04 The Bridge | 24–30 | 11 min | **Q&A by 50:00** |
+| 02 The Model | 8–15 | 14 min | **slide 16 by 24:00** |
+| 03 The Ecosystem | 16–22 | 10 min | **slide 23 by 34:00** |
+| 04 The Bridge | 23–29 | 14 min | **Q&A by 50:00** |
+| Q&A | 30 | 10 min | — |
 
-Four gates. Hit 31:00 entering the ecosystem section and everything downstream works.
-
-Section 02 is the long one — nine slides, of which one is a divider and one is the demo.
-**The arithmetic is tight:** an 8-minute demo starting at 23:00 closes exactly on the 31:00
-gate, which leaves ~12.5 minutes for the seven content slides — about 1.8 minutes each.
-That is achievable but has no slack in it, which is precisely why the demo is the first cut.
-Drop it and those seven slides get 20 minutes, which is comfortable.
-
-The two rebuttals (12 and 15) are the densest of the seven and the two you must not cut.
-Budget them ~2 minutes each and take the time out of 10 and 14, which are the most compressible.
+Cutting the demo bought 8 minutes and they are spread across the three content sections,
+so nothing is now squeezed. Section 02's seven content slides get 2 minutes each instead
+of 1.8; §04's six get just over 2.
 
 ---
 
 ## Checkpoints
 
-Three minutes apart, except through section 02, where every slide gets its own row — a
-three-minute grid there hides a squeeze. Each row is when you should be *arriving* at that
-slide, so the interval to the next row is that slide's budget.
+Each row is when you should be *arriving* at that slide, so the interval to the next row is
+that slide's budget.
 
 | Time | Should be on |
 |---|---|
 | 0:00 | 1 — Title |
-| 3:00 | 4 — §01 divider |
+| 3:30 | 4 — §01 divider |
 | 6:00 | 6 — Why `std::future` isn't the model |
-| 9:00 | 7 — What about coroutines |
+| 8:00 | 7 — What about coroutines |
+| 10:00 | 8 — §02 divider |
 | 10:20 | 9 — The model (concepts) |
-| 12:00 | 10 — The vocabulary |
-| 13:30 | 11 — Putting it together |
-| 15:30 | 12 — Isn't then just the callback |
-| 17:30 | 13 — Two patterns |
-| 19:30 | 14 — Structured concurrency |
-| 21:00 | 15 — Just do it in a destructor |
-| 23:00 | **16 — Demo starts** |
-| 27:00 | 16 — Demo, ~4 min in |
-| 30:00 | 16 — Demo, ~7 min in |
-| 31:00 | 17 — §03 divider |
-| 34:00 | 19 — Stdlib situation |
-| 37:00 | 22 — P2300 excludes I/O |
-| 39:00 | 24 — §04 divider |
-| 40:00 | 25 — Adoption is workload-dependent |
-| 42:00 | 26 — The bridge |
-| 44:00 | 27 — Operation state |
-| 47:00 | 28 — Before you wrap |
-| 48:00 | 30 — Summary |
-| 50:00 | 31 — Questions |
+| 12:20 | 10 — The vocabulary |
+| 14:00 | 11 — Putting it together |
+| 16:30 | 12 — Isn't then just the callback |
+| 18:30 | 13 — Two patterns |
+| 20:30 | 14 — Structured concurrency |
+| 22:00 | 15 — Just do it in a destructor |
+| 24:00 | 16 — §03 divider |
+| 24:20 | 17 — The road to P2300 |
+| 26:00 | 18 — Stdlib situation |
+| 28:00 | 19 — NVIDIA stdexec |
+| 29:30 | 20 — Beman |
+| 31:00 | 21 — P2300 excludes I/O |
+| 32:30 | 22 — Platform picture |
+| 34:00 | 23 — §04 divider |
+| 34:20 | 24 — Adoption is workload-dependent |
+| 37:00 | 25 — The bridge |
+| 39:30 | 26 — Operation state |
+| 42:30 | 27 — Before you wrap |
+| 45:00 | 28 — Sutter |
+| 47:00 | 29 — Summary |
+| 50:00 | 30 — Questions |
 
 ---
 
 ## What the numbers imply about delivery
 
-- **The demo is the relief valve.** It closes section 02 and nothing downstream depends on
-  it. If you reach slide 16 past 28:00, skip it and offer it at the end if questions run short.
-- **Slide 27 gets three minutes** — more than any other non-demo slide, deliberately. It's the
-  material nobody else can present. If you're at 44:00 when you reach it, take the full three.
+- **Slide 26 (operation state) gets three minutes** — the most of any slide, deliberately. It's
+  the material nobody else can present.
 - **Dividers are 20 seconds.** Breath, not content.
 - **Slides 12 and 15 are the reason for the talk.** They answer two of the four objections from
-  slide 3. If section 02 runs long, compress slides 10 and 14, not these.
-- **Section 02 has no mid-section divider** — nine slides straight through. Watch for the room
-  flagging around slide 11, the first code, and use the rebuttals that follow it to re-engage
-  them; they're argumentative, which reads as a change of pace.
-- **Section 03 is the fast one.** Six content slides in 8 minutes. None of it needs dwelling on;
+  slide 3. If §02 runs long, compress 10 and 14, not these.
+- **Section 03 is the fast one.** Six content slides in 10 minutes, and none needs dwelling on —
   it's the survey that earns the recommendation in §04.
+- **Section 02 has no divider in the middle** — seven slides straight through. Watch for the room
+  flagging around slide 11, the first code, and use the rebuttals that follow it to re-engage.
 
 ---
 
 ## If you're behind at a gate
 
-Cut in this order. Cut *content*, not pace — talking faster is how you lose a room.
+Cut *content*, not pace — talking faster is how you lose a room.
 
-1. **The demo (16)** — defer to the end. Biggest single block of time and fully optional.
-2. **Slide 18 (timeline)** — down to 60 seconds. Three rows and the band, skip the rest.
-3. **Slide 21 (Beman)** — 30 seconds: early, watch it, and the TAPS point.
-4. **Slide 25 (adoption by workload)** — fold into the summary.
-5. **Slide 23 (platform picture)** — headline only, skip the matrix.
+1. **Slide 17 (timeline)** — down to 60 seconds. Three rows and the band, skip the rest.
+2. **Slide 20 (Beman)** — 30 seconds: early, watch it, and the TAPS point.
+3. **Slide 24 (adoption by workload)** — fold its conclusion into the summary.
+4. **Slide 22 (platform picture)** — headline only, skip the matrix.
+5. **Slide 19 (stdexec)** — name the three things it gives you and move on.
 
-That's the demo plus about three minutes, without touching the argument.
+About five minutes without touching the argument.
 
-**Do not cut:** slides 12 and 15 (the two rebuttals), or slides 26 and 27 (the wrapping code).
+**Do not cut:** slides 12 and 15 (the two rebuttals), or slides 25 and 26 (the wrapping code).
 
-**Already cut:** the operation-state nesting diagram, now Appendix C.
+**Already cut:** the live demo, and the operation-state nesting diagram (now Appendix C).
 
 ---
 
@@ -107,22 +100,19 @@ That's the demo plus about three minutes, without touching the argument.
 
 - Time each section separately before timing the whole thing. A full run tells you you're four
   minutes over; sectional timings tell you where.
-- Run the demo standalone at least three times against a stopwatch. It's the only segment
-  where the clock isn't fully under your control.
 - Take the hand-count on slide 3 (who has *written* code against stdexec, libunifex, or Asio's
   sender adaptation). It tells you how fast to take section 02.
-- Rehearse the section-02 run without the demo at least once, so deferring it feels routine
-  rather than like a failure.
+- The 8 minutes the demo used to take is now slack. Resist spending it on slide 9 or 10 —
+  those are the compressible ones and they will absorb time if you let them.
 
 ---
 
 ## Pre-talk checklist
 
 - [ ] Re-check the cppreference C++26 "Execution control library" row; update the date stamp
-      on slide 19
-- [ ] Pin the stdexec commit in `demo/CMakeLists.txt`, rebuild, re-rehearse — in that order
-- [ ] Run `./run_all.sh` on the **presentation laptop**, not a dev box
-- [ ] Decide at setup: local terminal or Compiler Explorer (the slide names neither)
-- [ ] Make the talks repo public (references slide and cheatsheet links depend on it)
-- [ ] Confirm the cheatsheet is pushed and its link resolves
+      on slide 18
+- [ ] Make the talks repo public — the cheatsheet link, the demo project and the references
+      slide all depend on it
+- [ ] Confirm the cheatsheet and `demo/` both resolve from the links on screen
+- [ ] Re-verify the paper numbers on slide 17 against wg21.link
 - [ ] Open the deck with real fonts loaded; confirm no slide counter turns orange
