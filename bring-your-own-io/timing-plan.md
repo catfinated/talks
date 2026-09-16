@@ -42,9 +42,9 @@ that slide's budget.
 | 10:20 | 9 — The model (concepts) |
 | 12:20 | 10 — The vocabulary |
 | 14:00 | 11 — Putting it together |
-| 16:30 | 12 — Isn't then just the callback |
-| 18:30 | 13 — Two patterns |
-| 20:30 | 14 — Structured concurrency |
+| 16:30 | 12 — Two patterns |
+| 18:30 | 13 — Structured concurrency |
+| 20:00 | 14 — Isn't then just the callback |
 | 22:00 | 15 — Just do it in a destructor |
 | 24:00 | 16 — §03 divider |
 | 24:20 | 17 — The road to P2300 |
@@ -69,12 +69,12 @@ that slide's budget.
 - **Slide 26 (operation state) gets three minutes** — the most of any slide, deliberately. It's
   the material nobody else can present.
 - **Dividers are 20 seconds.** Breath, not content.
-- **Slides 12 and 15 are the reason for the talk.** They answer two of the four objections from
+- **Slides 14 and 15 are the reason for the talk.** They answer two of the four objections from
   slide 3. If §02 runs long, compress 10 and 14, not these.
 - **Section 03 is the fast one.** Six content slides in 10 minutes, and none needs dwelling on —
   it's the survey that earns the recommendation in §04.
 - **Section 02 has no divider in the middle** — seven slides straight through. Watch for the room
-  flagging around slide 11, the first code, and use the rebuttals that follow it to re-engage.
+  flagging around slide 11, the first code, and use the two rebuttals that close the section to re-engage.
 
 ---
 
@@ -90,7 +90,7 @@ Cut *content*, not pace — talking faster is how you lose a room.
 
 About five minutes without touching the argument.
 
-**Do not cut:** slides 12 and 15 (the two rebuttals), or slides 25 and 26 (the wrapping code).
+**Do not cut:** slides 14 and 15 (the two rebuttals), or slides 25 and 26 (the wrapping code).
 
 **Already cut:** the live demo, and the operation-state nesting diagram (now Appendix C).
 

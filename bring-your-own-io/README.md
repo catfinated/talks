@@ -56,4 +56,4 @@ Views are my own; this is personal research, not the work or views of my employe
 Research and slides prepared with AI assistance. Claims are checked against
 primary sources — papers, standard wording, and vendor status pages — cited
 throughout. Ecosystem and vendor-status claims are stamped with the date they
-were checked and will age; the cheatsheet was verified August 2026.
+were checked and will age; the cheatsheet was verified September 2026.
