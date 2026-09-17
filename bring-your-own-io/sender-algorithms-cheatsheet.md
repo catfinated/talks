@@ -137,4 +137,4 @@ that its authors also advocate a coroutine-native alternative.
 its status doc shows a few items (bulk, sync_wait, task, scopes, spawn) as
 implemented and tested but with review/documentation still catching up. stdexec
 remains experimental with ongoing API churn. Verify against each repo before
-relying on a specific spelling — this sheet reflects August 2026.
+relying on a specific spelling — this sheet reflects September 2026.
