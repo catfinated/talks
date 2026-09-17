@@ -12,8 +12,8 @@ include(FetchContent)
 FetchContent_Declare(
   stdexec
   GIT_REPOSITORY https://github.com/NVIDIA/stdexec.git
-  GIT_TAG        main          # <-- replace with a specific SHA before the talk
-  GIT_SHALLOW    TRUE
+  # NVIDIA/stdexec main @ 2026-09-16 (PR #2259). Pinned 17 Sep 2026.
+  GIT_TAG        abcdee3d1cef5bd1ff5d22d5cb11c9364e58cf67
 )
 set(STDEXEC_BUILD_TESTS   OFF CACHE BOOL "" FORCE)
 set(STDEXEC_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
