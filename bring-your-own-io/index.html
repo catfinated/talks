@@ -651,24 +651,24 @@ std::this_thread::<span class="fn">sync_wait</span>(scope.<span class="fn">join<
   <div class="row mt" style="gap:1.2em;">
     <div class="col">
       <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warn);margin-bottom:.35em;">The callback</p>
-<pre style="font-size:.86em;"><code><span class="kw">struct</span> ctx { <span class="kw">char</span>* buf; };   <span class="cm">// stop token? promise?</span>
+<pre style="font-size:.86em;"><code><span class="kw">struct</span> ctx { std::vector&lt;<span class="kw">char</span>&gt; buf; };   <span class="cm">// stop token? promise?</span>
 
 <span class="kw">void</span> <span class="fn">on_read</span>(<span class="kw">int</span> result, <span class="kw">void</span>* p) {
     <span class="kw">auto</span>* c = <span class="kw">static_cast</span>&lt;ctx*&gt;(p);
-    <span class="kw">if</span> (result &lt; <span class="num">0</span>) { <span class="cm">/* on whose thread?</span>
-                          <span class="cm">   report to whom? */</span> }
-    <span class="kw">else</span> <span class="fn">process</span>(c-&gt;buf, result);
-    <span class="kw">delete</span> c;   <span class="cm">// guaranteed heap-allocated?</span>
+    <span class="kw">if</span> (result &lt; <span class="num">0</span>) { <span class="cm">// report to whom?</span> }
+    <span class="kw">else</span> <span class="fn">process</span>(c-&gt;buf, result); <span class="cm">// on whose thread?</span>
+    <span class="kw">delete</span> c; <span class="cm">// guaranteed heap-allocated?</span>
 }
 
-<span class="cm">// void async_read(int fd, char* buf, size_t len,</span>
+<span class="cm">// void async_read(int fd, std::span&lt;char&gt; buf,</span>
 <span class="cm">//   void(*cb)(int result, void* ctx), void* ctx);</span>
-<span class="fn">async_read</span>(fd, buf, n, &amp;on_read, <span class="kw">new</span> ctx{buf});
+<span class="kw">auto</span> opstate = <span class="kw">new</span> ctx{};
+<span class="fn">async_read</span>(fd, opstate->bufspan(), &amp;on_read, opstate);
 <span class="cm">// nothing here to name, store, or compose</span></code></pre>
     </div>
     <div class="col">
       <p class="sm" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin-bottom:.35em;">The sender</p>
-<pre style="font-size:.86em;"><code><span class="kw">auto</span> work = <span class="fn">async_read</span>(fd, buf, n)
+<pre style="font-size:.86em;"><code><span class="kw">auto</span> work = <span class="fn">async_read</span>(iosched, fd, bufspan)
           | stdexec::<span class="fn">then</span>(process);
 
 <span class="cm">// ...and `work` is a value:</span>
@@ -684,7 +684,7 @@ stdexec::<span class="fn">when_all</span>(std::move(work),      <span class="cm"
   </div>
   <div class="row mt" style="gap:1em;flex:0 0 auto;">
     <div class="box rd col" style="margin:0;">
-      <p><strong>Where does the stop token go?</strong> There's one parameter left and it's <span class="ic">void*</span>. Same question for "which context does <span class="ic">process</span> run on?" and "who owns <span class="ic">buf</span> until completion?"</p>
+      <p><strong>Where does the stop token go?</strong> There's one parameter left and it's <span class="ic">void*</span>. Same question for "which context does <span class="ic">process</span> run on?" and "who owns <span class="ic">buf</span> until completion? Change just about any detail and it's a different context+callback"</p>
     </div>
     <div class="box bl col" style="margin:0;">
       <p><strong>A callback is a function you give away.</strong> You hand it to <span class="ic">async_read</span> at the call site and it's gone. <strong>A sender is a value you keep.</strong></p>
