@@ -31,6 +31,7 @@ cancellation and cleanup can live in destructors.
 | [`papers-cited.md`](papers-cited.md) | Every WG21 paper the talk cites, with its latest known revision and a `wg21.link` that stays current as papers are revised. Notes on the ones that are easy to get wrong. |
 | [`timing-plan.md`](timing-plan.md) | Section budgets and checkpoints for delivering it in a 60-minute slot. |
 | [`demo/`](demo/) | The live demo code — seven standalone programs, one per variation, with a CMake build that pins stdexec. `demo/README.md` has the expected output for each and the fallback ladder. |
+| [`bring-your-own-io-20260917.pdf`](bring-your-own-io-20260917.pdf) | The slides presented at the 20260917 NWCPP Meetup. |
 
 ### Viewing the slides
 
