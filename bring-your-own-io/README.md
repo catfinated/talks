@@ -4,7 +4,7 @@ A talk on C++26's `std::execution` (P2300) from a user and implementer
 perspective: the model, the ecosystem, and the I/O gap the standard
 deliberately left open.
 
-**[Northwest C++ Users' Group](https://nwcpp.org/) — 17 September 2026**
+**[Northwest C++ Users' Group](https://nwcpp.org/Sept-2026.html) — 17 September 2026**
 
 ## The talk
 
